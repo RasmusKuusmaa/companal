@@ -1,0 +1,31 @@
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI's dependency-injection system relies on calling Depends()/Query()/etc.
+# in argument defaults; that's the intended pattern, not the mutable-default-
+# argument bug B008 exists to catch.
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Alembic migrations call into SQLAlchemy dialect helpers (e.g. postgresql
+# ENUM.create/.drop) that ship without complete type stubs. Migrations are
+# generated/scripted, not hand-written application logic, so relax strict
+# checking here rather than littering every migration with type: ignore.
+module = "app.db.migrations.versions.*"
+disallow_untyped_calls = false
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["app/tests"]

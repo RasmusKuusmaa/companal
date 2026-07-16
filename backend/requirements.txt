@@ -1,0 +1,16 @@
+# Core framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database
+sqlalchemy==2.0.35
+asyncpg==0.29.0
+alembic==1.13.3
+
+# Settings & validation
+pydantic==2.9.2
+pydantic-settings==2.5.2
+
+# Auth
+pyjwt==2.9.0
+argon2-cffi==23.1.0
