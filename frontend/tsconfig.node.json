@@ -1,0 +1,12 @@
+{
+  "extends": "@tsconfig/node20/tsconfig.json",
+  "include": ["vite.config.ts", "tailwind.config.ts", "postcss.config.js"],
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "./node_modules/.tsc-cache/node",
+    "tsBuildInfoFile": "./node_modules/.tsc-cache/node.tsbuildinfo",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  }
+}
