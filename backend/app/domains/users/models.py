@@ -1,10 +1,10 @@
 """User ORM model.
 
-Deliberately the only domain model in this foundation: it exists so that
-JWT auth (core/dependencies.get_current_user) has a real row to resolve a
-token's `sub` against, and so Alembic/the DB connection have something
-concrete to migrate and query. Registration/login endpoints and the rest
-of the users domain (service, repository, router) land in the next slice.
+Registration/authentication live in `app.domains.auth` (which owns
+credentials-checking, token issuance, and session/refresh-token state);
+this domain owns user identity and profile data. The rest of the users
+domain (profile updates, admin user management, etc.) lands in a later
+slice.
 """
 
 import enum

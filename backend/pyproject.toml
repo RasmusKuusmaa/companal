@@ -27,5 +27,12 @@ disallow_untyped_calls = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
+# Session-scoped, not function-scoped: the app's async engine (db/session.py)
+# is a module-level singleton whose asyncpg connections get bound to
+# whichever event loop was running when they were opened. A fresh loop per
+# test would leave pooled connections pointing at an already-closed loop's
+# transport - on Windows (ProactorEventLoop) that surfaces as
+# `AttributeError: 'NoneType' object has no attribute 'send'` deep inside
+# asyncpg on the second DB-touching test in a run.
+asyncio_default_fixture_loop_scope = "session"
 testpaths = ["app/tests"]

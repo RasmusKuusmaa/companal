@@ -29,6 +29,7 @@ class TokenPayload(BaseModel):
     type: TokenType
     iat: int
     exp: int
+    jti: str
 
 
 def hash_password(password: str) -> str:
@@ -49,6 +50,14 @@ def _create_token(subject: uuid.UUID | str, token_type: TokenType, expires_delta
         "type": token_type.value,
         "iat": int(now.timestamp()),
         "exp": int((now + expires_delta).timestamp()),
+        # Without a per-token nonce, two tokens for the same subject
+        # issued within the same second (same iat, same fixed
+        # expires_delta -> same exp) are byte-identical JWTs. That's a
+        # real case, not just a testing artifact - e.g. issuing refresh
+        # tokens for the same user from two tabs within the same second -
+        # and it broke the DB's uniqueness constraint on the refresh
+        # token's hash.
+        "jti": uuid.uuid4().hex,
     }
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
