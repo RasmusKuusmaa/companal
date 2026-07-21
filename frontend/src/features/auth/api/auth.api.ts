@@ -7,7 +7,7 @@
 
 import { httpClient } from "@/services/http";
 
-import type { AuthTokens, LoginPayload, User, UserRole } from "../types";
+import type { AuthTokens, LoginPayload, RegisterPayload, User, UserRole } from "../types";
 
 interface TokenResponseDto {
   access_token: string;
@@ -40,9 +40,22 @@ function mapUser(dto: UserDto): User {
 }
 
 export const authApi = {
+  async register(payload: RegisterPayload): Promise<User> {
+    const { data } = await httpClient.post<UserDto>("/auth/register", {
+      email: payload.email,
+      password: payload.password,
+      full_name: payload.fullName,
+    });
+    return mapUser(data);
+  },
+
   async login(payload: LoginPayload): Promise<AuthTokens> {
     const { data } = await httpClient.post<TokenResponseDto>("/auth/login", payload);
     return mapTokens(data);
+  },
+
+  async logout(refreshToken: string): Promise<void> {
+    await httpClient.post("/auth/logout", { refresh_token: refreshToken });
   },
 
   async me(): Promise<User> {

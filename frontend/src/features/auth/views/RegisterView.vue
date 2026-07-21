@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 
 import { BaseButton, BaseCard, BaseInput } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
@@ -8,34 +8,37 @@ import { toApiProblem } from "@/shared/utils/api-error";
 import { useAuthStore } from "../stores/auth.store";
 
 const router = useRouter();
-const route = useRoute();
 const authStore = useAuthStore();
 
+const fullName = ref("");
 const email = ref("");
 const password = ref("");
+const confirmPassword = ref("");
 const errorMessage = ref("");
 const isSubmitting = ref(false);
 
-// Only ever redirect to a same-app relative path — the query param is
-// attacker-controllable, so an absolute/protocol-relative URL here would be
-// an open-redirect vector.
-function resolveRedirectTarget(): string {
-  const redirect = route.query.redirect;
-  const target = Array.isArray(redirect) ? redirect[0] : redirect;
-  if (target && target.startsWith("/") && !target.startsWith("//")) {
-    return target;
-  }
-  return "/";
-}
-
 async function handleSubmit(): Promise<void> {
   errorMessage.value = "";
+
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = "Passwords do not match.";
+    return;
+  }
+  if (password.value.length < 8) {
+    errorMessage.value = "Password must be at least 8 characters.";
+    return;
+  }
+
   isSubmitting.value = true;
   try {
-    await authStore.login({ email: email.value, password: password.value });
-    await router.push(resolveRedirectTarget());
+    await authStore.register({
+      email: email.value,
+      password: password.value,
+      fullName: fullName.value,
+    });
+    await router.push("/");
   } catch (error) {
-    errorMessage.value = toApiProblem(error).detail ?? "Incorrect email or password.";
+    errorMessage.value = toApiProblem(error).detail ?? "Could not create your account.";
   } finally {
     isSubmitting.value = false;
   }
@@ -44,8 +47,9 @@ async function handleSubmit(): Promise<void> {
 
 <template>
   <main class="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-    <BaseCard title="Sign in" class="w-full max-w-sm">
+    <BaseCard title="Create an account" class="w-full max-w-sm">
       <form class="space-y-4" novalidate @submit.prevent="handleSubmit">
+        <BaseInput v-model="fullName" label="Full name" autocomplete="name" required />
         <BaseInput
           v-model="email"
           label="Email"
@@ -57,7 +61,14 @@ async function handleSubmit(): Promise<void> {
           v-model="password"
           label="Password"
           type="password"
-          autocomplete="current-password"
+          autocomplete="new-password"
+          required
+        />
+        <BaseInput
+          v-model="confirmPassword"
+          label="Confirm password"
+          type="password"
+          autocomplete="new-password"
           required
         />
 
@@ -66,14 +77,14 @@ async function handleSubmit(): Promise<void> {
         </p>
 
         <BaseButton type="submit" class="w-full" :disabled="isSubmitting">
-          {{ isSubmitting ? "Signing in…" : "Sign in" }}
+          {{ isSubmitting ? "Creating account…" : "Create account" }}
         </BaseButton>
       </form>
 
       <p class="mt-4 text-center text-sm text-slate-600">
-        Don't have an account?
-        <RouterLink to="/register" class="font-medium text-slate-900 hover:underline">
-          Create one
+        Already have an account?
+        <RouterLink to="/login" class="font-medium text-slate-900 hover:underline">
+          Sign in
         </RouterLink>
       </p>
     </BaseCard>

@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/features/auth/api/auth.api", () => ({
   authApi: {
+    register: vi.fn(),
     login: vi.fn(),
+    logout: vi.fn(),
     me: vi.fn(),
   },
 }));
@@ -57,7 +59,44 @@ describe("auth store", () => {
     expect(getAccessToken()).toBe("access-1");
   });
 
-  it("clears state on logout", async () => {
+  it("clears state on logout and revokes the refresh token server-side", async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      accessToken: "access-1",
+      refreshToken: "refresh-1",
+    });
+    vi.mocked(authApi.me).mockResolvedValue(mockUser);
+    vi.mocked(authApi.logout).mockResolvedValue(undefined);
+
+    const store = useAuthStore();
+    await store.login({ email: mockUser.email, password: "secret" });
+    const logoutPromise = store.logout();
+
+    expect(store.status).toBe("unauthenticated");
+    expect(store.user).toBeNull();
+    expect(getAccessToken()).toBeNull();
+
+    await logoutPromise;
+    expect(authApi.logout).toHaveBeenCalledWith("refresh-1");
+  });
+
+  it("clears local state on logout even if the revoke call fails", async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      accessToken: "access-1",
+      refreshToken: "refresh-1",
+    });
+    vi.mocked(authApi.me).mockResolvedValue(mockUser);
+    vi.mocked(authApi.logout).mockRejectedValue(new Error("network error"));
+
+    const store = useAuthStore();
+    await store.login({ email: mockUser.email, password: "secret" });
+    await expect(store.logout()).resolves.toBeUndefined();
+
+    expect(store.status).toBe("unauthenticated");
+    expect(store.user).toBeNull();
+  });
+
+  it("registers, then signs in with the same credentials", async () => {
+    vi.mocked(authApi.register).mockResolvedValue(mockUser);
     vi.mocked(authApi.login).mockResolvedValue({
       accessToken: "access-1",
       refreshToken: "refresh-1",
@@ -65,12 +104,27 @@ describe("auth store", () => {
     vi.mocked(authApi.me).mockResolvedValue(mockUser);
 
     const store = useAuthStore();
-    await store.login({ email: mockUser.email, password: "secret" });
-    store.logout();
+    await store.register({ email: mockUser.email, password: "secret123", fullName: mockUser.fullName });
 
-    expect(store.status).toBe("unauthenticated");
-    expect(store.user).toBeNull();
-    expect(getAccessToken()).toBeNull();
+    expect(authApi.register).toHaveBeenCalledWith({
+      email: mockUser.email,
+      password: "secret123",
+      fullName: mockUser.fullName,
+    });
+    expect(authApi.login).toHaveBeenCalledWith({ email: mockUser.email, password: "secret123" });
+    expect(store.status).toBe("authenticated");
+    expect(store.user).toEqual(mockUser);
+  });
+
+  it("does not attempt to sign in if registration fails", async () => {
+    vi.mocked(authApi.register).mockRejectedValue(new Error("email already registered"));
+
+    const store = useAuthStore();
+    await expect(
+      store.register({ email: mockUser.email, password: "secret123", fullName: mockUser.fullName }),
+    ).rejects.toThrow();
+
+    expect(authApi.login).not.toHaveBeenCalled();
   });
 
   it("resumes a session on bootstrap when a refresh token is persisted", async () => {

@@ -14,6 +14,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false, guestOnly: true },
   },
   {
+    path: "/register",
+    name: "register",
+    component: () => import("@/features/auth/views/RegisterView.vue"),
+    meta: { requiresAuth: false, guestOnly: true },
+  },
+  {
     path: "/:pathMatch(.*)*",
     name: "not-found",
     component: () => import("../views/NotFoundView.vue"),
