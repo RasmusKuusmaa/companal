@@ -9,7 +9,7 @@ select = ["E", "F", "I", "UP", "B"]
 # FastAPI's dependency-injection system relies on calling Depends()/Query()/etc.
 # in argument defaults; that's the intended pattern, not the mutable-default-
 # argument bug B008 exists to catch.
-extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.File"]
 
 [tool.mypy]
 python_version = "3.12"

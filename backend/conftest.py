@@ -1,21 +1,24 @@
-"""Redirects the test run at the disposable `cadence_test` database instead
-of the dev DB in `.env`, before any test module gets a chance to import
-`app.core.config` (which binds `DATABASE_URL` at import time). Root-level
-conftest.py files load before anything under app/, which is what makes the
-ordering guarantee here hold.
+"""Redirects the test run at the disposable `cadence_test` database and a
+throwaway storage directory instead of the dev DB / uploads in `.env`,
+before any test module gets a chance to import `app.core.config` (which
+binds both at import time). Root-level conftest.py files load before
+anything under app/, which is what makes the ordering guarantee here hold.
 
 Environment variables take priority over `.env` file values in
 pydantic-settings, so `setdefault` is enough - it never overrides an
-explicit DATABASE_URL a developer has already exported.
+explicit DATABASE_URL/STORAGE_ROOT a developer has already exported. The
+temp storage dir is removed at session end in app/tests/conftest.py.
 """
 
 import asyncio
 import os
 import sys
+import tempfile
 
 os.environ.setdefault(
     "DATABASE_URL", "postgresql+asyncpg://cadence:cadence@localhost:5432/cadence_test"
 )
+os.environ.setdefault("STORAGE_ROOT", tempfile.mkdtemp(prefix="cadence_test_storage_"))
 
 # asyncpg's transport handling is unreliable on Windows' default Proactor
 # event loop - pooled connections intermittently come back "attached to a

@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     # --- Database ---
     DATABASE_URL: str
 
+    # --- File storage ---
+    # Relative paths resolve against the process's current working
+    # directory: `backend/storage` for a local `uvicorn` run from `backend/`,
+    # `/app/storage` inside the Docker image (WORKDIR /app).
+    STORAGE_ROOT: str = "./storage"
+    MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024
+
     # --- CORS ---
     # Kept as a raw string, not list[str]: pydantic-settings tries to
     # JSON-decode "complex" (list/dict) env fields *before* field

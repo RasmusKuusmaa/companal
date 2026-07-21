@@ -4,7 +4,19 @@ export const routes: RouteRecordRaw[] = [
   {
     path: "/",
     name: "home",
-    component: () => import("../views/HomeView.vue"),
+    component: () => import("../views/DashboardView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/projects/new",
+    name: "project-create",
+    component: () => import("@/features/projects/views/ProjectCreateView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: "/projects/:id",
+    name: "project-detail",
+    component: () => import("@/features/projects/views/ProjectDetailView.vue"),
     meta: { requiresAuth: true },
   },
   {

@@ -1,6 +1,7 @@
+import shutil
 import subprocess
 import sys
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 from pathlib import Path
 
 import pytest
@@ -8,11 +9,20 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import AsyncSessionLocal
 from app.main import app
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _isolated_storage_root() -> Iterator[None]:
+    """Removes the throwaway STORAGE_ROOT (see root conftest.py) once the
+    whole test session is done uploading into it."""
+    yield
+    shutil.rmtree(settings.STORAGE_ROOT, ignore_errors=True)
 
 
 @pytest.fixture(scope="session", autouse=True)
