@@ -19,3 +19,6 @@ argon2-cffi==23.1.0
 # File uploads
 python-multipart==0.0.12
 defusedxml==0.7.1
+
+# Music analysis
+music21==10.5.0

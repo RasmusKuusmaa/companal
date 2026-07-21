@@ -6,6 +6,7 @@ service layer treats "exists but belongs to someone else" the same as
 surface here as a plain 404.
 """
 
+import asyncio
 import re
 import uuid
 from pathlib import Path
@@ -16,6 +17,8 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
+from app.domains.analysis.schemas import ScoreAnalysis
+from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.projects.schemas import (
     CompositionCreate,
     CompositionRead,
@@ -196,3 +199,28 @@ async def download_project_version(
         media_type=media_type,
         headers={"Content-Disposition": _content_disposition(version.original_filename)},
     )
+
+
+@router.get("/{composition_id}/versions/{version_id}/analysis", response_model=ScoreAnalysis)
+async def analyze_project_version(
+    composition_id: uuid.UUID,
+    version_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ScoreAnalysis:
+    try:
+        version, content = await get_version_file(db, current_user.id, composition_id, version_id)
+    except CompositionNotFoundError as exc:
+        raise _composition_not_found from exc
+    except VersionNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Version not found."
+        ) from exc
+
+    try:
+        # Off the event loop: music21 is synchronous and CPU-bound.
+        return await asyncio.to_thread(analyze, content, version.original_filename)
+    except AnalysisError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc

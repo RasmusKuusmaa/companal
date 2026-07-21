@@ -211,3 +211,45 @@ class TestDownloadVersion:
         )
 
         assert response.status_code == 404
+
+
+class TestAnalyzeVersion:
+    async def test_returns_the_structured_analysis(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        uploaded = (await _upload_version(client, headers, composition["id"])).json()
+
+        response = await client.get(
+            f"/api/v1/projects/{composition['id']}/versions/{uploaded['id']}/analysis",
+            headers=headers,
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["part_count"] == 1
+        assert body["measures"][0]["notes"][0]["is_rest"] is True
+
+    async def test_returns_404_for_an_unknown_version(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+
+        response = await client.get(
+            f"/api/v1/projects/{composition['id']}/versions/"
+            "00000000-0000-0000-0000-000000000000/analysis",
+            headers=headers,
+        )
+
+        assert response.status_code == 404
+
+    async def test_returns_404_for_another_users_composition(self, client: AsyncClient) -> None:
+        headers_a = await _auth_headers(client, "a@example.com")
+        headers_b = await _auth_headers(client, "b@example.com")
+        composition = await _create_composition(client, headers_a)
+        uploaded = (await _upload_version(client, headers_a, composition["id"])).json()
+
+        response = await client.get(
+            f"/api/v1/projects/{composition['id']}/versions/{uploaded['id']}/analysis",
+            headers=headers_b,
+        )
+
+        assert response.status_code == 404

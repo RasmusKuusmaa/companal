@@ -25,6 +25,14 @@ ignore_missing_imports = true
 module = "app.db.migrations.versions.*"
 disallow_untyped_calls = false
 
+[[tool.mypy.overrides]]
+# music21 ships a py.typed marker (so ignore_missing_imports doesn't apply)
+# but its own annotations are incomplete - some Stream/Note/Chord methods
+# (e.g. chordify) are still untyped defs. Relax just this one check for the
+# analysis domain rather than littering music21 call sites with type: ignore.
+module = "app.domains.analysis.*"
+disallow_untyped_calls = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 # Session-scoped, not function-scoped: the app's async engine (db/session.py)
