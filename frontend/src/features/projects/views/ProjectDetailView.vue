@@ -70,9 +70,7 @@ async function saveTitle(): Promise<void> {
 
 async function handleDelete(): Promise<void> {
   if (!composition.value) return;
-  const confirmed = window.confirm(
-    `Delete "${composition.value.title}"? This cannot be undone.`,
-  );
+  const confirmed = window.confirm(`Delete "${composition.value.title}"? This cannot be undone.`);
   if (!confirmed) return;
 
   await projectsStore.remove(compositionId);
@@ -146,6 +144,14 @@ async function handleDownload(version: Version): Promise<void> {
               </div>
             </div>
             <div v-if="!isEditingTitle" class="flex gap-2">
+              <RouterLink
+                v-if="versions.length"
+                v-slot="{ navigate }"
+                :to="`/projects/${compositionId}/score`"
+                custom
+              >
+                <BaseButton variant="secondary" @click="navigate">View score</BaseButton>
+              </RouterLink>
               <BaseButton variant="secondary" @click="startEditingTitle">Rename</BaseButton>
               <BaseButton variant="ghost" @click="handleDelete">Delete</BaseButton>
             </div>
@@ -187,9 +193,18 @@ async function handleDownload(version: Version): Promise<void> {
                   {{ formatBytes(version.fileSize) }} · {{ formatDate(version.createdAt) }}
                 </p>
               </div>
-              <BaseButton variant="secondary" @click="handleDownload(version)">
-                Download
-              </BaseButton>
+              <div class="flex gap-2">
+                <RouterLink
+                  v-slot="{ navigate }"
+                  :to="`/projects/${compositionId}/score?version=${version.id}`"
+                  custom
+                >
+                  <BaseButton variant="secondary" @click="navigate">View</BaseButton>
+                </RouterLink>
+                <BaseButton variant="secondary" @click="handleDownload(version)">
+                  Download
+                </BaseButton>
+              </div>
             </li>
           </ul>
           <p v-else class="text-sm text-slate-500">No versions uploaded yet.</p>

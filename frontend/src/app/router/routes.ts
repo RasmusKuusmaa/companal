@@ -20,6 +20,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/projects/:id/score",
+    name: "score-viewer",
+    component: () => import("@/features/projects/views/ScoreView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/login",
     name: "login",
     component: () => import("@/features/auth/views/LoginView.vue"),
