@@ -5,6 +5,7 @@ from httpx import AsyncClient
 
 _FIXTURES = Path(__file__).parent / "fixtures"
 SIMPLE_SCORE = (_FIXTURES / "simple_score.musicxml").read_bytes()
+MELODY_LINE = (_FIXTURES / "melody_line.musicxml").read_bytes()
 
 
 async def _auth_headers(client: AsyncClient, email: str = "composer@example.com") -> dict[str, str]:
@@ -78,3 +79,51 @@ class TestAnalyzeUpload:
         )
 
         assert response.status_code == 413
+
+
+class TestAnalyzeMelodyUpload:
+    async def test_requires_auth(self, client: AsyncClient) -> None:
+        response = await client.post(
+            "/api/v1/analysis/melody",
+            files={"file": ("piece.musicxml", MELODY_LINE, "application/xml")},
+        )
+        assert response.status_code == 401
+
+    async def test_returns_the_melody_analysis(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/melody",
+            headers=headers,
+            files={"file": ("piece.musicxml", MELODY_LINE, "application/xml")},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert set(body) == {"score", "strengths", "issues", "technical_data"}
+        assert body["score"] >= 90.0
+        assert body["strengths"]
+        assert body["technical_data"]["range"]["interval_name"] == "Major Seventh"
+        assert len(body["technical_data"]["cadences"]) == 2
+
+    async def test_rejects_an_empty_file(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/melody",
+            headers=headers,
+            files={"file": ("piece.musicxml", b"", "application/xml")},
+        )
+
+        assert response.status_code == 400
+
+    async def test_rejects_unparseable_content(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/melody",
+            headers=headers,
+            files={"file": ("piece.musicxml", b"not xml", "application/xml")},
+        )
+
+        assert response.status_code == 400

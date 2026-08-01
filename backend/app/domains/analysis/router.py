@@ -13,18 +13,15 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.domains.analysis.schemas import ScoreAnalysis
+from app.domains.analysis.melody import analyze_melody
+from app.domains.analysis.schemas import MelodyAnalysis, ScoreAnalysis
 from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.users.models import User
 
 router = APIRouter(prefix="/analysis", tags=["analysis"])
 
 
-@router.post("", response_model=ScoreAnalysis)
-async def analyze_upload(
-    file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
-) -> ScoreAnalysis:
+async def _read_upload(file: UploadFile) -> bytes:
     content = await file.read()
     if not content:
         raise HTTPException(
@@ -35,8 +32,30 @@ async def analyze_upload(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File exceeds the maximum allowed upload size.",
         )
+    return content
 
+
+@router.post("", response_model=ScoreAnalysis)
+async def analyze_upload(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> ScoreAnalysis:
+    content = await _read_upload(file)
     try:
         return await asyncio.to_thread(analyze, content, file.filename or "upload.musicxml")
+    except AnalysisError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/melody", response_model=MelodyAnalysis)
+async def analyze_melody_upload(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> MelodyAnalysis:
+    content = await _read_upload(file)
+    try:
+        return await asyncio.to_thread(
+            analyze_melody, content, file.filename or "upload.musicxml"
+        )
     except AnalysisError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
