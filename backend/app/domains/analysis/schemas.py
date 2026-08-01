@@ -172,3 +172,205 @@ class MelodyAnalysis(BaseModel):
     strengths: list[str]
     issues: list[str]
     technical_data: MelodyTechnicalData
+
+
+# --------------------------------------------------------------------------- #
+# Harmony analysis
+#
+# The vertical counterpart to the melody engine above, and algorithmic in the
+# same way: chords come from music21's `chordify`, roman numerals from
+# `romanNumeralFromChord`, and parallel motion from music21's
+# `VoiceLeadingQuartet` - so every finding points at a specific pair of voices
+# moving between two specific chords.
+# --------------------------------------------------------------------------- #
+
+
+class HarmonicChordRead(BaseModel):
+    """One sonority in the piece, with its harmonic reading in the key."""
+
+    index: int
+    measure: int
+    offset: float  # absolute, in quarter notes from the start of the score
+    duration: float
+    pitches: list[str]
+    bass: str
+    root: str | None
+    quality: str | None  # major / minor / diminished / augmented / other
+    common_name: str | None
+    inversion: int | None
+    # Roman numeral in the prevailing key, e.g. "V7", "i6", "bII". `None` when
+    # music21 cannot fit the sonority to a numeral at all.
+    roman_numeral: str | None
+    scale_degree: int | None  # of the chord root, 1-7
+    # tonic / predominant / dominant / chromatic - see `_FUNCTION_BY_DEGREE`.
+    function: str
+    is_diatonic: bool
+    # Set when the chord reads as an applied dominant of the chord that
+    # follows it, e.g. "V/V". Detected from root motion, not from music21.
+    applied_to: str | None
+    is_consonant: bool
+
+
+class ProgressionStepRead(BaseModel):
+    """The move from one harmony to the next."""
+
+    from_index: int
+    to_index: int
+    measure: int
+    from_numeral: str | None
+    to_numeral: str | None
+    from_function: str
+    to_function: str
+    # Directed root motion, e.g. "down P5", "up M2", "same".
+    root_motion: str
+    # functional (T->PD->D->T order), repetition, retrogression (D->PD),
+    # or chromatic (either side is non-diatonic).
+    kind: str
+
+
+class HarmonicCadenceRead(BaseModel):
+    measure: int
+    chord_index: int  # index of the chord the cadence lands on
+    from_numeral: str | None
+    to_numeral: str | None
+    # authentic / half / plagal / deceptive
+    type: str
+    # perfect-authentic / imperfect-authentic / strong / weak
+    strength: str
+    is_final: bool
+
+
+class FunctionalData(BaseModel):
+    # How many chords fall into each function (tonic/predominant/dominant/
+    # chromatic), and how much of the piece is diatonic to the key.
+    function_counts: dict[str, int]
+    diatonic_ratio: float
+    chromatic_chord_indices: list[int]
+    secondary_dominants: list[str]
+    # Progressions running against the common-practice T->PD->D->T flow.
+    retrogressions: list[ProgressionStepRead]
+    # Distinct roman numerals used, and the most frequent harmony.
+    distinct_numerals: int
+    most_common_numeral: str | None
+    tonic_ratio: float
+
+
+class ParallelMotionRead(BaseModel):
+    """Two voices moving from one perfect interval to the same perfect interval.
+
+    Reported for consecutive fifths, octaves and unisons. Antiparallel cases
+    count as well - voices moving in *contrary* motion from a fifth to a
+    twelfth are forbidden in strict style for the same reason - so
+    `from_interval` and `to_interval` are not always equal.
+
+    Hidden (direct) fifths and octaves are listed separately: approaching a
+    perfect interval by similar motion is only conventionally a fault between
+    the outer voices, and only when the upper voice arrives by leap.
+    """
+
+    kind: str  # fifth / octave / unison / hidden-fifth / hidden-octave
+    upper_voice: str
+    lower_voice: str
+    from_index: int
+    to_index: int
+    measure: int
+    upper_motion: str  # e.g. "G4->A4"
+    lower_motion: str  # e.g. "C3->D3"
+    from_interval: str  # harmonic interval before the move, e.g. "P5"
+    to_interval: str
+    involves_outer_voices: bool
+
+
+class VoiceMotionRead(BaseModel):
+    upper_voice: str
+    lower_voice: str
+    from_index: int
+    to_index: int
+    measure: int
+    motion: str  # parallel / similar / contrary / oblique / none
+
+
+class VoiceLeapRead(BaseModel):
+    voice: str
+    from_index: int
+    to_index: int
+    measure: int
+    motion: str
+    semitones: int
+    interval_name: str
+
+
+class VoiceCrossingRead(BaseModel):
+    upper_voice: str
+    lower_voice: str
+    chord_index: int
+    measure: int
+    upper_pitch: str
+    lower_pitch: str
+
+
+class VoiceLeadingData(BaseModel):
+    # "parts" when each part of the score is a real monophonic voice (SATB,
+    # a string quartet); "vertical-positions" when voices had to be inferred
+    # by position within each sonority because at least one part carries
+    # written chords. Parallel findings are only as reliable as this.
+    voice_source: str
+    voice_count: int
+    voice_ids: list[str]
+    transitions: int
+    motion_counts: dict[str, int]
+    average_motion_semitones: float
+    # Share of transitions where no voice moves by more than a step.
+    smooth_ratio: float
+    parallel_fifths: list[ParallelMotionRead]
+    parallel_octaves: list[ParallelMotionRead]
+    parallel_unisons: list[ParallelMotionRead]
+    hidden_parallels: list[ParallelMotionRead]
+    large_leaps: list[VoiceLeapRead]
+    voice_crossings: list[VoiceCrossingRead]
+
+
+class DissonanceRead(BaseModel):
+    """A dissonant tone and what became of it."""
+
+    # chordal-seventh / leading-tone / tritone / final-chord
+    kind: str
+    chord_index: int
+    measure: int
+    voice: str | None
+    pitch: str
+    # What common-practice treatment expects, and what the voice actually did.
+    expected: str
+    actual: str
+    resolved: bool
+
+
+class DissonanceData(BaseModel):
+    dissonant_chord_count: int
+    dissonance_ratio: float
+    seventh_count: int
+    unresolved: list[DissonanceRead]
+    resolved_count: int
+    # True when the piece's last chord is itself dissonant.
+    ends_dissonant: bool
+
+
+class HarmonyTechnicalData(BaseModel):
+    key: str | None
+    key_confidence: float | None
+    mode: str | None
+    chord_count: int
+    measure_count: int
+    chords: list[HarmonicChordRead]
+    progression: list[ProgressionStepRead]
+    functional: FunctionalData
+    cadences: list[HarmonicCadenceRead]
+    voice_leading: VoiceLeadingData
+    dissonances: DissonanceData
+
+
+class HarmonyAnalysis(BaseModel):
+    score: float
+    strengths: list[str]
+    issues: list[str]
+    technical_data: HarmonyTechnicalData
