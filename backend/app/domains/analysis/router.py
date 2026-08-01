@@ -15,7 +15,13 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.domains.analysis.harmony import analyze_harmony
 from app.domains.analysis.melody import analyze_melody
-from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
+from app.domains.analysis.rhythm import analyze_rhythm
+from app.domains.analysis.schemas import (
+    HarmonyAnalysis,
+    MelodyAnalysis,
+    RhythmAnalysis,
+    ScoreAnalysis,
+)
 from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.users.models import User
 
@@ -71,6 +77,20 @@ async def analyze_harmony_upload(
     try:
         return await asyncio.to_thread(
             analyze_harmony, content, file.filename or "upload.musicxml"
+        )
+    except AnalysisError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/rhythm", response_model=RhythmAnalysis)
+async def analyze_rhythm_upload(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> RhythmAnalysis:
+    content = await _read_upload(file)
+    try:
+        return await asyncio.to_thread(
+            analyze_rhythm, content, file.filename or "upload.musicxml"
         )
     except AnalysisError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc

@@ -7,6 +7,7 @@ _FIXTURES = Path(__file__).parent / "fixtures"
 SIMPLE_SCORE = (_FIXTURES / "simple_score.musicxml").read_bytes()
 MELODY_LINE = (_FIXTURES / "melody_line.musicxml").read_bytes()
 SATB = (_FIXTURES / "harmony_satb.musicxml").read_bytes()
+RHYTHM_STUDY = (_FIXTURES / "rhythm_study.musicxml").read_bytes()
 
 
 async def _auth_headers(client: AsyncClient, email: str = "composer@example.com") -> dict[str, str]:
@@ -187,6 +188,70 @@ class TestAnalyzeHarmonyUpload:
 
         response = await client.post(
             "/api/v1/analysis/harmony",
+            headers=headers,
+            files={"file": ("piece.musicxml", b"not xml", "application/xml")},
+        )
+
+        assert response.status_code == 400
+
+
+class TestAnalyzeRhythmUpload:
+    async def test_requires_auth(self, client: AsyncClient) -> None:
+        response = await client.post(
+            "/api/v1/analysis/rhythm",
+            files={"file": ("piece.musicxml", RHYTHM_STUDY, "application/xml")},
+        )
+        assert response.status_code == 401
+
+    async def test_returns_the_rhythm_analysis(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/rhythm",
+            headers=headers,
+            files={"file": ("piece.musicxml", RHYTHM_STUDY, "application/xml")},
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert set(body) == {"score", "strengths", "issues", "technical_data"}
+        technical = body["technical_data"]
+        assert technical["time_signatures"] == ["4/4"]
+        assert technical["tempo"] == 96.0
+        assert technical["density"]["note_count"] == 38
+        assert technical["density"]["onset_count"] == 27
+        assert technical["durations"]["distinct_durations"] == 6
+        assert technical["syncopation"]["syncopated_note_count"] == 2
+        assert technical["phrases"]["phrase_count"] == 2
+        assert len(technical["parts"]) == 2
+
+    async def test_rejects_a_score_without_notes(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/rhythm",
+            headers=headers,
+            files={"file": ("piece.musicxml", b"<score-partwise/>", "application/xml")},
+        )
+
+        assert response.status_code == 400
+
+    async def test_rejects_an_empty_file(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/rhythm",
+            headers=headers,
+            files={"file": ("piece.musicxml", b"", "application/xml")},
+        )
+
+        assert response.status_code == 400
+
+    async def test_rejects_unparseable_content(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/analysis/rhythm",
             headers=headers,
             files={"file": ("piece.musicxml", b"not xml", "application/xml")},
         )

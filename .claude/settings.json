@@ -64,7 +64,20 @@
       "Bash(SECRET_KEY=x DATABASE_URL=postgresql+asyncpg://u:p@localhost/db STORAGE_ROOT=/tmp python -c ' *)",
       "Bash(python -m ruff check app/)",
       "Bash(python -m mypy app/domains/analysis/ app/tests/test_harmony_service.py)",
-      "Bash(python -m mypy app/tests/test_melody_service.py)"
+      "Bash(python -m mypy app/tests/test_melody_service.py)",
+      "Bash(python \"C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/probe_rhythm.py\")",
+      "Bash(python \"C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/probe_rhythm2.py\")",
+      "Bash(python \"C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/gen_rhythm_xml.py\")",
+      "Bash(cp app/tests/test_rhythm_service.py C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/)",
+      "Bash(rm -rf C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/fixtures)",
+      "Bash(PYTHONPATH=\"c:/Users/4j534/Desktop/companal/backend\" python -m pytest test_rhythm_service.py -q -p no:cacheprovider)",
+      "Bash(python -m mypy app/domains/analysis/)",
+      "Bash(python -m ruff check --fix app/)",
+      "Bash(python -m mypy app/domains/analysis/ app/tests/test_rhythm_service.py app/tests/test_harmony_service.py)",
+      "Bash(cp app/tests/test_rhythm_service.py app/tests/test_harmony_service.py app/tests/test_melody_service.py app/tests/test_analysis_service.py C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/)",
+      "Bash(PYTHONPATH=\"c:/Users/4j534/Desktop/companal/backend\" python -m pytest -q -p no:cacheprovider)",
+      "Bash(SECRET_KEY=0123456789abcdef0123456789abcdef0123456789 DATABASE_URL=postgresql+asyncpg://u:p@localhost/db STORAGE_ROOT=/tmp python -c ' *)",
+      "Bash(git ls-tree *)"
     ]
   }
 }

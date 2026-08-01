@@ -374,3 +374,167 @@ class HarmonyAnalysis(BaseModel):
     strengths: list[str]
     issues: list[str]
     technical_data: HarmonyTechnicalData
+
+
+# --------------------------------------------------------------------------- #
+# Rhythm analysis
+#
+# The temporal counterpart to the melody and harmony engines, and algorithmic
+# in the same way: durations, beat positions and metric accent weights all
+# come from music21, and everything else is counting against them. Unlike the
+# other two engines this one reads *every* part - rhythm is a property of the
+# whole texture - and reports a per-part breakdown alongside the totals.
+# --------------------------------------------------------------------------- #
+
+
+class DurationCountRead(BaseModel):
+    name: str  # music21's full name, e.g. "Dotted Quarter", "Eighth Triplet"
+    quarter_length: float
+    count: int
+    ratio: float
+
+
+class DurationVarietyData(BaseModel):
+    distinct_durations: int
+    by_duration: list[DurationCountRead]
+    shortest: float
+    longest: float
+    # longest / shortest - how wide a span of note values the piece uses.
+    range_ratio: float
+    most_common: str | None
+    most_common_ratio: float
+    # Normalised Shannon entropy of the duration distribution: 0.0 when every
+    # note is the same length, 1.0 when all *observed* durations are equally
+    # frequent. It measures evenness, so read it with `distinct_durations` -
+    # a piece alternating two values scores 1.0 here too.
+    variety_index: float
+    dotted_count: int
+    tuplet_count: int
+    tied_count: int
+
+
+class MeasureDensityRead(BaseModel):
+    measure: int
+    onsets: int  # distinct attack points across all parts
+    notes: int
+    # Share of the bar with at least one part sounding.
+    sounding_ratio: float
+
+
+class RhythmicDensityData(BaseModel):
+    note_count: int
+    rest_count: int
+    # Distinct attack points in time. Lower than `note_count` whenever parts
+    # articulate together, which is what separates a chorale from a fugue.
+    onset_count: int
+    notes_per_measure: float
+    onsets_per_measure: float
+    notes_per_quarter: float
+    rest_ratio: float
+    busiest_measure: int | None
+    quietest_measure: int | None
+    per_measure: list[MeasureDensityRead]
+
+
+class RhythmicPatternRead(BaseModel):
+    # The cell as note values, e.g. ["Quarter", "Eighth", "Eighth"].
+    pattern: list[str]
+    quarter_lengths: list[float]
+    length_notes: int
+    occurrences: int
+    measures: list[int]
+    part_id: str
+
+
+class RhythmicRepetitionData(BaseModel):
+    repeated_patterns: list[RhythmicPatternRead]
+    # Measures sharing an identical attack pattern across the whole texture.
+    distinct_measure_rhythms: int
+    repeated_measure_count: int
+    measure_repetition_ratio: float
+    # An ostinato is a cell restated back-to-back rather than merely recurring.
+    has_ostinato: bool
+    ostinato_pattern: list[str] | None
+    ostinato_occurrences: int
+
+
+class SyncopationRead(BaseModel):
+    part_id: str
+    measure: int
+    beat: float
+    pitch: str | None
+    duration: float
+    # sustained-over-beat / tied-over-barline / offbeat-attack
+    kind: str
+    onset_strength: float
+    crossed_strength: float | None
+    description: str
+
+
+class SyncopationData(BaseModel):
+    syncopated_note_count: int
+    syncopation_ratio: float
+    offbeat_onset_count: int
+    offbeat_ratio: float
+    tied_over_barline: int
+    # Measures where no part attacks the downbeat at all.
+    silent_downbeats: int
+    by_kind: dict[str, int]
+    instances: list[SyncopationRead]
+
+
+class PhraseRead(BaseModel):
+    index: int
+    start_measure: int
+    end_measure: int
+    start_offset: float
+    length_quarters: float
+    length_measures: float
+    note_count: int
+    # Length of the silence that closed the phrase, in quarter notes.
+    following_rest_quarters: float
+
+
+class PhraseRhythmData(BaseModel):
+    phrase_count: int
+    phrases: list[PhraseRead]
+    average_length_quarters: float
+    most_common_length_measures: float | None
+    # True when every phrase spans the same number of bars.
+    is_regular: bool
+    distinct_lengths: int
+    has_anacrusis: bool
+    anacrusis_quarters: float
+
+
+class RhythmPartRead(BaseModel):
+    part_id: str
+    name: str | None
+    note_count: int
+    notes_per_measure: float
+    rest_ratio: float
+    syncopated_count: int
+    distinct_durations: int
+    shortest: float
+    longest: float
+
+
+class RhythmTechnicalData(BaseModel):
+    time_signatures: list[str]
+    tempo: float | None
+    measure_count: int
+    total_quarters: float
+    part_count: int
+    density: RhythmicDensityData
+    repetition: RhythmicRepetitionData
+    syncopation: SyncopationData
+    durations: DurationVarietyData
+    phrases: PhraseRhythmData
+    parts: list[RhythmPartRead]
+
+
+class RhythmAnalysis(BaseModel):
+    score: float
+    strengths: list[str]
+    issues: list[str]
+    technical_data: RhythmTechnicalData
