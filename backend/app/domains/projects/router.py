@@ -20,6 +20,7 @@ from app.core.dependencies import get_current_user, get_db
 from app.domains.analysis.schemas import ScoreAnalysis
 from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.projects.schemas import (
+    CompositionAnalysisRead,
     CompositionCreate,
     CompositionRead,
     CompositionUpdate,
@@ -32,6 +33,7 @@ from app.domains.projects.service import (
     VersionConflictError,
     VersionNotFoundError,
     add_version,
+    analyze_composition,
     create_composition,
     delete_composition,
     get_composition,
@@ -198,6 +200,47 @@ async def download_project_version(
         content=content,
         media_type=media_type,
         headers={"Content-Disposition": _content_disposition(version.original_filename)},
+    )
+
+
+@router.post("/{composition_id}/analyze", response_model=CompositionAnalysisRead)
+async def analyze_project(
+    composition_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CompositionAnalysisRead:
+    """Run all three analysis engines over the composition's newest version.
+
+    The result is stored (one row per version, overwritten on re-analysis)
+    and returned. An engine that cannot read this particular score - no
+    harmony in a single line, no pitches in a percussion part - is reported
+    in `unavailable` and left out of `overall_score`; only a file that no
+    engine can analyze is a 422.
+    """
+    try:
+        analysis, version = await analyze_composition(db, current_user.id, composition_id)
+    except CompositionNotFoundError as exc:
+        raise _composition_not_found from exc
+    except VersionNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This composition has no uploaded versions to analyze.",
+        ) from exc
+    except AnalysisError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)
+        ) from exc
+
+    return CompositionAnalysisRead(
+        melody_analysis=analysis.melody_analysis,
+        harmony_analysis=analysis.harmony_analysis,
+        rhythm_analysis=analysis.rhythm_analysis,
+        overall_score=analysis.overall_score,
+        unavailable=analysis.unavailable,
+        composition_id=analysis.composition_id,
+        version_id=analysis.version_id,
+        version_number=version.version_number,
+        analyzed_at=analysis.updated_at,
     )
 
 

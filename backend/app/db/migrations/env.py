@@ -19,6 +19,11 @@ from app.db.base import Base
 # Import every domain's models so they register on Base.metadata before
 # autogenerate compares it against the live database.
 from app.domains.auth.models import RefreshToken  # noqa: F401
+from app.domains.projects.models import (  # noqa: F401
+    Composition,
+    CompositionAnalysis,
+    Version,
+)
 from app.domains.users.models import User  # noqa: F401
 
 config = context.config

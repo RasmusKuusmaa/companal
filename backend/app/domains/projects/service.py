@@ -13,6 +13,7 @@ without parsing musical content - that's the analysis domain's job, not
 this one's.
 """
 
+import asyncio
 import io
 import uuid
 import zipfile
@@ -28,7 +29,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
 from app.core.config import settings
-from app.domains.projects.models import Composition, Version
+from app.domains.analysis.combined import run_all_analyses
+from app.domains.analysis.schemas import AnalysisBundle
+from app.domains.projects.models import Composition, CompositionAnalysis, Version
 from app.domains.projects.schemas import CompositionCreate, CompositionUpdate
 
 _MUSICXML_ROOT_TAGS = {"score-partwise", "score-timewise"}
@@ -236,3 +239,65 @@ async def get_version_file(
 
     content = await storage.read_file(version.storage_key)
     return version, content
+
+
+async def analyze_composition(
+    db: AsyncSession, owner_id: uuid.UUID, composition_id: uuid.UUID
+) -> tuple[CompositionAnalysis, Version]:
+    """Analyze a composition's newest version and store the result.
+
+    The latest version is the one analyzed: an analysis describes a specific
+    upload, and the newest is the only one a caller asking to "analyze this
+    composition" can mean. Raises `VersionNotFoundError` when nothing has
+    been uploaded yet, and `AnalysisError` (from the analysis domain) when
+    the file cannot be analyzed at all.
+    """
+    await _get_owned_composition(db, composition_id, owner_id)
+    version = await db.scalar(
+        select(Version)
+        .where(Version.composition_id == composition_id)
+        .order_by(Version.version_number.desc())
+        .limit(1)
+    )
+    if version is None:
+        raise VersionNotFoundError
+
+    content = await storage.read_file(version.storage_key)
+    # Off the event loop: music21 is synchronous and CPU-bound, and this runs
+    # three engines over one parse.
+    bundle = await asyncio.to_thread(run_all_analyses, content, version.original_filename)
+
+    analysis = await db.scalar(
+        select(CompositionAnalysis).where(CompositionAnalysis.version_id == version.id)
+    )
+    if analysis is None:
+        analysis = CompositionAnalysis(composition_id=composition_id, version_id=version.id)
+        db.add(analysis)
+    _apply_bundle(analysis, bundle)
+
+    await db.commit()
+    await db.refresh(analysis)
+    return analysis, version
+
+
+def _apply_bundle(analysis: CompositionAnalysis, bundle: AnalysisBundle) -> None:
+    """Copy a freshly computed bundle onto the row, replacing what was there.
+
+    `mode="json"` so the stored documents are exactly the JSON the API
+    returns, rather than Python objects JSONB would have to coerce.
+    """
+    analysis.overall_score = bundle.overall_score
+    analysis.melody_score = bundle.melody_analysis.score if bundle.melody_analysis else None
+    analysis.harmony_score = bundle.harmony_analysis.score if bundle.harmony_analysis else None
+    analysis.rhythm_score = bundle.rhythm_analysis.score if bundle.rhythm_analysis else None
+    analysis.melody_analysis = (
+        bundle.melody_analysis.model_dump(mode="json") if bundle.melody_analysis else None
+    )
+    analysis.harmony_analysis = (
+        bundle.harmony_analysis.model_dump(mode="json") if bundle.harmony_analysis else None
+    )
+    analysis.rhythm_analysis = (
+        bundle.rhythm_analysis.model_dump(mode="json") if bundle.rhythm_analysis else None
+    )
+    analysis.unavailable = [u.model_dump(mode="json") for u in bundle.unavailable]
+    analysis.updated_at = datetime.now(UTC)

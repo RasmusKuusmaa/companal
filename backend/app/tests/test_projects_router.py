@@ -1,7 +1,19 @@
+import uuid
+from pathlib import Path
 from typing import Any, cast
 
 import pytest
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.domains.projects.models import CompositionAnalysis
+
+_FIXTURES = Path(__file__).parent / "fixtures"
+# Four real parts, so all three engines have something to read.
+SATB = (_FIXTURES / "harmony_satb.musicxml").read_bytes()
+# One line: melody and rhythm run, harmony has no chords to read.
+MELODY_LINE = (_FIXTURES / "melody_line.musicxml").read_bytes()
 
 VALID_MUSICXML = b"""<?xml version="1.0" encoding="UTF-8"?>
 <score-partwise version="4.0">
@@ -253,3 +265,224 @@ class TestAnalyzeVersion:
         )
 
         assert response.status_code == 404
+
+
+class TestAnalyzeComposition:
+    async def test_requires_auth(self, client: AsyncClient) -> None:
+        response = await client.post(
+            "/api/v1/projects/00000000-0000-0000-0000-000000000000/analyze"
+        )
+        assert response.status_code == 401
+
+    async def test_returns_404_for_an_unknown_composition(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            "/api/v1/projects/00000000-0000-0000-0000-000000000000/analyze", headers=headers
+        )
+
+        assert response.status_code == 404
+
+    async def test_returns_404_for_another_users_composition(self, client: AsyncClient) -> None:
+        headers_a = await _auth_headers(client, "a@example.com")
+        headers_b = await _auth_headers(client, "b@example.com")
+        composition = await _create_composition(client, headers_a)
+        await _upload_version(client, headers_a, composition["id"], content=SATB)
+
+        response = await client.post(
+            f"/api/v1/projects/{composition['id']}/analyze", headers=headers_b
+        )
+
+        assert response.status_code == 404
+
+    async def test_returns_404_when_nothing_has_been_uploaded(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+
+        response = await client.post(
+            f"/api/v1/projects/{composition['id']}/analyze", headers=headers
+        )
+
+        assert response.status_code == 404
+        assert "no uploaded versions" in response.json()["detail"]
+
+    async def test_returns_all_three_analyses_and_an_overall_score(
+        self, client: AsyncClient
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        uploaded = (await _upload_version(client, headers, composition["id"], content=SATB)).json()
+
+        response = await client.post(
+            f"/api/v1/projects/{composition['id']}/analyze", headers=headers
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["melody_analysis"] is not None
+        assert body["harmony_analysis"] is not None
+        assert body["rhythm_analysis"] is not None
+        assert body["unavailable"] == []
+        assert 0.0 <= body["overall_score"] <= 100.0
+        # Each engine's own report comes through whole.
+        assert set(body["melody_analysis"]) == {"score", "strengths", "issues", "technical_data"}
+        assert body["harmony_analysis"]["technical_data"]["key"] == "C major"
+        # ...alongside the identity of the version that was analyzed.
+        assert body["composition_id"] == composition["id"]
+        assert body["version_id"] == uploaded["id"]
+        assert body["version_number"] == 1
+
+    async def test_overall_score_is_the_mean_of_the_engine_scores(
+        self, client: AsyncClient
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=SATB)
+
+        body = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+
+        scores = [
+            body["melody_analysis"]["score"],
+            body["harmony_analysis"]["score"],
+            body["rhythm_analysis"]["score"],
+        ]
+        assert body["overall_score"] == pytest.approx(sum(scores) / 3, abs=0.05)
+
+    async def test_analyzes_the_newest_version(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=MELODY_LINE)
+        second = (await _upload_version(client, headers, composition["id"], content=SATB)).json()
+
+        body = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+
+        assert body["version_id"] == second["id"]
+        assert body["version_number"] == 2
+        # The SATB upload has harmony; the earlier single line did not.
+        assert body["harmony_analysis"] is not None
+
+    async def test_reports_an_engine_that_cannot_read_the_score(self, client: AsyncClient) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=MELODY_LINE)
+
+        body = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+
+        assert body["melody_analysis"] is not None
+        assert body["rhythm_analysis"] is not None
+        assert body["harmony_analysis"] is None
+        assert [u["engine"] for u in body["unavailable"]] == ["harmony"]
+        # The absent engine is left out of the mean, not counted as zero.
+        ran = [body["melody_analysis"]["score"], body["rhythm_analysis"]["score"]]
+        assert body["overall_score"] == pytest.approx(sum(ran) / 2, abs=0.05)
+
+    async def test_returns_422_when_no_engine_can_analyze_the_file(
+        self, client: AsyncClient
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        # The shared fixture is a single whole rest - nothing to analyze.
+        await _upload_version(client, headers, composition["id"], content=VALID_MUSICXML)
+
+        response = await client.post(
+            f"/api/v1/projects/{composition['id']}/analyze", headers=headers
+        )
+
+        assert response.status_code == 422
+
+    async def test_stores_the_analysis(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        uploaded = (await _upload_version(client, headers, composition["id"], content=SATB)).json()
+
+        body = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+
+        stored = (
+            await db_session.scalars(
+                select(CompositionAnalysis).where(
+                    CompositionAnalysis.version_id == uuid.UUID(uploaded["id"])
+                )
+            )
+        ).all()
+        assert len(stored) == 1
+        row = stored[0]
+        assert row.overall_score == body["overall_score"]
+        assert row.melody_score == body["melody_analysis"]["score"]
+        assert row.harmony_score == body["harmony_analysis"]["score"]
+        assert row.rhythm_score == body["rhythm_analysis"]["score"]
+        # The stored documents are the same JSON the endpoint returned.
+        assert row.harmony_analysis == body["harmony_analysis"]
+        assert row.unavailable == []
+
+    async def test_stores_a_null_score_for_an_engine_that_could_not_run(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=MELODY_LINE)
+
+        await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+
+        row = await db_session.scalar(select(CompositionAnalysis))
+        assert row is not None
+        assert row.harmony_score is None
+        assert row.harmony_analysis is None
+        assert row.melody_score is not None
+        assert [u["engine"] for u in row.unavailable] == ["harmony"]
+
+    async def test_re_analysing_overwrites_rather_than_adding_a_row(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=SATB)
+
+        first = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+        second = (
+            await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+        ).json()
+
+        rows = (await db_session.scalars(select(CompositionAnalysis))).all()
+        assert len(rows) == 1
+        # The engines are deterministic, so a re-run reproduces the analysis.
+        assert first["overall_score"] == second["overall_score"]
+
+    async def test_keeps_one_analysis_per_version(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=MELODY_LINE)
+        await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+
+        await _upload_version(client, headers, composition["id"], content=SATB)
+        await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+
+        rows = (await db_session.scalars(select(CompositionAnalysis))).all()
+        assert len(rows) == 2
+        assert {r.harmony_score is None for r in rows} == {True, False}
+
+    async def test_deleting_the_composition_removes_its_analyses(
+        self, client: AsyncClient, db_session: AsyncSession
+    ) -> None:
+        headers = await _auth_headers(client)
+        composition = await _create_composition(client, headers)
+        await _upload_version(client, headers, composition["id"], content=SATB)
+        await client.post(f"/api/v1/projects/{composition['id']}/analyze", headers=headers)
+
+        await client.delete(f"/api/v1/projects/{composition['id']}", headers=headers)
+
+        rows = (await db_session.scalars(select(CompositionAnalysis))).all()
+        assert rows == []

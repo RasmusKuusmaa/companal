@@ -538,3 +538,29 @@ class RhythmAnalysis(BaseModel):
     strengths: list[str]
     issues: list[str]
     technical_data: RhythmTechnicalData
+
+
+# --------------------------------------------------------------------------- #
+# Combined analysis
+#
+# All three engines over one score. Each is independent, and a score that
+# defeats one need not defeat the others - a single melodic line has no
+# harmony to read, a percussion part has no pitch - so an engine that cannot
+# run reports why instead of failing the whole bundle.
+# --------------------------------------------------------------------------- #
+
+
+class EngineUnavailable(BaseModel):
+    engine: str  # melody / harmony / rhythm
+    reason: str
+
+
+class AnalysisBundle(BaseModel):
+    melody_analysis: MelodyAnalysis | None
+    harmony_analysis: HarmonyAnalysis | None
+    rhythm_analysis: RhythmAnalysis | None
+    # Unweighted mean of the engines that ran, 0-100. Engines that could not
+    # run are left out rather than counted as zero: a monophonic piece should
+    # not be marked down for having no harmony to analyze.
+    overall_score: float
+    unavailable: list[EngineUnavailable]

@@ -77,7 +77,15 @@
       "Bash(cp app/tests/test_rhythm_service.py app/tests/test_harmony_service.py app/tests/test_melody_service.py app/tests/test_analysis_service.py C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/)",
       "Bash(PYTHONPATH=\"c:/Users/4j534/Desktop/companal/backend\" python -m pytest -q -p no:cacheprovider)",
       "Bash(SECRET_KEY=0123456789abcdef0123456789abcdef0123456789 DATABASE_URL=postgresql+asyncpg://u:p@localhost/db STORAGE_ROOT=/tmp python -c ' *)",
-      "Bash(git ls-tree *)"
+      "Bash(git ls-tree *)",
+      "Bash(python -m mypy app/domains/ app/db/)",
+      "Bash(cp app/tests/test_combined_service.py C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/)",
+      "Bash(PYTHONPATH=\"c:/Users/4j534/Desktop/companal/backend\" python -m pytest test_combined_service.py -q -p no:cacheprovider)",
+      "Bash(python -m ruff check app/tests/test_projects_router.py)",
+      "Bash(python -m compileall -q app/tests/test_projects_router.py)",
+      "Bash(SECRET_KEY=\"0123456789abcdef0123456789abcdef0123456789\" DATABASE_URL=\"postgresql+asyncpg://u:p@localhost/db\" STORAGE_ROOT=/tmp python -m alembic upgrade 202601180001:head --sql)",
+      "Bash(python -m pip install alembic --quiet)",
+      "Bash(cp app/tests/test_combined_service.py app/tests/test_rhythm_service.py app/tests/test_harmony_service.py app/tests/test_melody_service.py app/tests/test_analysis_service.py C:/Users/4j534/AppData/Local/Temp/claude/c--Users-4j534-Desktop-companal/49d639a7-a3c3-4414-87b6-1cf870523420/scratchpad/standalone/)"
     ]
   }
 }
