@@ -112,7 +112,22 @@
       "Bash(grep -vE \"SAWarning|self._root|^$\")",
       "Bash(MSYS_NO_PATHCONV=1 docker compose exec -T -e DATABASE_URL=postgresql+asyncpg://cadence:cadence@postgres:5432/cadence_test -e STORAGE_ROOT=/tmp/cadence_test_storage api python -m pytest -q -p no:cacheprovider --no-header)",
       "Bash(grep -vE \"SAWarning|self._root|^$|garbage collector\")",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "Bash(python -m pip show anthropic)",
+      "Bash(python -m pip install anthropic --quiet)",
+      "Bash(SECRET_KEY=\"0123456789abcdef0123456789abcdef0123456789\" DATABASE_URL=\"postgresql+asyncpg://u:p@localhost/db\" STORAGE_ROOT=/tmp python -m alembic upgrade 202601190001:202601200001 --sql)",
+      "Bash(python -m compileall -q app/domains/feedback app/api/v1/router.py app/db/migrations/env.py app/core/config.py)",
+      "Bash(python -m compileall -q app/tests/test_feedback_service.py app/tests/test_feedback_router.py)",
+      "Bash(python -m pip install ruff --quiet)",
+      "Bash(python -m ruff check app/domains/feedback app/tests/test_feedback_service.py app/tests/test_feedback_router.py app/db/migrations/versions/202601200001_add_feedback_table.py)",
+      "Bash(python -m ruff check app/domains/feedback app/tests/test_feedback_service.py app/tests/test_feedback_router.py app/db/migrations/versions/202601200001_add_feedback_table.py app/api/v1/router.py app/db/migrations/env.py app/core/config.py .env.example)",
+      "Bash(python -m ruff check app/domains/feedback app/tests/test_feedback_service.py app/tests/test_feedback_router.py app/db/migrations/versions/202601200001_add_feedback_table.py app/api/v1/router.py app/db/migrations/env.py app/core/config.py)",
+      "Bash(python -m pip install mypy --quiet)",
+      "Bash(python -m mypy app/domains/feedback)",
+      "Bash(powershell -Command \"Start-Process 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'\")"
     ]
   }
 }

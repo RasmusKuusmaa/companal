@@ -22,3 +22,6 @@ defusedxml==0.7.1
 
 # Music analysis
 music21==10.5.0
+
+# AI feedback
+anthropic==0.121.0

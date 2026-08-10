@@ -41,6 +41,12 @@ class Settings(BaseSettings):
     STORAGE_ROOT: str = "./storage"
     MAX_UPLOAD_SIZE_BYTES: int = 20 * 1024 * 1024
 
+    # --- AI feedback ---
+    # Unset in local dev without an API key: the feedback endpoints raise a
+    # clear 503 instead of failing at import/startup time.
+    ANTHROPIC_API_KEY: str | None = None
+    AI_MODEL: str = "claude-opus-5"
+
     # --- CORS ---
     # Kept as a raw string, not list[str]: pydantic-settings tries to
     # JSON-decode "complex" (list/dict) env fields *before* field
