@@ -22,3 +22,27 @@ export interface CreateCompositionPayload {
 export interface RenameCompositionPayload {
   title: string;
 }
+
+/** One engine's algorithmic (non-AI) score and findings. */
+export interface EngineAnalysis {
+  score: number;
+  strengths: string[];
+  issues: string[];
+}
+
+export interface UnavailableEngine {
+  engine: string;
+  reason: string;
+}
+
+export interface CompositionAnalysis {
+  compositionId: string;
+  versionId: string;
+  versionNumber: number;
+  overallScore: number;
+  melody: EngineAnalysis | null;
+  harmony: EngineAnalysis | null;
+  rhythm: EngineAnalysis | null;
+  unavailable: UnavailableEngine[];
+  analyzedAt: string;
+}

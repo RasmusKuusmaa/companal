@@ -127,7 +127,8 @@
       "Bash(python -m ruff check app/domains/feedback app/tests/test_feedback_service.py app/tests/test_feedback_router.py app/db/migrations/versions/202601200001_add_feedback_table.py app/api/v1/router.py app/db/migrations/env.py app/core/config.py)",
       "Bash(python -m pip install mypy --quiet)",
       "Bash(python -m mypy app/domains/feedback)",
-      "Bash(powershell -Command \"Start-Process 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'\")"
+      "Bash(powershell -Command \"Start-Process 'C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe'\")",
+      "Bash(npx prettier *)"
     ]
   }
 }

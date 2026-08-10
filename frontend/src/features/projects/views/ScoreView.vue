@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { useRoute } from "vue-router";
 
+import AnalysisDashboard from "@/features/feedback/components/AnalysisDashboard.vue";
+
 import CompositionWorkspace from "../components/CompositionWorkspace.vue";
 
 const route = useRoute();
@@ -17,6 +19,8 @@ const versionId = typeof route.query.version === "string" ? route.query.version 
       </RouterLink>
 
       <CompositionWorkspace :composition-id="compositionId" :version-id="versionId" />
+
+      <AnalysisDashboard :composition-id="compositionId" />
     </div>
   </main>
 </template>
