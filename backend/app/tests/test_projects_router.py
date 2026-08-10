@@ -440,6 +440,14 @@ class TestAnalyzeComposition:
         assert row.melody_score is not None
         assert [u["engine"] for u in row.unavailable] == ["harmony"]
 
+        # Stored as SQL NULL, not the JSON value 'null' - otherwise this
+        # IS NULL filter silently matches nothing.
+        missing = await db_session.scalar(
+            select(CompositionAnalysis).where(CompositionAnalysis.harmony_analysis.is_(None))
+        )
+        assert missing is not None
+        assert missing.id == row.id
+
     async def test_re_analysing_overwrites_rather_than_adding_a_row(
         self, client: AsyncClient, db_session: AsyncSession
     ) -> None:

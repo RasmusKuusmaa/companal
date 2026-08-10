@@ -30,6 +30,13 @@ WORKDIR /app
 COPY alembic.ini .
 COPY app ./app
 
+# STORAGE_ROOT (./storage, relative to this WORKDIR) is where uploads land,
+# and compose mounts a named volume over it. Create it owned by the runtime
+# user *before* dropping privileges: Docker copies an image directory's
+# owner and mode onto a fresh empty volume, so without this the mount point
+# is created root-owned and every upload fails with EACCES.
+RUN mkdir -p /app/storage && chown app:app /app/storage
+
 USER app
 
 EXPOSE 8000

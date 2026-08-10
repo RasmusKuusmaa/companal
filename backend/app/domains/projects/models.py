@@ -105,9 +105,19 @@ class CompositionAnalysis(Base):
     harmony_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     rhythm_score: Mapped[float | None] = mapped_column(Float, nullable=True)
 
-    melody_analysis: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    harmony_analysis: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
-    rhythm_analysis: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
+    # none_as_null: without it SQLAlchemy stores a missing analysis as the
+    # JSON value 'null' rather than SQL NULL, so `WHERE harmony_analysis IS
+    # NULL` would never match an engine that could not run - defeating the
+    # point of making these queryable alongside the score columns.
+    melody_analysis: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
+    harmony_analysis: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
+    rhythm_analysis: Mapped[dict[str, Any] | None] = mapped_column(
+        JSONB(none_as_null=True), nullable=True
+    )
     unavailable: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
     )
