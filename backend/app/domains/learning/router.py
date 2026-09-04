@@ -14,18 +14,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.domains.learning.schemas import (
+    LessonCompleteRead,
     LessonRead,
+    ProgressSummary,
     QuizAnswerRequest,
     QuizAnswerResult,
     RoadmapRead,
+    StepSeenRead,
 )
 from app.domains.learning.service import (
     LessonNotFoundError,
     StepKindError,
     StepNotFoundError,
     answer_quiz,
+    complete_lesson,
     get_lesson,
+    get_progress_summary,
     get_roadmap,
+    mark_step_seen,
 )
 from app.domains.users.models import User
 
@@ -94,3 +100,50 @@ async def answer_quiz_step(
         raise _step_not_found from exc
     except StepKindError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/lessons/{lesson_slug}/steps/{step_slug}/seen", response_model=StepSeenRead)
+async def mark_step_seen_endpoint(
+    lesson_slug: str,
+    step_slug: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StepSeenRead:
+    """Records that the student has reached this step.
+
+    The player calls this as each step comes into view, including the first,
+    which is what moves a lesson from `not_started` to `in_progress` and
+    what "continue where you left off" reads later.
+    """
+    try:
+        return await mark_step_seen(db, current_user.id, lesson_slug, step_slug)
+    except LessonNotFoundError as exc:
+        raise _lesson_not_found from exc
+    except StepNotFoundError as exc:
+        raise _step_not_found from exc
+
+
+@router.post("/lessons/{lesson_slug}/complete", response_model=LessonCompleteRead)
+async def complete_lesson_endpoint(
+    lesson_slug: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> LessonCompleteRead:
+    """Marks a lesson complete and points at the next one.
+
+    Idempotent: completing a finished lesson returns the original completion
+    time rather than resetting it.
+    """
+    try:
+        return await complete_lesson(db, current_user.id, lesson_slug)
+    except LessonNotFoundError as exc:
+        raise _lesson_not_found from exc
+
+
+@router.get("/progress", response_model=ProgressSummary)
+async def read_progress(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> ProgressSummary:
+    """Totals per stage, plus the lesson to pick back up."""
+    return await get_progress_summary(db, current_user.id)
