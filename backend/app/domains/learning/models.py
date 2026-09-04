@@ -34,6 +34,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -59,6 +60,11 @@ class StepKind(str, enum.Enum):
     READING = "reading"
     QUIZ = "quiz"
     COMPOSITION = "composition"
+
+
+class LessonStatus(str, enum.Enum):
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
 
 
 class Course(Base):
@@ -246,4 +252,50 @@ class StepAttempt(Base):
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class UserProgress(Base):
+    """Where a student has got to in one lesson.
+
+    One row per `(user_id, lesson_id)`, created the moment the lesson is
+    first opened - so the absence of a row means "not started", and a row
+    with `completed_at` unset means "started, still going". That's a
+    deliberate change from a table that only ever recorded completions: the
+    roadmap needs to show what's underway, not just what's finished, and
+    "continue where you left off" needs somewhere to remember the step.
+
+    Nothing here gates anything. Every lesson is reachable regardless of
+    progress; this table describes the student's path, it doesn't constrain
+    it.
+    """
+
+    __tablename__ = "user_progress"
+    __table_args__ = (UniqueConstraint("user_id", "lesson_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    lesson_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lessons.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    status: Mapped[LessonStatus] = mapped_column(
+        Enum(LessonStatus, name="lesson_status", values_callable=lambda e: [m.value for m in e]),
+        nullable=False,
+        default=LessonStatus.IN_PROGRESS,
+    )
+    # SET NULL rather than CASCADE: re-seeding a lesson replaces its steps,
+    # and losing the bookmark should send the student back to the start of
+    # that lesson, not delete their progress in it.
+    current_step_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lesson_steps.id", ondelete="SET NULL"), nullable=True
+    )
+
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
