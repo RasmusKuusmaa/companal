@@ -18,7 +18,8 @@ import { Barline, Formatter, Renderer, Stave } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
-import type { NotationDocument, NotationNote } from "../types";
+import { insertionIndexAtX, noteAtX, pitchAtY, staveAtPoint } from "../hit-test";
+import type { NotationDocument, NotationNote, PitchStep } from "../types";
 import { applyAccidentals, buildBeams, buildTies, buildVoice } from "../vexflow";
 
 const props = withDefaults(
@@ -26,9 +27,29 @@ const props = withDefaults(
     document: NotationDocument;
     /** Measures per system before wrapping. */
     measuresPerSystem?: number;
+    /** Which voice a click enters into, on staves that carry more than one. */
+    activeVoiceId?: string;
   }>(),
-  { measuresPerSystem: 4 },
+  { measuresPerSystem: 4, activeVoiceId: undefined },
 );
+
+const emit = defineEmits<{
+  /** A click resolved to a place on the staff. */
+  (event: "staff-click", payload: StaffClick): void;
+}>();
+
+/** Everything a click means, resolved from raw coordinates. */
+export interface StaffClick {
+  staffIndex: number;
+  measureIndex: number;
+  voiceId: string;
+  /** Where a new note would go in the voice. */
+  insertionIndex: number;
+  step: PitchStep;
+  octave: number;
+  /** The note actually clicked on, when the click landed on a head. */
+  noteId: string | null;
+}
 
 const host = ref<HTMLDivElement | null>(null);
 
@@ -212,6 +233,66 @@ function draw(): void {
   }
 }
 
+/**
+ * Resolves a pointer event to a staff position.
+ *
+ * Coordinates come from the SVG's own bounding rect rather than the host
+ * div, so scrolling the score horizontally doesn't shift every note by the
+ * scroll offset.
+ */
+function handleClick(event: MouseEvent): void {
+  const svg = host.value?.querySelector("svg");
+  if (!svg) return;
+
+  const rect = svg.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  const boxes = drawnStaves.map(({ staffIndex, measureIndex, stave }) => ({
+    staffIndex,
+    measureIndex,
+    x: stave.getNoteStartX(),
+    width: stave.getNoteEndX() - stave.getNoteStartX(),
+    topLineY: stave.getYForLine(0),
+    bottomLineY: stave.getYForLine(4),
+    lineSpacing: stave.getSpacingBetweenLines(),
+  }));
+
+  const box = staveAtPoint(boxes, x, y);
+  if (!box) return;
+
+  const staff = props.document.staves[box.staffIndex];
+  const measure = staff?.measures[box.measureIndex];
+  if (!staff || !measure) return;
+
+  // With one voice per staff the choice is made for us; multi-voice staves
+  // take the voice the editor is currently on, which the parent supplies.
+  const voiceId = props.activeVoiceId ?? measure.voices[0]?.id;
+  if (!voiceId) return;
+
+  const inVoice = drawnNotes.filter(
+    (note) =>
+      note.staffIndex === box.staffIndex &&
+      note.measureIndex === box.measureIndex &&
+      note.voiceId === voiceId,
+  );
+
+  const pitch = pitchAtY(
+    { clef: staff.clef, topLineY: box.topLineY, lineSpacing: box.lineSpacing },
+    y,
+  );
+
+  emit("staff-click", {
+    staffIndex: box.staffIndex,
+    measureIndex: box.measureIndex,
+    voiceId,
+    insertionIndex: insertionIndexAtX(inVoice, x),
+    step: pitch.step,
+    octave: pitch.octave,
+    noteId: noteAtX(inVoice, x)?.note.id ?? null,
+  });
+}
+
 onMounted(() => {
   draw();
   if (typeof ResizeObserver !== "undefined" && host.value) {
@@ -232,5 +313,9 @@ defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => d
 </script>
 
 <template>
-  <div ref="host" class="w-full overflow-x-auto rounded-md border border-slate-200 bg-white" />
+  <div
+    ref="host"
+    class="w-full cursor-crosshair overflow-x-auto rounded-md border border-slate-200 bg-white"
+    @click="handleClick"
+  />
 </template>
