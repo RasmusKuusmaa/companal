@@ -14,15 +14,10 @@ this one's.
 """
 
 import asyncio
-import io
 import uuid
-import zipfile
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from pathlib import Path
 
-from defusedxml import ElementTree
-from defusedxml.common import DefusedXmlException
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,11 +26,9 @@ from app.core import storage
 from app.core.config import settings
 from app.domains.analysis.combined import run_all_analyses
 from app.domains.analysis.schemas import AnalysisBundle
+from app.domains.notation.importer import NotationImportError, validate_musicxml_upload
 from app.domains.projects.models import Composition, CompositionAnalysis, Version
 from app.domains.projects.schemas import CompositionCreate, CompositionUpdate
-
-_MUSICXML_ROOT_TAGS = {"score-partwise", "score-timewise"}
-_ALLOWED_EXTENSIONS = {".xml", ".musicxml", ".mxl"}
 
 
 class ProjectError(Exception):
@@ -77,40 +70,16 @@ async def _get_owned_composition(
 
 def _validate_musicxml(filename: str, content: bytes) -> str:
     """Returns the normalized (lowercased) file extension, or raises
-    `InvalidMusicXmlFileError`."""
-    if not content:
-        raise InvalidMusicXmlFileError("The uploaded file is empty.")
+    `InvalidMusicXmlFileError`.
 
-    extension = Path(filename).suffix.lower()
-    if extension not in _ALLOWED_EXTENSIONS:
-        raise InvalidMusicXmlFileError(
-            "Unsupported file type. Upload a .musicxml, .xml, or .mxl file."
-        )
-
-    if extension == ".mxl":
-        buffer = io.BytesIO(content)
-        if not zipfile.is_zipfile(buffer):
-            raise InvalidMusicXmlFileError("The .mxl file is not a valid compressed archive.")
-        with zipfile.ZipFile(buffer) as archive:
-            if "META-INF/container.xml" not in archive.namelist():
-                raise InvalidMusicXmlFileError(
-                    "The .mxl archive is missing its META-INF/container.xml manifest."
-                )
-        return extension
-
-    # Parsed with defusedxml, not stdlib ElementTree - this is untrusted
-    # user input, and a plain XML parser is vulnerable to entity-expansion
-    # ("billion laughs") and external-entity attacks.
+    Delegates to `notation.importer.validate_musicxml_upload`, the shared
+    check every MusicXML upload path uses - wrapped here only to keep this
+    domain's own exception type, which the router already catches.
+    """
     try:
-        root = ElementTree.fromstring(content)
-    except (ElementTree.ParseError, DefusedXmlException) as exc:
-        raise InvalidMusicXmlFileError("The file is not well-formed XML.") from exc
-
-    if root.tag not in _MUSICXML_ROOT_TAGS:
-        raise InvalidMusicXmlFileError(
-            "The file's root element is not <score-partwise> or <score-timewise>."
-        )
-    return extension
+        return validate_musicxml_upload(filename, content)
+    except NotationImportError as exc:
+        raise InvalidMusicXmlFileError(str(exc)) from exc
 
 
 async def create_composition(

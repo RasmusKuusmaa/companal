@@ -15,12 +15,16 @@ whatever program wrote it. See `_DURATION_BY_QUARTER_LENGTH` for exactly
 what's accepted.
 """
 
+import io
 import tempfile
 import uuid
+import zipfile
 from fractions import Fraction
 from pathlib import Path
 from typing import Any, cast
 
+from defusedxml import ElementTree
+from defusedxml.common import DefusedXmlException
 from music21 import chord as m21chord
 from music21 import clef as m21clef
 from music21 import converter
@@ -47,9 +51,59 @@ from app.domains.notation.schemas import (
 _DEFAULT_SUFFIX = ".musicxml"
 _DEFAULT_TEMPO = 90
 
+_MUSICXML_ROOT_TAGS = {"score-partwise", "score-timewise"}
+ALLOWED_MUSICXML_EXTENSIONS = {".xml", ".musicxml", ".mxl"}
+
 
 class NotationImportError(Exception):
     """Raised when a file can't be represented as a notation document."""
+
+
+def validate_musicxml_upload(filename: str, content: bytes) -> str:
+    """Rejects an obviously-wrong upload before any parsing is attempted -
+    wrong extension, malformed XML, a `.mxl` that isn't actually a zip.
+
+    Shared by every upload path that accepts a MusicXML file (a composition
+    version, a composition-step submission), so the same file is judged the
+    same way regardless of where it's uploaded to. Deliberately shallow:
+    enough to reject obviously-wrong files without parsing musical content -
+    that's `import_musicxml`'s job, not this one's.
+
+    Returns the normalized (lowercased) file extension.
+    """
+    if not content:
+        raise NotationImportError("The uploaded file is empty.")
+
+    extension = Path(filename).suffix.lower()
+    if extension not in ALLOWED_MUSICXML_EXTENSIONS:
+        raise NotationImportError(
+            "Unsupported file type. Upload a .musicxml, .xml, or .mxl file."
+        )
+
+    if extension == ".mxl":
+        buffer = io.BytesIO(content)
+        if not zipfile.is_zipfile(buffer):
+            raise NotationImportError("The .mxl file is not a valid compressed archive.")
+        with zipfile.ZipFile(buffer) as archive:
+            if "META-INF/container.xml" not in archive.namelist():
+                raise NotationImportError(
+                    "The .mxl archive is missing its META-INF/container.xml manifest."
+                )
+        return extension
+
+    # Parsed with defusedxml, not stdlib ElementTree - this is untrusted
+    # user input, and a plain XML parser is vulnerable to entity-expansion
+    # ("billion laughs") and external-entity attacks.
+    try:
+        root = ElementTree.fromstring(content)
+    except (ElementTree.ParseError, DefusedXmlException) as exc:
+        raise NotationImportError("The file is not well-formed XML.") from exc
+
+    if root.tag not in _MUSICXML_ROOT_TAGS:
+        raise NotationImportError(
+            "The file's root element is not <score-partwise> or <score-timewise>."
+        )
+    return extension
 
 
 def _parse_score(content: bytes, filename: str) -> Score:

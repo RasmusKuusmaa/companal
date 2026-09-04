@@ -15,7 +15,11 @@ from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFil
 from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.domains.notation.builder import to_musicxml_bytes
-from app.domains.notation.importer import NotationImportError, import_musicxml
+from app.domains.notation.importer import (
+    NotationImportError,
+    import_musicxml,
+    validate_musicxml_upload,
+)
 from app.domains.notation.schemas import NotationDocument
 from app.domains.users.models import User
 
@@ -63,9 +67,16 @@ async def import_score(
     Only what the editor can represent comes back - see `importer.py` for
     exactly what that excludes (tuplets, chords, anything past a double
     sharp/flat). A file outside that is a 400, not a best-effort guess.
+
+    Validated with the same `validate_musicxml_upload` a composition
+    version upload goes through (`projects.service`) before music21 ever
+    sees the bytes - wrong extension, a `.mxl` that isn't really a zip, and
+    malformed XML all get the same clear rejection here that they do there.
     """
+    filename = file.filename or "upload.musicxml"
     content = await _read_upload(file)
     try:
-        return await asyncio.to_thread(import_musicxml, content, file.filename or "upload.musicxml")
+        validate_musicxml_upload(filename, content)
+        return await asyncio.to_thread(import_musicxml, content, filename)
     except NotationImportError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
