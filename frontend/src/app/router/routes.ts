@@ -8,6 +8,21 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/learn",
+    name: "roadmap",
+    component: () => import("@/features/learning/views/RoadmapView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
+    // No course segment: lesson slugs are unique across the whole
+    // curriculum (see the backend's Lesson model), so a lesson moved to a
+    // different stage keeps its URL rather than breaking every link to it.
+    path: "/learn/:lessonSlug",
+    name: "lesson",
+    component: () => import("@/features/learning/views/LessonView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/projects/new",
     name: "project-create",
     component: () => import("@/features/projects/views/ProjectCreateView.vue"),
