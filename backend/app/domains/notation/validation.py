@@ -15,16 +15,20 @@ document itself.
 from dataclasses import dataclass
 from fractions import Fraction
 
+from music21 import key as m21key
 from music21 import pitch as m21pitch
 
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
 from app.domains.notation.requirements import (
     CadenceRequirement,
+    DiatonicOnlyRequirement,
+    ForbiddenPitchesRequirement,
     KeyRequirement,
     LeapRecoveryRequirement,
     MaxLeapRequirement,
     MeasureCountRequirement,
     RangeRequirement,
+    RequiredScaleDegreesRequirement,
     RequirementResult,
     TimeSignatureRequirement,
 )
@@ -269,6 +273,131 @@ def check_leap_recovery(
         f"(up to {requirement.max_unresolved} allowed)."
     )
     return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+# --------------------------------------------------------------------------- #
+# Pitch content
+# --------------------------------------------------------------------------- #
+
+
+def _parse_key(key_str: str) -> m21key.Key:
+    """Parses `ScoreAnalysis.key` (e.g. "C major", "c# minor") into a `Key`.
+
+    `key.Key(key_str)` can't take this directly - its constructor treats a
+    single string argument as a *pitch* name, and "major"/"minor" isn't
+    one. `ScoreAnalysis.key` is always `str(a music21 Key)`, which is
+    exactly "<tonic> <mode>", so splitting on the last space recovers the
+    two pieces `Key(tonic, mode)` wants.
+    """
+    tonic, _, mode = key_str.rpartition(" ")
+    return m21key.Key(tonic, mode)
+
+
+def _melody_pitches(score: ScoreAnalysis) -> list[tuple[str, int]]:
+    """Every single-pitch note in the score, as (pitch name, measure number).
+
+    Chords are skipped - these three requirements are about a melodic line,
+    and a chord's constituent pitches aren't "the melody" in the sense any
+    of them mean. For the monophonic exercises these requirements are
+    written for, that's every note there is.
+    """
+    return [
+        (note.pitch, measure.number)
+        for measure in score.measures
+        for note in measure.notes
+        if not note.is_rest and not note.is_chord and note.pitch is not None
+    ]
+
+
+def check_diatonic_only(
+    context: RequirementContext, requirement: DiatonicOnlyRequirement
+) -> RequirementResult:
+    if not context.score.key:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message="Could not determine a key, so diatonicism could not be checked.",
+        )
+
+    key_obj = _parse_key(context.score.key)
+    chromatic_measures = sorted(
+        {
+            measure
+            for pitch_name, measure in _melody_pitches(context.score)
+            if key_obj.getScaleDegreeFromPitch(m21pitch.Pitch(pitch_name)) is None
+        }
+    )
+
+    passed = not chromatic_measures
+    message = (
+        f"Every note is diatonic to {context.score.key}."
+        if passed
+        else f"Chromatic notes outside {context.score.key} in measure(s) "
+        + ", ".join(str(m) for m in chromatic_measures)
+        + "."
+    )
+    return RequirementResult(
+        requirement=requirement,
+        passed=passed,
+        message=message,
+        measure=chromatic_measures[0] if chromatic_measures else None,
+    )
+
+
+def check_required_scale_degrees(
+    context: RequirementContext, requirement: RequiredScaleDegreesRequirement
+) -> RequirementResult:
+    if not context.score.key:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message="Could not determine a key, so scale degrees could not be checked.",
+        )
+
+    key_obj = _parse_key(context.score.key)
+    observed = {
+        degree
+        for pitch_name, _measure in _melody_pitches(context.score)
+        if (degree := key_obj.getScaleDegreeFromPitch(m21pitch.Pitch(pitch_name))) is not None
+    }
+    missing = sorted(set(requirement.degrees) - observed)
+
+    passed = not missing
+    message = (
+        f"Uses every required scale degree ({sorted(requirement.degrees)})."
+        if passed
+        else f"Missing scale degree(s) {missing} of {context.score.key}."
+    )
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+def check_forbidden_pitches(
+    context: RequirementContext, requirement: ForbiddenPitchesRequirement
+) -> RequirementResult:
+    """Rejects any use of a forbidden pitch class, in any octave or spelling.
+
+    Compared by `pitchClass` (0-11), not by name - F# and Gb are the same
+    key on the keyboard and the same thing to forbid, whichever way a
+    student happens to spell it.
+    """
+    forbidden_classes = {m21pitch.Pitch(name).pitchClass for name in requirement.pitches}
+    hits = sorted(
+        {
+            measure
+            for pitch_name, measure in _melody_pitches(context.score)
+            if m21pitch.Pitch(pitch_name).pitchClass in forbidden_classes
+        }
+    )
+
+    passed = not hits
+    message = (
+        f"None of {requirement.pitches} appear."
+        if passed
+        else f"{requirement.pitches} used in measure(s) " + ", ".join(str(m) for m in hits) + "."
+    )
+    return RequirementResult(
+        requirement=requirement, passed=passed, message=message, measure=hits[0] if hits else None
+    )
 
 
 def check_time_signature(
