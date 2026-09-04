@@ -369,6 +369,16 @@ export function appendMeasure(document: NotationDocument): NotationDocument {
   return next;
 }
 
+const MIN_TEMPO = 20;
+const MAX_TEMPO = 300;
+
+/** Sets the tempo, clamped to a musically sane range. */
+export function setTempo(document: NotationDocument, quarterNotesPerMinute: number): NotationDocument {
+  const next = clone(document);
+  next.tempo = Math.min(MAX_TEMPO, Math.max(MIN_TEMPO, Math.round(quarterNotesPerMinute)));
+  return next;
+}
+
 /** Removes the last measure. The document always keeps at least one. */
 export function removeLastMeasure(document: NotationDocument): NotationDocument {
   if (measureCount(document) <= 1) return document;

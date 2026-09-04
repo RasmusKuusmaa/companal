@@ -31,6 +31,7 @@ import {
   nearestOctaveForStep,
   noteAt,
   removeLastMeasure,
+  setTempo as setDocumentTempo,
   toggleTieBefore,
 } from "../document";
 import type {
@@ -154,6 +155,10 @@ export function useNotationEditor(
 
   function setRestMode(isRest: boolean): void {
     activeIsRest.value = isRest;
+  }
+
+  function setTempo(quarterNotesPerMinute: number): void {
+    document.value = setDocumentTempo(document.value, quarterNotesPerMinute);
   }
 
   /** Ties (or unties) the note before the cursor to whatever follows it. */
@@ -312,6 +317,7 @@ export function useNotationEditor(
     setDots,
     setAlter,
     setRestMode,
+    setTempo,
     placeAt,
     placeStep,
     toggleTie,

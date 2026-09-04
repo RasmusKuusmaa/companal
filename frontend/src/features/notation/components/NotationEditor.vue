@@ -10,11 +10,13 @@
 import { watch } from "vue";
 
 import { useNotationEditor } from "../composables/useNotationEditor";
+import { useNotationPlayback } from "../composables/useNotationPlayback";
 import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
 import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
 import MeasureControls from "./MeasureControls.vue";
+import PlaybackTransport from "./PlaybackTransport.vue";
 import RestToggle from "./RestToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
 import TieToggle from "./TieToggle.vue";
@@ -34,6 +36,7 @@ const editor = useNotationEditor(props.modelValue, {
   minMeasures: props.minMeasures,
   maxMeasures: props.maxMeasures,
 });
+const playback = useNotationPlayback(editor.document);
 
 // The document flows both ways: the parent may replace it (loading a
 // starter score, resetting an exercise), and every edit flows back out.
@@ -149,6 +152,13 @@ function handleKeydown(event: KeyboardEvent): void {
         :can-remove="editor.canRemoveMeasure.value"
         @add="editor.addMeasure"
         @remove="editor.removeMeasure"
+      />
+      <PlaybackTransport
+        :is-playing="playback.isPlaying.value"
+        :tempo="editor.document.value.tempo"
+        @play="playback.play"
+        @stop="playback.stop"
+        @update:tempo="editor.setTempo"
       />
     </div>
 
