@@ -15,11 +15,16 @@ document itself.
 from dataclasses import dataclass
 from fractions import Fraction
 
+from music21 import pitch as m21pitch
+
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
 from app.domains.notation.requirements import (
     CadenceRequirement,
     KeyRequirement,
+    LeapRecoveryRequirement,
+    MaxLeapRequirement,
     MeasureCountRequirement,
+    RangeRequirement,
     RequirementResult,
     TimeSignatureRequirement,
 )
@@ -179,6 +184,91 @@ def check_cadence(
     return RequirementResult(
         requirement=requirement, passed=passed, message=message, measure=final.measure
     )
+
+
+# --------------------------------------------------------------------------- #
+# Range and motion
+# --------------------------------------------------------------------------- #
+
+
+def _midi(pitch_name: str) -> int:
+    return int(m21pitch.Pitch(pitch_name).midi)
+
+
+def check_range(context: RequirementContext, requirement: RangeRequirement) -> RequirementResult:
+    if context.melody is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message="Melody could not be analyzed, so its range could not be checked.",
+        )
+
+    observed = context.melody.technical_data.range
+    problems: list[str] = []
+
+    if requirement.max_semitones is not None and observed.semitones > requirement.max_semitones:
+        problems.append(
+            f"spans {observed.semitones} semitones ({observed.interval_name}), "
+            f"more than the {requirement.max_semitones} allowed"
+        )
+    if requirement.lowest is not None and _midi(observed.lowest) < _midi(requirement.lowest):
+        problems.append(f"goes down to {observed.lowest}, below {requirement.lowest}")
+    if requirement.highest is not None and _midi(observed.highest) > _midi(requirement.highest):
+        problems.append(f"goes up to {observed.highest}, above {requirement.highest}")
+
+    passed = not problems
+    message = (
+        f"Range is {observed.lowest}-{observed.highest}, within bounds."
+        if passed
+        else f"Range is {observed.lowest}-{observed.highest}: " + "; ".join(problems) + "."
+    )
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+def check_max_leap(
+    context: RequirementContext, requirement: MaxLeapRequirement
+) -> RequirementResult:
+    if context.melody is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message="Melody could not be analyzed, so its leaps could not be checked.",
+        )
+
+    largest = context.melody.technical_data.leaps.largest_semitones
+    passed = largest <= requirement.semitones
+    message = (
+        f"Largest leap is {largest} semitones, within the {requirement.semitones} allowed."
+        if passed
+        else f"Largest leap is {largest} semitones, more than the {requirement.semitones} allowed."
+    )
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+def check_leap_recovery(
+    context: RequirementContext, requirement: LeapRecoveryRequirement
+) -> RequirementResult:
+    """Every large leap should be answered by a step back the other way.
+
+    Reads `leaps.unresolved` straight off the melody engine, which already
+    makes this exact judgment per leap - see `_build_leaps` in melody.py.
+    """
+    if context.melody is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message="Melody could not be analyzed, so its leaps could not be checked.",
+        )
+
+    unresolved = context.melody.technical_data.leaps.unresolved
+    passed = unresolved <= requirement.max_unresolved
+    message = (
+        f"{unresolved} unresolved leap(s), within the {requirement.max_unresolved} allowed."
+        if passed
+        else f"{unresolved} leap(s) not answered by a step in the opposite direction "
+        f"(up to {requirement.max_unresolved} allowed)."
+    )
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
 
 
 def check_time_signature(
