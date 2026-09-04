@@ -49,6 +49,14 @@ export function useNotationEditor(initial?: NotationDocument) {
 
   const activeDuration = ref<DurationName>("quarter");
   const activeDots = ref(0);
+  /**
+   * The accidental the next placed note carries, as a semitone offset.
+   * Zero means "no accidental of its own" - what the key signature and the
+   * bar's earlier accidentals already imply, which is what most notes are.
+   * It does not persist after one note: an accidental applies to the note
+   * it's chosen for, not to a whole run the way duration does.
+   */
+  const activeAlter = ref(0);
 
   /**
    * Set when a note can't be entered - a full bar, most often.
@@ -74,6 +82,10 @@ export function useNotationEditor(initial?: NotationDocument) {
     activeDots.value = dots;
   }
 
+  function setAlter(alter: number): void {
+    activeAlter.value = alter;
+  }
+
   /**
    * Enters a note where the student clicked.
    *
@@ -97,6 +109,7 @@ export function useNotationEditor(initial?: NotationDocument) {
     const note = createNote({
       step: placement.step,
       octave: placement.octave,
+      alter: activeAlter.value,
       duration: activeDuration.value,
       dots: activeDots.value,
     });
@@ -105,6 +118,9 @@ export function useNotationEditor(initial?: NotationDocument) {
     document.value = result.document;
     cursor.value = result.cursor;
     lastRefusal.value = result.inserted ? "" : "That bar is full.";
+    // One-shot: the next note goes back to "whatever the bar/key implies"
+    // unless the student picks another accidental for it specifically.
+    if (result.inserted) activeAlter.value = 0;
     return result.inserted;
   }
 
@@ -113,12 +129,14 @@ export function useNotationEditor(initial?: NotationDocument) {
     cursor,
     activeDuration,
     activeDots,
+    activeAlter,
     lastRefusal,
     staffCount,
     barQuarters,
     setDocument,
     setDuration,
     setDots,
+    setAlter,
     placeAt,
   };
 }
