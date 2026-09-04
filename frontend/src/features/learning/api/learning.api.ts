@@ -11,15 +11,45 @@
 import { httpClient } from "@/services/http";
 
 import type {
+  CadenceKind,
   Lesson,
   LessonCompletion,
   LessonStep,
   LessonSummary,
   ProgressSummary,
   QuizAnswerResult,
+  Requirement,
   Roadmap,
   StepSeen,
 } from "../types";
+
+type RequirementDto =
+  | { type: "key"; key: string }
+  | { type: "time_signature"; value: string }
+  | { type: "measure_count"; count: number }
+  | { type: "cadence"; cadence: CadenceKind }
+  | { type: "range"; max_semitones: number | null; lowest: string | null; highest: string | null }
+  | { type: "max_leap"; semitones: number }
+  | { type: "leap_recovery"; max_unresolved: number }
+  | { type: "diatonic_only" }
+  | { type: "required_scale_degrees"; degrees: number[] }
+  | { type: "forbidden_pitches"; pitches: string[] };
+
+function mapRequirement(dto: RequirementDto): Requirement {
+  switch (dto.type) {
+    case "range":
+      return {
+        type: "range",
+        maxSemitones: dto.max_semitones,
+        lowest: dto.lowest,
+        highest: dto.highest,
+      };
+    case "leap_recovery":
+      return { type: "leap_recovery", maxUnresolved: dto.max_unresolved };
+    default:
+      return dto;
+  }
+}
 
 interface LessonSummaryDto {
   id: string;
@@ -68,7 +98,7 @@ type StepDto =
       slug: string;
       position: number;
       brief: string;
-      requirements: Record<string, unknown>;
+      requirements: RequirementDto[];
       starter_notation: Record<string, unknown> | null;
     };
 
@@ -169,7 +199,7 @@ function mapStep(dto: StepDto): LessonStep {
         ...base,
         kind: "composition",
         brief: dto.brief,
-        requirements: dto.requirements,
+        requirements: dto.requirements.map(mapRequirement),
         starterNotation: dto.starter_notation,
       };
   }

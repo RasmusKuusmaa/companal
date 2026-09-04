@@ -20,16 +20,20 @@ disagree.
 import enum
 import uuid
 from datetime import datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domains.learning.models import CourseLevel, StepKind
+from app.domains.notation.requirements import Requirement
+from app.domains.notation.schemas import NotationDocument
 
 __all__ = [
     "CourseLevel",
     "StepKind",
     "LessonProgressStatus",
+    "Requirement",
+    "NotationDocument",
     "ReadingPayload",
     "QuizPayload",
     "CompositionPayload",
@@ -99,17 +103,17 @@ class QuizPayload(BaseModel):
 class CompositionPayload(BaseModel):
     """A task the student answers by writing music.
 
-    `requirements` stays an opaque mapping until Phase D gives the rule
-    language a schema of its own - the validator that reads these rules
-    doesn't exist yet, and inventing a shape here that the validator then has
-    to honour would be guessing. `starter_notation` is the same: the notation
-    document format is defined by the editor, so this holds it untyped until
-    there is an editor to define it.
+    `requirements` is the declarative rule language `notation.requirements`
+    defines and `notation.validation` grades against - what used to be an
+    opaque mapping here, before that module existed. `starter_notation` is
+    a full `NotationDocument` for the same reason: a given soprano line or a
+    cantus firmus the student writes against, in the exact shape the editor
+    itself edits.
     """
 
     brief: str = Field(min_length=1)
-    requirements: dict[str, Any] = Field(default_factory=dict)
-    starter_notation: dict[str, Any] | None = None
+    requirements: list[Requirement] = Field(default_factory=list)
+    starter_notation: NotationDocument | None = None
 
 
 StepPayload = ReadingPayload | QuizPayload | CompositionPayload
@@ -148,8 +152,8 @@ class QuizStepRead(_StepBase):
 class CompositionStepRead(_StepBase):
     kind: Literal[StepKind.COMPOSITION] = StepKind.COMPOSITION
     brief: str
-    requirements: dict[str, Any]
-    starter_notation: dict[str, Any] | None = None
+    requirements: list[Requirement]
+    starter_notation: NotationDocument | None = None
 
 
 LessonStepRead = Annotated[

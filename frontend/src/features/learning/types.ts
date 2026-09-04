@@ -37,10 +37,33 @@ export interface QuizStep extends StepBase {
   choices: string[];
 }
 
+export type CadenceKind =
+  "perfect_authentic" | "imperfect_authentic" | "half" | "plagal" | "deceptive";
+
+/**
+ * The declarative rule language a composition brief is stated in - mirrors
+ * `app.domains.notation.requirements` on the backend, which is the only
+ * place any of these are actually checked. `type` is the discriminator,
+ * shared verbatim with the backend the same way `StepKind` is.
+ */
+export type Requirement =
+  | { type: "key"; key: string }
+  | { type: "time_signature"; value: string }
+  | { type: "measure_count"; count: number }
+  | { type: "cadence"; cadence: CadenceKind }
+  | { type: "range"; maxSemitones: number | null; lowest: string | null; highest: string | null }
+  | { type: "max_leap"; semitones: number }
+  | { type: "leap_recovery"; maxUnresolved: number }
+  | { type: "diatonic_only" }
+  | { type: "required_scale_degrees"; degrees: number[] }
+  | { type: "forbidden_pitches"; pitches: string[] };
+
 export interface CompositionStep extends StepBase {
   kind: "composition";
   brief: string;
-  requirements: Record<string, unknown>;
+  requirements: Requirement[];
+  // Left as raw JSON until the editor is wired into composition steps
+  // (Phase F) and needs to actually load it - see learning.api.ts.
   starterNotation: Record<string, unknown> | null;
 }
 

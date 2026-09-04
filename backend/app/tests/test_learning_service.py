@@ -103,7 +103,10 @@ def _curriculum() -> list[CourseDef]:
                             kind="composition",
                             payload={
                                 "brief": "Write a four-bar phrase ending with a perfect cadence.",
-                                "requirements": {"measures": 4},
+                                "requirements": [
+                                    {"type": "measure_count", "count": 4},
+                                    {"type": "cadence", "cadence": "perfect_authentic"},
+                                ],
                             },
                             topics=["cadences"],
                         )
