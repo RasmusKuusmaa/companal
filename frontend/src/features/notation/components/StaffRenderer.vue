@@ -31,8 +31,15 @@ const props = withDefaults(
     activeVoiceId?: string;
     /** The note to draw as the cursor, so keyboard/click navigation is visible. */
     cursorNoteId?: string | null;
+    /** Notes currently sounding during playback, highlighted independently of the cursor. */
+    playingNoteIds?: ReadonlySet<string>;
   }>(),
-  { measuresPerSystem: 4, activeVoiceId: undefined, cursorNoteId: null },
+  {
+    measuresPerSystem: 4,
+    activeVoiceId: undefined,
+    cursorNoteId: null,
+    playingNoteIds: () => new Set(),
+  },
 );
 
 const emit = defineEmits<{
@@ -144,8 +151,12 @@ function drawMeasureNotes(
   for (const entry of built) {
     for (const drawn of entry.notes) {
       // Styled before drawing, not after - VexFlow bakes fill/stroke colour
-      // into the glyph at draw time.
-      if (drawn.note.id === props.cursorNoteId) {
+      // into the glyph at draw time. Playback takes precedence over the
+      // edit cursor when both would apply to the same note - during
+      // playback the sounding note is the more useful thing to see.
+      if (props.playingNoteIds.has(drawn.note.id)) {
+        drawn.staveNote.setStyle({ fillStyle: "#d97706", strokeStyle: "#d97706" });
+      } else if (drawn.note.id === props.cursorNoteId) {
         drawn.staveNote.setStyle({ fillStyle: "#2563eb", strokeStyle: "#2563eb" });
       }
     }
@@ -351,6 +362,7 @@ onBeforeUnmount(() => {
 watch(() => props.document, draw);
 watch(() => props.measuresPerSystem, draw);
 watch(() => props.cursorNoteId, draw);
+watch(() => props.playingNoteIds, draw);
 
 defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => drawnNotes });
 </script>

@@ -165,6 +165,7 @@ function handleKeydown(event: KeyboardEvent): void {
     <StaffRenderer
       :document="editor.document.value"
       :cursor-note-id="editor.cursorNoteId.value"
+      :playing-note-ids="playback.activeNoteIds.value"
       @staff-click="handleStaffClick"
     />
 
