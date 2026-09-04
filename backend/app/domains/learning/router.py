@@ -13,9 +13,17 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
-from app.domains.learning.schemas import LessonRead, RoadmapRead
+from app.domains.learning.schemas import (
+    LessonRead,
+    QuizAnswerRequest,
+    QuizAnswerResult,
+    RoadmapRead,
+)
 from app.domains.learning.service import (
     LessonNotFoundError,
+    StepKindError,
+    StepNotFoundError,
+    answer_quiz,
     get_lesson,
     get_roadmap,
 )
@@ -24,6 +32,7 @@ from app.domains.users.models import User
 router = APIRouter(prefix="/learning", tags=["learning"])
 
 _lesson_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found.")
+_step_not_found = HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Step not found.")
 
 
 @router.get("/roadmap", response_model=RoadmapRead)
@@ -60,3 +69,28 @@ async def read_lesson(
         return await get_lesson(db, current_user.id, lesson_slug)
     except LessonNotFoundError as exc:
         raise _lesson_not_found from exc
+
+
+@router.post("/lessons/{lesson_slug}/steps/{step_slug}/answer", response_model=QuizAnswerResult)
+async def answer_quiz_step(
+    lesson_slug: str,
+    step_slug: str,
+    payload: QuizAnswerRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> QuizAnswerResult:
+    """Grades one multiple-choice answer.
+
+    The correct choice and the explanation come back whether the answer was
+    right or wrong. Retries are unlimited and unpenalised, so there is
+    nothing to protect by withholding them - and a student who got it wrong
+    is exactly the one who needs the explanation.
+    """
+    try:
+        return await answer_quiz(db, current_user.id, lesson_slug, step_slug, payload.choice_index)
+    except LessonNotFoundError as exc:
+        raise _lesson_not_found from exc
+    except StepNotFoundError as exc:
+        raise _step_not_found from exc
+    except StepKindError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
