@@ -3,6 +3,7 @@ import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 import { useAuthStore } from "@/features/auth/stores/auth.store";
+import ContinueLearningCard from "@/features/learning/components/ContinueLearningCard.vue";
 import ProjectList from "@/features/projects/components/ProjectList.vue";
 import { useProjectsStore } from "@/features/projects/stores/projects.store";
 import { BaseButton, BaseCard } from "@/shared/components/base";
@@ -30,6 +31,10 @@ async function handleLogout(): Promise<void> {
           <p class="text-sm text-slate-500">Signed in as {{ authStore.user?.fullName }}</p>
         </div>
         <BaseButton variant="ghost" @click="handleLogout">Sign out</BaseButton>
+      </div>
+
+      <div class="mb-4">
+        <ContinueLearningCard />
       </div>
 
       <BaseCard>

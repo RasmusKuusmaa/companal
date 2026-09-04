@@ -121,6 +121,7 @@ interface ProgressSummaryDto {
     in_progress_lesson_count: number;
   }[];
   continue_lesson_slug: string | null;
+  continue_lesson_title: string | null;
 }
 
 function mapLessonSummary(dto: LessonSummaryDto): LessonSummary {
@@ -206,6 +207,7 @@ function mapProgressSummary(dto: ProgressSummaryDto): ProgressSummary {
       inProgressLessonCount: course.in_progress_lesson_count,
     })),
     continueLessonSlug: dto.continue_lesson_slug,
+    continueLessonTitle: dto.continue_lesson_title,
   };
 }
 

@@ -137,4 +137,5 @@ export interface ProgressSummary {
   inProgressLessonCount: number;
   byCourse: CourseProgress[];
   continueLessonSlug: string | null;
+  continueLessonTitle: string | null;
 }
