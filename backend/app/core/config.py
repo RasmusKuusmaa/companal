@@ -51,6 +51,12 @@ class Settings(BaseSettings):
     # cap - the default, so local dev without this set never trips it.
     GLOBAL_AI_MONTHLY_SPEND_CAP_USD: float | None = None
 
+    # --- Billing (Stripe, dormant) ---
+    # Unset until the premium phase actually wires Stripe in - see
+    # `billing.models`'s module docstring. The webhook route is inert
+    # without it: it accepts every request and does nothing.
+    STRIPE_WEBHOOK_SECRET: str | None = None
+
     # --- CORS ---
     # Kept as a raw string, not list[str]: pydantic-settings tries to
     # JSON-decode "complex" (list/dict) env fields *before* field
