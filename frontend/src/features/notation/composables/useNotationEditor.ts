@@ -48,6 +48,7 @@ export function useNotationEditor(initial?: NotationDocument) {
   });
 
   const activeDuration = ref<DurationName>("quarter");
+  const activeDots = ref(0);
 
   /**
    * Set when a note can't be entered - a full bar, most often.
@@ -69,6 +70,10 @@ export function useNotationEditor(initial?: NotationDocument) {
     activeDuration.value = duration;
   }
 
+  function setDots(dots: number): void {
+    activeDots.value = dots;
+  }
+
   /**
    * Enters a note where the student clicked.
    *
@@ -83,7 +88,7 @@ export function useNotationEditor(initial?: NotationDocument) {
       noteIndex: placement.insertionIndex,
     };
 
-    if (!fits(document.value, target, activeDuration.value, 0)) {
+    if (!fits(document.value, target, activeDuration.value, activeDots.value)) {
       lastRefusal.value = "That bar is full.";
       cursor.value = target;
       return false;
@@ -93,6 +98,7 @@ export function useNotationEditor(initial?: NotationDocument) {
       step: placement.step,
       octave: placement.octave,
       duration: activeDuration.value,
+      dots: activeDots.value,
     });
 
     const result = insertNote(document.value, target, note);
@@ -106,11 +112,13 @@ export function useNotationEditor(initial?: NotationDocument) {
     document,
     cursor,
     activeDuration,
+    activeDots,
     lastRefusal,
     staffCount,
     barQuarters,
     setDocument,
     setDuration,
+    setDots,
     placeAt,
   };
 }

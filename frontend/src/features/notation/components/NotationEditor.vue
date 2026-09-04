@@ -11,6 +11,7 @@ import { watch } from "vue";
 
 import { useNotationEditor } from "../composables/useNotationEditor";
 import type { NotationDocument } from "../types";
+import DurationPalette from "./DurationPalette.vue";
 import StaffRenderer from "./StaffRenderer.vue";
 
 const props = defineProps<{
@@ -37,6 +38,13 @@ watch(editor.document, (next) => emit("update:modelValue", next));
 
 <template>
   <div class="flex flex-col gap-3">
+    <DurationPalette
+      :duration="editor.activeDuration.value"
+      :dots="editor.activeDots.value"
+      @update:duration="editor.setDuration"
+      @update:dots="editor.setDots"
+    />
+
     <StaffRenderer :document="editor.document.value" @staff-click="editor.placeAt" />
 
     <p v-if="editor.lastRefusal.value" class="text-sm text-amber-700" role="status">
