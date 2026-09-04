@@ -109,6 +109,7 @@ def _public_step(step: LessonStep) -> LessonStepRead:
         brief=composition.brief,
         requirements=composition.requirements,
         starter_notation=composition.starter_notation,
+        locked_staff_indices=composition.locked_staff_indices,
     )
 
 
@@ -367,6 +368,31 @@ def _attempt_storage_key(attempt_id: uuid.UUID) -> str:
     return f"learning-attempts/{attempt_id}.musicxml"
 
 
+def _apply_locked_staves(
+    document: NotationDocument, composition: CompositionPayload
+) -> NotationDocument:
+    """Overwrites each locked staff with its pristine starter version before
+    grading.
+
+    The editor's own lock (`useNotationEditor`'s `lockedStaffIndices`) is
+    what stops a student from editing the given material in the first
+    place, but nothing stops a request straight to this endpoint from
+    carrying an edited one anyway - silently restoring the original here
+    makes that pointless rather than needing to detect and reject it, and
+    it means grading is always against the true given material regardless
+    of what the client actually sent.
+    """
+    if not composition.locked_staff_indices or composition.starter_notation is None:
+        return document
+
+    starter_staves = composition.starter_notation.staves
+    staves = list(document.staves)
+    for index in composition.locked_staff_indices:
+        if 0 <= index < len(staves) and index < len(starter_staves):
+            staves[index] = starter_staves[index]
+    return document.model_copy(update={"staves": staves})
+
+
 async def _reusable_ai_feedback(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -437,6 +463,7 @@ async def submit_composition(
         raise StepKindError(f"step '{step_slug}' is a {step.kind.value} step, not a composition")
 
     composition = CompositionPayload.model_validate(step.payload)
+    document = _apply_locked_staves(document, composition)
     grade, musicxml = grade_submission(document, composition.requirements)
 
     ai_feedback: CompositionFeedback | None = None

@@ -10,10 +10,16 @@
  */
 import type { NotationStaff } from "../types";
 
-defineProps<{
-  staves: NotationStaff[];
-  activeStaffIndex: number;
-}>();
+const props = withDefaults(
+  defineProps<{
+    staves: NotationStaff[];
+    activeStaffIndex: number;
+    /** Staves holding given material - shown with a lock glyph, still
+     *  selectable so the student can view (not edit) what's there. */
+    lockedStaffIndices?: number[];
+  }>(),
+  { lockedStaffIndices: () => [] },
+);
 
 const emit = defineEmits<{
   (event: "select", staffIndex: number): void;
@@ -40,6 +46,7 @@ const emit = defineEmits<{
       :aria-pressed="index === activeStaffIndex"
       @click="emit('select', index)"
     >
+      <span v-if="props.lockedStaffIndices.includes(index)" aria-hidden="true">🔒</span>
       {{ staff.name ?? `Staff ${index + 1}` }}
     </button>
   </div>

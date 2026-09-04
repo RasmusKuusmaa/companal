@@ -110,6 +110,7 @@ type StepDto =
       brief: string;
       requirements: RequirementDto[];
       starter_notation: NotationDocumentDto | null;
+      locked_staff_indices: number[];
     };
 
 interface LessonDto {
@@ -267,7 +268,10 @@ function mapStep(dto: StepDto): LessonStep {
         kind: "composition",
         brief: dto.brief,
         requirements: dto.requirements.map(mapRequirement),
-        starterNotation: dto.starter_notation ? notationDocumentFromDto(dto.starter_notation) : null,
+        starterNotation: dto.starter_notation
+          ? notationDocumentFromDto(dto.starter_notation)
+          : null,
+        lockedStaffIndices: dto.locked_staff_indices,
       };
   }
 }

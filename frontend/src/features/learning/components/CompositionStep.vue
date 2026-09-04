@@ -128,7 +128,7 @@ async function submit(): Promise<void> {
     </div>
 
     <div class="mt-6">
-      <NotationEditor v-model="document" />
+      <NotationEditor v-model="document" :locked-staff-indices="step.lockedStaffIndices" />
     </div>
 
     <div class="mt-4 flex flex-wrap items-center gap-4">

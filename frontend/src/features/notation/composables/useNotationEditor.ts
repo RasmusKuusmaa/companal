@@ -61,13 +61,23 @@ export interface NotationEditorOptions {
    */
   minMeasures?: number;
   maxMeasures?: number;
+  /**
+   * Staff indices whose content can't be changed - the given material for
+   * a harmonization or counterpoint exercise (a given soprano, a cantus
+   * firmus). Navigation still works on them - clicking, arrow keys,
+   * selecting a note - only the mutating operations refuse, surfacing the
+   * same `lastRefusal` a full bar does.
+   */
+  lockedStaffIndices?: number[];
 }
+
+const LOCKED_STAFF_MESSAGE = "This line is given and can't be edited.";
 
 export function useNotationEditor(
   initial?: NotationDocument,
   options: NotationEditorOptions = {},
 ) {
-  const { minMeasures = 1, maxMeasures } = options;
+  const { minMeasures = 1, maxMeasures, lockedStaffIndices = [] } = options;
   /**
    * `shallowRef`, not `ref`. Every edit replaces the whole document, so deep
    * reactivity buys nothing - and it actively breaks things: a deeply
@@ -117,6 +127,10 @@ export function useNotationEditor(
    * the editor's job is to say so, not to fail.
    */
   const lastRefusal = ref("");
+
+  function isStaffLocked(staffIndex: number): boolean {
+    return lockedStaffIndices.includes(staffIndex);
+  }
 
   const staffCount = computed(() => document.value.staves.length);
   const barQuarters = computed(() => measureQuarters(document.value.time));
@@ -172,6 +186,10 @@ export function useNotationEditor(
   /** Ties (or unties) the note before the cursor to whatever follows it. */
   function toggleTie(): void {
     if (!canTieAtCursor.value) return;
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
     document.value = toggleTieBefore(document.value, cursor.value);
   }
 
@@ -223,6 +241,10 @@ export function useNotationEditor(
 
   /** Backspace: removes the note the cursor sits after. */
   function deleteBefore(): void {
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
     const result = deleteNoteBefore(document.value, cursor.value);
     document.value = result.document;
     cursor.value = result.cursor;
@@ -230,6 +252,10 @@ export function useNotationEditor(
 
   /** Delete: removes the note the cursor sits before. */
   function deleteAtCursor(): void {
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
     const result = deleteNoteAt(document.value, cursor.value);
     document.value = result.document;
     cursor.value = result.cursor;
@@ -311,6 +337,12 @@ export function useNotationEditor(
       noteIndex: placement.insertionIndex,
     };
 
+    if (isStaffLocked(placement.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      cursor.value = target;
+      return false;
+    }
+
     if (!fits(document.value, target, activeDuration.value, activeDots.value)) {
       lastRefusal.value = "That bar is full.";
       cursor.value = target;
@@ -353,6 +385,7 @@ export function useNotationEditor(
     isTiedAtCursor,
     cursorNoteId,
     activeStaffVoices,
+    isStaffLocked,
     setDocument,
     setDuration,
     setDots,

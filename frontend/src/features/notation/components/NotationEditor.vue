@@ -28,6 +28,8 @@ const props = defineProps<{
   /** Bounds passed straight to useNotationEditor - see its own docs. */
   minMeasures?: number;
   maxMeasures?: number;
+  /** Staff indices holding given material the student can't edit away. */
+  lockedStaffIndices?: number[];
 }>();
 
 const emit = defineEmits<{
@@ -37,6 +39,7 @@ const emit = defineEmits<{
 const editor = useNotationEditor(props.modelValue, {
   minMeasures: props.minMeasures,
   maxMeasures: props.maxMeasures,
+  lockedStaffIndices: props.lockedStaffIndices,
 });
 const playback = useNotationPlayback(editor.document);
 
@@ -138,6 +141,7 @@ function handleKeydown(event: KeyboardEvent): void {
       <StaffSelector
         :staves="editor.document.value.staves"
         :active-staff-index="editor.cursor.value.staffIndex"
+        :locked-staff-indices="props.lockedStaffIndices ?? []"
         @select="editor.setActiveStaff"
       />
       <VoiceSelector

@@ -69,6 +69,8 @@ export interface CompositionStep extends StepBase {
   requirements: Requirement[];
   /** A given soprano, bass or cantus firmus the student writes against. */
   starterNotation: NotationDocument | null;
+  /** Indices into `starterNotation.staves` the student can't edit. */
+  lockedStaffIndices: number[];
 }
 
 export type LessonStep = ReadingStep | QuizStep | CompositionStep;

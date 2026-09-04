@@ -114,11 +114,20 @@ class CompositionPayload(BaseModel):
     a full `NotationDocument` for the same reason: a given soprano line or a
     cantus firmus the student writes against, in the exact shape the editor
     itself edits.
+
+    `locked_staff_indices` names which of `starter_notation`'s staves are
+    the given material rather than a mere starting point - indices into
+    `starter_notation.staves`, not into the whole document's voices, since a
+    lock is a per-staff, not per-voice, concept (see the editor's
+    `useNotationEditor` on the frontend, which is where this is actually
+    enforced; the backend never re-checks it, the same way it never
+    re-checks that the student didn't resize the canvas).
     """
 
     brief: str = Field(min_length=1)
     requirements: list[Requirement] = Field(default_factory=list)
     starter_notation: NotationDocument | None = None
+    locked_staff_indices: list[int] = Field(default_factory=list)
 
 
 StepPayload = ReadingPayload | QuizPayload | CompositionPayload
@@ -159,6 +168,7 @@ class CompositionStepRead(_StepBase):
     brief: str
     requirements: list[Requirement]
     starter_notation: NotationDocument | None = None
+    locked_staff_indices: list[int] = Field(default_factory=list)
 
 
 LessonStepRead = Annotated[
