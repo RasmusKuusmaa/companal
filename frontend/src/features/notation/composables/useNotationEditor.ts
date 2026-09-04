@@ -12,7 +12,7 @@
  * program behaves and what anyone who reads music will expect.
  */
 
-import { computed, ref, shallowRef } from "vue";
+import { computed, ref, shallowRef, toRaw } from "vue";
 
 import { CLEF_MIDDLE_LINE } from "../constants";
 import {
@@ -53,8 +53,15 @@ export function useNotationEditor(initial?: NotationDocument) {
    * reactive document is a Proxy, and `structuredClone` refuses to clone
    * one, which is exactly what the edit helpers do. Keeping it shallow also
    * spares Vue from proxying every note in the score.
+   *
+   * `toRaw` on the initial value because `initial` often *is* a reactive
+   * Proxy already - when the caller is a `v-model`-bound prop, Vue wraps
+   * even a plain object passed into that prop. `structuredClone` (used
+   * throughout ../document to produce each edit's new document) refuses to
+   * clone a Proxy outright, so the document has to be de-proxied the moment
+   * it enters the editor, not discovered as a bug on the first edit.
    */
-  const document = shallowRef<NotationDocument>(initial ?? createDocument());
+  const document = shallowRef<NotationDocument>(toRaw(initial ?? createDocument()));
   const cursor = ref<NotationCursor>({
     staffIndex: 0,
     measureIndex: 0,
@@ -106,7 +113,7 @@ export function useNotationEditor(initial?: NotationDocument) {
   const cursorNoteId = computed(() => noteBeforeCursor.value?.id ?? null);
 
   function setDocument(next: NotationDocument): void {
-    document.value = next;
+    document.value = toRaw(next);
   }
 
   function setDuration(duration: DurationName): void {
