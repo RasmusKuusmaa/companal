@@ -106,6 +106,37 @@ class Lesson(Base):
     )
 
 
+class Topic(Base):
+    """One thing a student can be good or bad at.
+
+    Topics are the axis the skill map is drawn on, and they're deliberately
+    finer-grained than lessons: "parallel fifths and octaves" is a topic that
+    a voice-leading lesson teaches, a counterpoint lesson leans on, and half
+    a dozen composition tasks produce evidence about. Steps tag the topics
+    they exercise (see `LessonStepTopic`), and mastery is accumulated per
+    topic from every attempt that touched one.
+    """
+
+    __tablename__ = "topics"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    slug: Mapped[str] = mapped_column(String(80), nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Coarse grouping for the skill map's heatmap rows - "fundamentals",
+    # "harmony", "counterpoint", "form". A string rather than an enum
+    # because it's authored alongside the curriculum, and adding an area
+    # shouldn't require a migration.
+    area: Mapped[str] = mapped_column(String(64), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    position: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
 class LessonStep(Base):
     """One step of a lesson: something to read, answer, or compose.
 
@@ -135,4 +166,30 @@ class LessonStep(Base):
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class LessonStepTopic(Base):
+    """Which topics a step exercises - many-to-many, both sides seeded.
+
+    A composite primary key rather than a surrogate id: the pair *is* the
+    row's identity, which is what lets the seed loader re-tag a step
+    idempotently.
+    """
+
+    __tablename__ = "lesson_step_topics"
+
+    step_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("lesson_steps.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    # Indexed on its own because the skill map reads the other direction -
+    # "which steps exercise this topic" - and the composite primary key's
+    # index only serves lookups that lead with `step_id`.
+    topic_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("topics.id", ondelete="CASCADE"),
+        primary_key=True,
+        index=True,
     )
