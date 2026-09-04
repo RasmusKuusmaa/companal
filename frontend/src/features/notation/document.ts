@@ -14,7 +14,7 @@
  * the grader - has to cope with one.
  */
 
-import { quarterLength } from "./constants";
+import { STEP_INDEX, quarterLength } from "./constants";
 import type {
   ClefName,
   DurationName,
@@ -381,8 +381,21 @@ export function removeLastMeasure(document: NotationDocument): NotationDocument 
 
 /** Diatonic position: C4 is 28, D4 is 29 - accidentals don't move it. */
 export function diatonicIndex(step: PitchStep, octave: number): number {
-  const index = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 }[step];
-  return octave * 7 + index;
+  return octave * 7 + STEP_INDEX[step];
+}
+
+/**
+ * The octave that puts `step` closest to a reference diatonic position.
+ *
+ * This is what makes keyboard letter entry usable: a step repeats every
+ * octave, so "press G" is ambiguous on its own, and choosing the occurrence
+ * nearest the note just entered is what every notation program's letter
+ * entry does - the alternative, always defaulting to one fixed octave,
+ * would turn a scale into a saw-tooth every time it crossed a letter name
+ * near an octave boundary.
+ */
+export function nearestOctaveForStep(step: PitchStep, referenceIndex: number): number {
+  return Math.round((referenceIndex - STEP_INDEX[step]) / 7);
 }
 
 export function fromDiatonicIndex(index: number): { step: PitchStep; octave: number } {

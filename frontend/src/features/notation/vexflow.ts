@@ -17,7 +17,7 @@
 
 import { Accidental, Beam, Dot, StaveNote, StaveTie, Voice } from "vexflow";
 
-import { durationSpec, keySignatureName } from "./constants";
+import { CLEF_MIDDLE_LINE, durationSpec, keySignatureName } from "./constants";
 import type { ClefName, NotationDocument, NotationNote, NotationVoice } from "./types";
 
 /** VexFlow's pitch spelling: `f#/4`, `bb/3`, `c/4`. */
@@ -37,20 +37,19 @@ export function vexKey(note: NotationNote): string {
 /**
  * A rest's vertical position on the staff.
  *
- * Rests have no pitch, but they do have a place: convention puts them in
- * the middle of the staff, which is B4 in treble, D3 in bass, and the
- * middle line's pitch in the C clefs.
+ * Rests have no pitch, but they do have a place: convention puts them on
+ * the clef's middle line - `CLEF_MIDDLE_LINE`, the same reference keyboard
+ * entry uses for its default octave, since both are "the middle of this
+ * staff" by definition.
  */
-const REST_KEY: Readonly<Record<ClefName, string>> = {
-  treble: "b/4",
-  bass: "d/3",
-  alto: "c/4",
-  tenor: "a/3",
-};
+function restKey(clef: ClefName): string {
+  const middle = CLEF_MIDDLE_LINE[clef];
+  return `${middle.step.toLowerCase()}/${middle.octave}`;
+}
 
 export function buildStaveNote(note: NotationNote, clef: ClefName): StaveNote {
   const staveNote = new StaveNote({
-    keys: [note.isRest ? REST_KEY[clef] : vexKey(note)],
+    keys: [note.isRest ? restKey(clef) : vexKey(note)],
     duration: durationSpec(note.duration).code,
     ...(note.isRest ? { type: "r" } : {}),
     clef,

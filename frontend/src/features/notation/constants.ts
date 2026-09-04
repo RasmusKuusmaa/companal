@@ -102,6 +102,22 @@ export const STEP_SEMITONES: Readonly<Record<PitchStep, number>> = {
   B: 11,
 };
 
+/**
+ * The pitch on each clef's middle line.
+ *
+ * Two things anchor on it: a rest is always drawn here regardless of clef
+ * (see the renderer's `REST_KEY`, which mirrors these values), and it's the
+ * reference pitch keyboard entry uses before anything has been typed yet -
+ * pressing "C" with an empty bar lands near the middle of the staff rather
+ * than in whichever octave happens to sort first.
+ */
+export const CLEF_MIDDLE_LINE: Readonly<Record<ClefName, { step: PitchStep; octave: number }>> = {
+  treble: { step: "B", octave: 4 },
+  bass: { step: "D", octave: 3 },
+  alto: { step: "C", octave: 4 },
+  tenor: { step: "A", octave: 3 },
+};
+
 export interface ClefSpec {
   name: ClefName;
   label: string;

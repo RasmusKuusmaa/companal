@@ -14,16 +14,19 @@
 
 import { computed, ref, shallowRef } from "vue";
 
+import { CLEF_MIDDLE_LINE } from "../constants";
 import {
   createDocument,
   createNote,
   deleteNoteAt,
   deleteNoteBefore,
+  diatonicIndex,
   fits,
   insertNote,
   locateNote,
   measureQuarters,
   moveCursor,
+  nearestOctaveForStep,
   noteAt,
   toggleTieBefore,
 } from "../document";
@@ -157,6 +160,36 @@ export function useNotationEditor(initial?: NotationDocument) {
   }
 
   /**
+   * Enters a note by pitch letter at the cursor, choosing the octave
+   * nearest to whatever the student just entered.
+   *
+   * With nothing before the cursor yet, the reference is the clef's middle
+   * line rather than a fixed octave - the same anchor a freshly placed rest
+   * uses - so the first letter typed into an empty bar lands in the middle
+   * of the staff instead of wherever octave 4 happens to fall for that clef.
+   */
+  function placeStep(step: PitchStep): boolean {
+    const staff = document.value.staves[cursor.value.staffIndex];
+    if (!staff) return false;
+
+    const reference = noteBeforeCursor.value
+      ? diatonicIndex(noteBeforeCursor.value.step, noteBeforeCursor.value.octave)
+      : diatonicIndex(
+          CLEF_MIDDLE_LINE[staff.clef].step,
+          CLEF_MIDDLE_LINE[staff.clef].octave,
+        );
+
+    return placeAt({
+      staffIndex: cursor.value.staffIndex,
+      measureIndex: cursor.value.measureIndex,
+      voiceId: cursor.value.voiceId,
+      insertionIndex: cursor.value.noteIndex,
+      step,
+      octave: nearestOctaveForStep(step, reference),
+    });
+  }
+
+  /**
    * Enters a note where the student clicked.
    *
    * The click carries an exact pitch - the y position on the staff is
@@ -214,6 +247,7 @@ export function useNotationEditor(initial?: NotationDocument) {
     setAlter,
     setRestMode,
     placeAt,
+    placeStep,
     toggleTie,
     selectNote,
     moveLeft,

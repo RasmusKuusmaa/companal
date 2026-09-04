@@ -10,7 +10,8 @@
 import { watch } from "vue";
 
 import { useNotationEditor } from "../composables/useNotationEditor";
-import type { NotationDocument } from "../types";
+import { PITCH_STEPS } from "../constants";
+import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
 import RestToggle from "./RestToggle.vue";
@@ -68,19 +69,29 @@ function handleKeydown(event: KeyboardEvent): void {
     case "ArrowLeft":
       event.preventDefault();
       editor.moveLeft();
-      break;
+      return;
     case "ArrowRight":
       event.preventDefault();
       editor.moveRight();
-      break;
+      return;
     case "Backspace":
       event.preventDefault();
       editor.deleteBefore();
-      break;
+      return;
     case "Delete":
       event.preventDefault();
       editor.deleteAtCursor();
-      break;
+      return;
+  }
+
+  // A-G, unmodified: the letter-name fast path. Anything held with the key
+  // (Ctrl/Cmd/Alt) is left alone so browser and OS shortcuts on those same
+  // letters - Cmd+A select-all, say - keep working.
+  if (event.ctrlKey || event.metaKey || event.altKey) return;
+  const letter = event.key.toUpperCase();
+  if ((PITCH_STEPS as readonly string[]).includes(letter)) {
+    event.preventDefault();
+    editor.placeStep(letter as PitchStep);
   }
 }
 </script>
