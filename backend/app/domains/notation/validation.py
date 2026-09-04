@@ -29,6 +29,7 @@ from app.domains.notation.requirements import (
     MeasureCountRequirement,
     RangeRequirement,
     RequiredScaleDegreesRequirement,
+    Requirement,
     RequirementResult,
     TimeSignatureRequirement,
 )
@@ -414,3 +415,49 @@ def check_time_signature(
         message = f"Written in {actual}, but {requirement.value} was asked for."
 
     return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+# --------------------------------------------------------------------------- #
+# Runner
+# --------------------------------------------------------------------------- #
+
+# Every requirement type dispatches to its checker by Python type, not by
+# the `type` string field - `isinstance`/`type()` dispatch here mirrors the
+# Pydantic discriminated union's own `type` tag one-for-one, so adding a new
+# requirement means adding one line here and nowhere else forgets it (mypy's
+# exhaustiveness checking over a `match` on a closed union would catch a
+# missed case at type-check time rather than at request time).
+_CHECKERS: dict[type[Requirement], object] = {
+    KeyRequirement: check_key,
+    TimeSignatureRequirement: check_time_signature,
+    MeasureCountRequirement: check_measure_count,
+    CadenceRequirement: check_cadence,
+    RangeRequirement: check_range,
+    MaxLeapRequirement: check_max_leap,
+    LeapRecoveryRequirement: check_leap_recovery,
+    DiatonicOnlyRequirement: check_diatonic_only,
+    RequiredScaleDegreesRequirement: check_required_scale_degrees,
+    ForbiddenPitchesRequirement: check_forbidden_pitches,
+}
+
+
+def run_requirements(
+    context: RequirementContext, requirements: list[Requirement]
+) -> list[RequirementResult]:
+    """Checks every requirement a composition task states, in order.
+
+    The checklist a student sees on their submission is exactly this list -
+    nothing is summarized or dropped, so "8 measures ✓ · ends on a half
+    cadence ✗" is the whole of what determines whether the task passed, and
+    it's visible as the individual facts it's made of rather than a single
+    opaque verdict.
+    """
+    results: list[RequirementResult] = []
+    for requirement in requirements:
+        checker = _CHECKERS[type(requirement)]
+        results.append(checker(context, requirement))  # type: ignore[operator]
+    return results
+
+
+def all_passed(results: list[RequirementResult]) -> bool:
+    return all(result.passed for result in results)
