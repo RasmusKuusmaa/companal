@@ -296,7 +296,9 @@ class ProgressSummary(BaseModel):
 
     `continue_lesson_slug` is the lesson the dashboard's "continue" button
     points at: the one in progress, or failing that the first not yet
-    started, in roadmap order.
+    started, in roadmap order. Its title rides along so that card is
+    self-sufficient - otherwise every dashboard would have to fetch the
+    entire roadmap to render one line of text.
     """
 
     lesson_count: int
@@ -304,3 +306,4 @@ class ProgressSummary(BaseModel):
     in_progress_lesson_count: int
     by_course: list[CourseProgress]
     continue_lesson_slug: str | None = None
+    continue_lesson_title: str | None = None

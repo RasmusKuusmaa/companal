@@ -382,21 +382,19 @@ async def complete_lesson(
     )
 
 
-def _continue_slug(
-    lessons_in_order: Sequence[tuple[str, LessonProgressStatus]],
-) -> str | None:
+def _continue_lesson(lessons_in_order: Sequence[LessonSummary]) -> LessonSummary | None:
     """Where "continue learning" should send the student.
 
     The lesson they're partway through, and failing that the first they
     haven't opened. Once everything is complete there's nothing to continue,
     and the caller says so rather than looping back to lesson one.
     """
-    for slug, status in lessons_in_order:
-        if status is LessonProgressStatus.IN_PROGRESS:
-            return slug
-    for slug, status in lessons_in_order:
-        if status is LessonProgressStatus.NOT_STARTED:
-            return slug
+    for lesson in lessons_in_order:
+        if lesson.status is LessonProgressStatus.IN_PROGRESS:
+            return lesson
+    for lesson in lessons_in_order:
+        if lesson.status is LessonProgressStatus.NOT_STARTED:
+            return lesson
     return None
 
 
@@ -417,14 +415,14 @@ async def get_progress_summary(db: AsyncSession, user_id: uuid.UUID) -> Progress
         for course in roadmap.courses
     ]
 
-    ordered = [
-        (lesson.slug, lesson.status) for course in roadmap.courses for lesson in course.lessons
-    ]
+    ordered = [lesson for course in roadmap.courses for lesson in course.lessons]
+    resume = _continue_lesson(ordered)
 
     return ProgressSummary(
         lesson_count=roadmap.lesson_count,
         completed_lesson_count=roadmap.completed_lesson_count,
         in_progress_lesson_count=roadmap.in_progress_lesson_count,
         by_course=by_course,
-        continue_lesson_slug=_continue_slug(ordered),
+        continue_lesson_slug=resume.slug if resume else None,
+        continue_lesson_title=resume.title if resume else None,
     )
