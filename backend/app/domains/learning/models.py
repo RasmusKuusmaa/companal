@@ -67,6 +67,21 @@ class LessonStatus(str, enum.Enum):
     COMPLETED = "completed"
 
 
+class MasteryStatus(str, enum.Enum):
+    """How well a student is doing on one topic.
+
+    `UNTOUCHED` is never stored - a topic with no `TopicMastery` row is
+    untouched by definition, and the skill map synthesises the status for
+    every topic the student hasn't met yet. It's a member here so the API
+    has one enum to describe all four states.
+    """
+
+    UNTOUCHED = "untouched"
+    LEARNING = "learning"
+    SOLID = "solid"
+    NEEDS_PRACTICE = "needs_practice"
+
+
 class Course(Base):
     """One stage of the roadmap - "Fundamentals", "Voice leading", ...
 
@@ -296,6 +311,58 @@ class UserProgress(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
+
+
+class TopicMastery(Base):
+    """How well one student is doing on one topic.
+
+    Derivable from `StepAttempt` alone, and materialized anyway: the skill
+    map's whole purpose is to answer "what am I good at, what needs work" at
+    a glance, and doing that by aggregating every attempt a student has ever
+    made - across topics, joined through the step-topic table - is a query
+    that gets slower every week they use the site. This row is updated in
+    the same transaction that records the attempt, so it can't drift.
+
+    `recent_results` is what separates "struggled a year ago" from "getting
+    it wrong now". A lifetime accuracy of 60% reads the same whether the
+    student has just turned a corner or just started slipping, and the
+    student wants to be told the second one. Capped at the last ten
+    outcomes, oldest first.
+    """
+
+    __tablename__ = "topic_mastery"
+    __table_args__ = (UniqueConstraint("user_id", "topic_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    topic_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("topics.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+
+    attempt_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    correct_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # 0.0-1.0 over the student's whole history with this topic. Stored
+    # rather than computed on read so the skill map can order by it.
+    accuracy: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    recent_results: Mapped[list[bool]] = mapped_column(JSONB, nullable=False, default=list)
+
+    status: Mapped[MasteryStatus] = mapped_column(
+        Enum(MasteryStatus, name="mastery_status", values_callable=lambda e: [m.value for m in e]),
+        nullable=False,
+        default=MasteryStatus.LEARNING,
+    )
+
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
