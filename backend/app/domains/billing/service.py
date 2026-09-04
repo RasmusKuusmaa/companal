@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.features import TIER_MONTHLY_AI_QUOTA
 from app.domains.billing.models import AiUsage, AiUsageKind, Subscription, SubscriptionStatus, Tier
+from app.domains.billing.schemas import SubscriptionSummary
 
 # Anthropic's published per-model rate, USD per million tokens (input, output).
 # A model missing here costs $0 in the ledger rather than a guessed number -
@@ -147,3 +148,27 @@ async def enforce_global_spend_cap(db: AsyncSession) -> None:
     spent = await global_ai_spend_this_period(db)
     if spent >= cap:
         raise GlobalSpendCapExceededError
+
+
+async def get_subscription_summary(db: AsyncSession, user_id: uuid.UUID) -> SubscriptionSummary:
+    """Reads the caller's tier and quota standing without ever creating a
+    `Subscription` row - a plain `GET` shouldn't backfill one for a free
+    user who has never needed one (see `models.py`'s module docstring).
+    """
+    subscription = await db.scalar(select(Subscription).where(Subscription.user_id == user_id))
+    tier = subscription.tier if subscription is not None else Tier.FREE
+    status = subscription.status if subscription is not None else SubscriptionStatus.ACTIVE
+    period_end = subscription.current_period_end if subscription is not None else None
+
+    quota = TIER_MONTHLY_AI_QUOTA[tier]
+    used = await ai_usage_this_period(db, user_id)
+    remaining = None if quota is None else max(quota - used, 0)
+
+    return SubscriptionSummary(
+        tier=tier,
+        status=status,
+        current_period_end=period_end,
+        ai_quota=quota,
+        ai_quota_used=used,
+        ai_quota_remaining=remaining,
+    )
