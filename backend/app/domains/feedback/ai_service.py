@@ -11,6 +11,7 @@ from typing import Any
 import anthropic
 
 from app.core.config import settings
+from app.domains.billing.service import AiCallUsage
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.prompts import build_system_prompt, build_user_prompt
 from app.domains.feedback.schemas import CompositionFeedback
@@ -30,8 +31,12 @@ def _get_client() -> anthropic.Anthropic:
 
 def generate_feedback(
     analysis_bundle: dict[str, Any], skill_level: SkillLevel
-) -> CompositionFeedback:
-    """Calls Claude to turn one structured analysis into educational feedback."""
+) -> tuple[CompositionFeedback, AiCallUsage]:
+    """Calls Claude to turn one structured analysis into educational feedback.
+
+    Returns the parsed feedback alongside the call's token usage, so callers
+    can record it to the `AiUsage` ledger without a second round trip.
+    """
     client = _get_client()
     try:
         response = client.messages.parse(
@@ -48,4 +53,10 @@ def generate_feedback(
         raise AIServiceError("The AI declined to generate feedback for this composition.")
     if response.parsed_output is None:
         raise AIServiceError("The AI response could not be parsed into feedback.")
-    return response.parsed_output
+
+    usage = AiCallUsage(
+        model=response.model,
+        input_tokens=response.usage.input_tokens,
+        output_tokens=response.usage.output_tokens,
+    )
+    return response.parsed_output, usage

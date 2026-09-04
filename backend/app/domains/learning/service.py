@@ -21,6 +21,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
+from app.domains.billing import service as billing_service
+from app.domains.billing.models import AiUsageKind
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.schemas import CompositionFeedback
 from app.domains.learning.models import (
@@ -405,7 +407,7 @@ async def submit_composition(
     ai_feedback: CompositionFeedback | None = None
     if with_ai_feedback:
         try:
-            ai_feedback = generate_exercise_feedback(
+            ai_feedback, usage = generate_exercise_feedback(
                 lesson.title,
                 composition.brief,
                 grade.requirement_results,
@@ -414,6 +416,10 @@ async def submit_composition(
             )
         except AIGradingError:
             ai_feedback = None
+        else:
+            await billing_service.record_ai_usage(
+                db, user_id, AiUsageKind.EXERCISE_GRADING, usage
+            )
 
     attempt_id = uuid.uuid4()
     storage_key = _attempt_storage_key(attempt_id)

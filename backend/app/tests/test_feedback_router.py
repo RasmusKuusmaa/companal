@@ -4,6 +4,7 @@ from typing import Any, cast
 import pytest
 from httpx import AsyncClient
 
+from app.domains.billing.service import AiCallUsage
 from app.domains.feedback.ai_service import AIServiceError
 from app.domains.feedback.schemas import CompositionFeedback, FeedbackIssue, TheoryLesson
 
@@ -28,10 +29,13 @@ _FAKE_FEEDBACK = CompositionFeedback(
 )
 
 
+_FAKE_USAGE = AiCallUsage(model="claude-opus-5", input_tokens=100, output_tokens=50)
+
+
 def _mock_ai(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "app.domains.feedback.service.generate_feedback",
-        lambda *_args, **_kwargs: _FAKE_FEEDBACK,
+        lambda *_args, **_kwargs: (_FAKE_FEEDBACK, _FAKE_USAGE),
     )
 
 

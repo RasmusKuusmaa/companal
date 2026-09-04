@@ -1,6 +1,7 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.billing.service import AiCallUsage
 from app.domains.feedback.models import Feedback, SkillLevel
 from app.domains.feedback.schemas import CompositionFeedback, FeedbackIssue, TheoryLesson
 from app.domains.feedback.service import (
@@ -71,10 +72,13 @@ async def _make_analyzed_composition(db_session: AsyncSession, owner: User) -> C
     return analysis
 
 
+_FAKE_USAGE = AiCallUsage(model="claude-opus-5", input_tokens=100, output_tokens=50)
+
+
 def _mock_ai(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "app.domains.feedback.service.generate_feedback",
-        lambda *_args, **_kwargs: _FAKE_FEEDBACK,
+        lambda *_args, **_kwargs: (_FAKE_FEEDBACK, _FAKE_USAGE),
     )
 
 

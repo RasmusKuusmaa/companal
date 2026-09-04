@@ -12,6 +12,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.domains.billing import service as billing_service
+from app.domains.billing.models import AiUsageKind
 from app.domains.feedback.ai_service import generate_feedback
 from app.domains.feedback.models import Feedback, SkillLevel
 from app.domains.projects.models import CompositionAnalysis
@@ -59,7 +61,8 @@ async def generate_composition_feedback(
     await get_composition(db, owner_id, composition_id)
     analysis = await _latest_analysis(db, composition_id)
 
-    content = generate_feedback(_bundle_from_analysis(analysis), skill_level)
+    content, usage = generate_feedback(_bundle_from_analysis(analysis), skill_level)
+    await billing_service.record_ai_usage(db, owner_id, AiUsageKind.COMPOSITION_FEEDBACK, usage)
 
     feedback = await db.scalar(
         select(Feedback).where(

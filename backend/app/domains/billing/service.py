@@ -9,13 +9,39 @@ billing endpoints).
 
 import uuid
 from datetime import UTC, datetime
+from typing import NamedTuple
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.features import TIER_MONTHLY_AI_QUOTA
-from app.domains.billing.models import AiUsage, Subscription, SubscriptionStatus, Tier
+from app.domains.billing.models import AiUsage, AiUsageKind, Subscription, SubscriptionStatus, Tier
+
+# Anthropic's published per-model rate, USD per million tokens (input, output).
+# A model missing here costs $0 in the ledger rather than a guessed number -
+# that's immediately visible as "0.00" and prompts updating this table,
+# instead of silently under- or over-billing against a stale rate.
+_MODEL_RATES_USD_PER_MILLION_TOKENS: dict[str, tuple[float, float]] = {
+    "claude-opus-5": (5.00, 25.00),
+    "claude-sonnet-5": (2.00, 10.00),
+    "claude-haiku-4-5": (1.00, 5.00),
+}
+
+
+class AiCallUsage(NamedTuple):
+    """What a single Claude call cost, as reported by the API response
+    itself - the resolved `model` (not the possibly-aliased one requested)
+    and the token counts `estimate_cost_usd` prices."""
+
+    model: str
+    input_tokens: int
+    output_tokens: int
+
+
+def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
+    input_rate, output_rate = _MODEL_RATES_USD_PER_MILLION_TOKENS.get(model, (0.0, 0.0))
+    return (input_tokens * input_rate + output_tokens * output_rate) / 1_000_000
 
 
 class QuotaExceededError(Exception):
@@ -41,6 +67,27 @@ async def get_or_create_subscription(db: AsyncSession, user_id: uuid.UUID) -> Su
     await db.commit()
     await db.refresh(subscription)
     return subscription
+
+
+async def record_ai_usage(
+    db: AsyncSession, user_id: uuid.UUID, kind: AiUsageKind, usage: AiCallUsage
+) -> AiUsage:
+    """Appends one row to the never-updated `AiUsage` ledger. Call this once
+    per successful Claude call, after the response comes back - a failed or
+    refused call was never billed by Anthropic and shouldn't count against
+    the user's quota either."""
+    record = AiUsage(
+        user_id=user_id,
+        kind=kind,
+        model=usage.model,
+        input_tokens=usage.input_tokens,
+        output_tokens=usage.output_tokens,
+        estimated_cost_usd=estimate_cost_usd(usage.model, usage.input_tokens, usage.output_tokens),
+    )
+    db.add(record)
+    await db.commit()
+    await db.refresh(record)
+    return record
 
 
 def _current_period_start() -> datetime:
