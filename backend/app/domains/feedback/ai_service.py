@@ -22,10 +22,21 @@ class AIServiceError(Exception):
     a failed API call, or a response that could not be parsed."""
 
 
+class AIServiceUnavailableError(AIServiceError):
+    """Raised specifically because no API key is configured.
+
+    A deployment state, not a transient failure - callers should treat this
+    as "this feature doesn't exist here" (no upgrade prompt, no 503) rather
+    than the generic `AIServiceError` handling for an actual failed call.
+    """
+
+
 @lru_cache
 def _get_client() -> anthropic.Anthropic:
     if not settings.ANTHROPIC_API_KEY:
-        raise AIServiceError("AI feedback is not configured (ANTHROPIC_API_KEY is unset).")
+        raise AIServiceUnavailableError(
+            "AI feedback is not configured (ANTHROPIC_API_KEY is unset)."
+        )
     return anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
 

@@ -5,7 +5,7 @@ import pytest
 from httpx import AsyncClient
 
 from app.domains.billing.service import AiCallUsage
-from app.domains.feedback.ai_service import AIServiceError
+from app.domains.feedback.ai_service import AIServiceError, AIServiceUnavailableError
 from app.domains.feedback.schemas import CompositionFeedback, FeedbackIssue, TheoryLesson
 
 _FIXTURES = Path(__file__).parent / "fixtures"
@@ -154,7 +154,7 @@ class TestCreateFeedback:
         self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         def _raise(*_args: Any, **_kwargs: Any) -> CompositionFeedback:
-            raise AIServiceError("AI feedback is not configured (ANTHROPIC_API_KEY is unset).")
+            raise AIServiceError("AI feedback request failed: rate limited.")
 
         monkeypatch.setattr("app.domains.feedback.service.generate_feedback", _raise)
         headers = await _auth_headers(client)
@@ -165,6 +165,24 @@ class TestCreateFeedback:
         )
 
         assert response.status_code == 503
+
+    async def test_returns_404_not_503_when_no_api_key_is_configured(
+        self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _raise(*_args: Any, **_kwargs: Any) -> CompositionFeedback:
+            raise AIServiceUnavailableError(
+                "AI feedback is not configured (ANTHROPIC_API_KEY is unset)."
+            )
+
+        monkeypatch.setattr("app.domains.feedback.service.generate_feedback", _raise)
+        headers = await _auth_headers(client)
+        composition = await _analyzed_composition(client, headers)
+
+        response = await client.post(
+            f"/api/v1/projects/{composition['id']}/feedback", headers=headers
+        )
+
+        assert response.status_code == 404
 
 
 class TestReadFeedback:

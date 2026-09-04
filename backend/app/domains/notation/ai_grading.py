@@ -29,10 +29,17 @@ class AIGradingError(Exception):
     a failed API call, or a response that could not be parsed."""
 
 
+class AIGradingUnavailableError(AIGradingError):
+    """Raised specifically because no API key is configured - see
+    `feedback.ai_service.AIServiceUnavailableError`, which this mirrors."""
+
+
 @lru_cache
 def _get_client() -> anthropic.Anthropic:
     if not settings.ANTHROPIC_API_KEY:
-        raise AIGradingError("AI grading is not configured (ANTHROPIC_API_KEY is unset).")
+        raise AIGradingUnavailableError(
+            "AI grading is not configured (ANTHROPIC_API_KEY is unset)."
+        )
     return anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
 

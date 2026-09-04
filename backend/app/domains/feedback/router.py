@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
-from app.domains.feedback.ai_service import AIServiceError
+from app.domains.feedback.ai_service import AIServiceError, AIServiceUnavailableError
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.schemas import FeedbackRead
 from app.domains.feedback.service import (
@@ -51,6 +51,13 @@ async def create_feedback(
         raise _composition_not_found from exc
     except AnalysisNotFoundError as exc:
         raise _analysis_not_found from exc
+    except AIServiceUnavailableError as exc:
+        # Not configured, not broken: treat a missing API key as the
+        # feature not existing in this deployment, not as an outage.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="AI feedback is not available in this deployment.",
+        ) from exc
     except AIServiceError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)

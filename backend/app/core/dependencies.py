@@ -68,12 +68,25 @@ async def get_current_user(
 def require_feature(feature: Feature) -> Callable[..., Awaitable[User]]:
     """Dependency factory gating a route behind a feature the caller's tier
     must have. Raises 402 with a payload the frontend can turn straight into
-    an upgrade prompt, rather than a bare "forbidden"."""
+    an upgrade prompt, rather than a bare "forbidden".
+
+    When no `ANTHROPIC_API_KEY` is configured at all, every AI feature is
+    unavailable regardless of tier - raising the usual 402 there would tell
+    a user to upgrade for something upgrading can't fix, so this raises 404
+    instead: the same "doesn't exist here" signal already used for a missing
+    resource, not an upgrade prompt and not a 503.
+    """
 
     async def _require_feature(
         user: User = Depends(get_current_user),
         db: AsyncSession = Depends(get_db),
     ) -> User:
+        if not settings.ANTHROPIC_API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="This feature is not available in this deployment.",
+            )
+
         tier = await billing_service.get_tier(db, user.id)
         if not tier_has_feature(tier, feature):
             raise HTTPException(
