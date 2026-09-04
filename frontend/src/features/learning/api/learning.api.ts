@@ -9,9 +9,17 @@
  */
 
 import { httpClient } from "@/services/http";
+import {
+  notationDocumentFromDto,
+  notationDocumentToDto,
+  type NotationDocumentDto,
+} from "@/features/notation/api";
+import type { NotationDocument } from "@/features/notation/types";
 
 import type {
   CadenceKind,
+  CompositionAiFeedback,
+  CompositionSubmissionResult,
   Lesson,
   LessonCompletion,
   LessonStep,
@@ -19,7 +27,9 @@ import type {
   ProgressSummary,
   QuizAnswerResult,
   Requirement,
+  RequirementResult,
   Roadmap,
+  SkillLevel,
   StepSeen,
 } from "../types";
 
@@ -99,7 +109,7 @@ type StepDto =
       position: number;
       brief: string;
       requirements: RequirementDto[];
-      starter_notation: Record<string, unknown> | null;
+      starter_notation: NotationDocumentDto | null;
     };
 
 interface LessonDto {
@@ -129,6 +139,63 @@ interface StepSeenDto {
   lesson_id: string;
   current_step_id: string | null;
   status: Lesson["status"];
+}
+
+interface RequirementResultDto {
+  requirement: RequirementDto;
+  passed: boolean;
+  message: string;
+  measure: number | null;
+}
+
+function mapRequirementResult(dto: RequirementResultDto): RequirementResult {
+  return {
+    requirement: mapRequirement(dto.requirement),
+    passed: dto.passed,
+    message: dto.message,
+    measure: dto.measure,
+  };
+}
+
+interface CompositionAiFeedbackDto {
+  summary: string;
+  strengths: string[];
+  issues: {
+    problem: string;
+    explanation: string;
+    suggestion: string;
+    theory: { concept: string; lesson: string };
+  }[];
+  suggestions: string[];
+}
+
+function mapCompositionAiFeedback(dto: CompositionAiFeedbackDto): CompositionAiFeedback {
+  return {
+    summary: dto.summary,
+    strengths: dto.strengths,
+    issues: dto.issues,
+    suggestions: dto.suggestions,
+  };
+}
+
+interface CompositionSubmissionDto {
+  attempt_id: string;
+  created_at: string;
+  requirement_results: RequirementResultDto[];
+  passed: boolean;
+  overall_score: number | null;
+  ai_feedback: CompositionAiFeedbackDto | null;
+}
+
+function mapCompositionSubmission(dto: CompositionSubmissionDto): CompositionSubmissionResult {
+  return {
+    attemptId: dto.attempt_id,
+    createdAt: dto.created_at,
+    requirementResults: dto.requirement_results.map(mapRequirementResult),
+    passed: dto.passed,
+    overallScore: dto.overall_score,
+    aiFeedback: dto.ai_feedback ? mapCompositionAiFeedback(dto.ai_feedback) : null,
+  };
 }
 
 interface LessonCompletionDto {
@@ -200,7 +267,7 @@ function mapStep(dto: StepDto): LessonStep {
         kind: "composition",
         brief: dto.brief,
         requirements: dto.requirements.map(mapRequirement),
-        starterNotation: dto.starter_notation,
+        starterNotation: dto.starter_notation ? notationDocumentFromDto(dto.starter_notation) : null,
       };
   }
 }
@@ -268,6 +335,30 @@ export const learningApi = {
       correctIndex: data.correct_index,
       explanation: data.explanation,
     };
+  },
+
+  /**
+   * Submits a composition attempt. Deterministic grading always runs;
+   * `withAiFeedback` only adds commentary on top of it, and asking for it
+   * without an AI available (no key configured, quota spent) is not an
+   * error - `aiFeedback` simply comes back `null`.
+   */
+  async submitComposition(
+    lessonSlug: string,
+    stepSlug: string,
+    document: NotationDocument,
+    skillLevel: SkillLevel,
+    withAiFeedback: boolean,
+  ): Promise<CompositionSubmissionResult> {
+    const { data } = await httpClient.post<CompositionSubmissionDto>(
+      `/learning/lessons/${lessonSlug}/steps/${stepSlug}/submit`,
+      {
+        document: notationDocumentToDto(document),
+        skill_level: skillLevel,
+        with_ai_feedback: withAiFeedback,
+      },
+    );
+    return mapCompositionSubmission(data);
   },
 
   /** Records that the student reached this step - what starts a lesson. */

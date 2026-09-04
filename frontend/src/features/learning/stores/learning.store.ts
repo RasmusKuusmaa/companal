@@ -1,14 +1,18 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
+import type { NotationDocument } from "@/features/notation/types";
+
 import { learningApi } from "../api/learning.api";
 import type {
+  CompositionSubmissionResult,
   Lesson,
   LessonProgressStatus,
   LessonStep,
   ProgressSummary,
   QuizAnswerResult,
   Roadmap,
+  SkillLevel,
 } from "../types";
 
 /**
@@ -31,6 +35,9 @@ export const useLearningStore = defineStore("learning", () => {
   const lesson = ref<Lesson | null>(null);
   const stepIndex = ref(0);
   const quizResults = ref<Record<string, QuizAnswerResult>>({});
+  /** Keyed by step slug, same as `quizResults` and for the same reason: a
+   *  submission survives navigating away and back within the open lesson. */
+  const compositionResults = ref<Record<string, CompositionSubmissionResult>>({});
 
   const isLoadingRoadmap = ref(false);
   const isLoadingLesson = ref(false);
@@ -88,6 +95,7 @@ export const useLearningStore = defineStore("learning", () => {
       const loaded = await learningApi.getLesson(lessonSlug);
       lesson.value = loaded;
       quizResults.value = {};
+      compositionResults.value = {};
 
       const resumeAt = loaded.steps.findIndex((step) => step.id === loaded.currentStepId);
       stepIndex.value = resumeAt >= 0 ? resumeAt : 0;
@@ -143,6 +151,36 @@ export const useLearningStore = defineStore("learning", () => {
     return result;
   }
 
+  /**
+   * Submits a composition attempt. Every attempt is kept and graded on the
+   * backend - unlike a quiz, there's no "retry" that clears the previous
+   * result; a new submission simply replaces what this slug shows, the same
+   * way the lesson player only ever needs the *latest* attempt in view.
+   */
+  async function submitComposition(
+    stepSlug: string,
+    document: NotationDocument,
+    skillLevel: SkillLevel,
+    withAiFeedback: boolean,
+  ): Promise<CompositionSubmissionResult> {
+    const open = lesson.value;
+    if (!open) throw new Error("No lesson is open.");
+
+    const result = await learningApi.submitComposition(
+      open.slug,
+      stepSlug,
+      document,
+      skillLevel,
+      withAiFeedback,
+    );
+    compositionResults.value = { ...compositionResults.value, [stepSlug]: result };
+    if (open.status === "not_started") {
+      open.status = "in_progress";
+      applyLessonStatus(open.slug, "in_progress", null);
+    }
+    return result;
+  }
+
   /** Clears a stored result so the student can answer the question again. */
   function retryQuiz(stepSlug: string): void {
     const rest = { ...quizResults.value };
@@ -167,6 +205,7 @@ export const useLearningStore = defineStore("learning", () => {
     lesson,
     stepIndex,
     quizResults,
+    compositionResults,
     isLoadingRoadmap,
     isLoadingLesson,
     steps,
@@ -181,6 +220,7 @@ export const useLearningStore = defineStore("learning", () => {
     previousStep,
     markSeen,
     answerQuiz,
+    submitComposition,
     retryQuiz,
     completeLesson,
   };

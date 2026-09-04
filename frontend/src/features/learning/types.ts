@@ -9,6 +9,11 @@
  * place that has to handle it.
  */
 
+import type { FeedbackIssue, SkillLevel } from "@/features/feedback/types";
+import type { NotationDocument } from "@/features/notation/types";
+
+export type { SkillLevel };
+
 export type CourseLevel = "beginner" | "intermediate" | "advanced";
 
 export type LessonProgressStatus = "not_started" | "in_progress" | "completed";
@@ -62,12 +67,47 @@ export interface CompositionStep extends StepBase {
   kind: "composition";
   brief: string;
   requirements: Requirement[];
-  // Left as raw JSON until the editor is wired into composition steps
-  // (Phase F) and needs to actually load it - see learning.api.ts.
-  starterNotation: Record<string, unknown> | null;
+  /** A given soprano, bass or cantus firmus the student writes against. */
+  starterNotation: NotationDocument | null;
 }
 
 export type LessonStep = ReadingStep | QuizStep | CompositionStep;
+
+/** The verdict on one requirement, for the checklist a student sees. */
+export interface RequirementResult {
+  requirement: Requirement;
+  passed: boolean;
+  message: string;
+  measure: number | null;
+}
+
+/**
+ * The AI teacher's commentary on one exercise submission - the same shape
+ * as a composition's stored `Feedback`, minus the metadata (id, skill
+ * level, timestamps) that only applies to a *stored* row. This one rides
+ * along with a single submission and is never fetched again on its own.
+ */
+export interface CompositionAiFeedback {
+  summary: string;
+  strengths: string[];
+  issues: FeedbackIssue[];
+  suggestions: string[];
+}
+
+/**
+ * A graded composition submission. Deterministic grading (`requirementResults`,
+ * `passed`) is always present; `aiFeedback` rides along only when requested
+ * and available - see `CompositionStep.vue` for what "unavailable" looks
+ * like to a student.
+ */
+export interface CompositionSubmissionResult {
+  attemptId: string;
+  createdAt: string;
+  requirementResults: RequirementResult[];
+  passed: boolean;
+  overallScore: number | null;
+  aiFeedback: CompositionAiFeedback | null;
+}
 
 export interface LessonSummary {
   id: string;
