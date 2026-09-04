@@ -15,6 +15,7 @@ import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
 import RestToggle from "./RestToggle.vue";
 import StaffRenderer from "./StaffRenderer.vue";
+import TieToggle from "./TieToggle.vue";
 
 const props = defineProps<{
   modelValue: NotationDocument;
@@ -49,6 +50,11 @@ watch(editor.document, (next) => emit("update:modelValue", next));
       />
       <AccidentalPalette :alter="editor.activeAlter.value" @update:alter="editor.setAlter" />
       <RestToggle :active="editor.activeIsRest.value" @update:active="editor.setRestMode" />
+      <TieToggle
+        :active="editor.isTiedAtCursor.value"
+        :disabled="!editor.canTieAtCursor.value"
+        @toggle="editor.toggleTie"
+      />
     </div>
 
     <StaffRenderer :document="editor.document.value" @staff-click="editor.placeAt" />

@@ -14,7 +14,7 @@
  * what's currently on screen.
  */
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Barline, Formatter, Renderer, Stave } from "vexflow";
+import { Barline, Formatter, Renderer, Stave, StaveTie, type StaveNote } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
@@ -94,6 +94,18 @@ export interface DrawnNote {
 }
 let drawnNotes: DrawnNote[] = [];
 
+/**
+ * The last note of each voice from the previous measure, kept only long
+ * enough to draw a tie into the first note of the next one.
+ *
+ * A tie within one measure is drawn from that measure's own note list (see
+ * `buildTies`), but a tie held *over* a barline needs glyphs from two
+ * measures that are built independently - this is what bridges them. Keyed
+ * by `staffIndex:voiceId` since a voice's identity continues across
+ * measures but its VexFlow objects don't.
+ */
+let tieTails = new Map<string, { note: NotationNote; staveNote: StaveNote }>();
+
 function systemCount(): number {
   return Math.max(1, Math.ceil(measureCount(props.document) / props.measuresPerSystem));
 }
@@ -137,6 +149,20 @@ function drawMeasureNotes(
       tie.setContext(context).draw();
     }
 
+    const tailKey = `${staffIndex}:${entry.voiceId}`;
+    const incomingTail = tieTails.get(tailKey);
+    const firstNote = entry.notes[0];
+    if (incomingTail?.note.tiedToNext && firstNote) {
+      new StaveTie({
+        firstNote: incomingTail.staveNote,
+        lastNote: firstNote.staveNote,
+        firstIndexes: [0],
+        lastIndexes: [0],
+      })
+        .setContext(context)
+        .draw();
+    }
+
     entry.notes.forEach((drawn, noteIndex) => {
       // `getAbsoluteX`/`getWidth` rather than `getBoundingBox`: the bounding
       // box measures every attached glyph, which drags in canvas text
@@ -151,6 +177,9 @@ function drawMeasureNotes(
         width: drawn.staveNote.getWidth(),
       });
     });
+
+    const lastNote = entry.notes[entry.notes.length - 1];
+    if (lastNote) tieTails.set(tailKey, lastNote);
   }
 }
 
@@ -173,6 +202,7 @@ function draw(): void {
 
   drawnStaves = [];
   drawnNotes = [];
+  tieTails = new Map();
 
   const total = measureCount(props.document);
   const perSystem = props.measuresPerSystem;

@@ -14,7 +14,15 @@
 
 import { computed, ref, shallowRef } from "vue";
 
-import { createDocument, createNote, fits, insertNote, measureQuarters } from "../document";
+import {
+  createDocument,
+  createNote,
+  fits,
+  insertNote,
+  measureQuarters,
+  noteAt,
+  toggleTieBefore,
+} from "../document";
 import type {
   DurationName,
   NotationCursor,
@@ -78,6 +86,16 @@ export function useNotationEditor(initial?: NotationDocument) {
   const staffCount = computed(() => document.value.staves.length);
   const barQuarters = computed(() => measureQuarters(document.value.time));
 
+  /** The note the "tie" control acts on - whichever one the cursor sits after. */
+  const noteBeforeCursor = computed(() =>
+    noteAt(document.value, { ...cursor.value, noteIndex: cursor.value.noteIndex - 1 }),
+  );
+  const canTieAtCursor = computed(() => {
+    const note = noteBeforeCursor.value;
+    return note !== undefined && !note.isRest;
+  });
+  const isTiedAtCursor = computed(() => noteBeforeCursor.value?.tiedToNext ?? false);
+
   function setDocument(next: NotationDocument): void {
     document.value = next;
   }
@@ -96,6 +114,12 @@ export function useNotationEditor(initial?: NotationDocument) {
 
   function setRestMode(isRest: boolean): void {
     activeIsRest.value = isRest;
+  }
+
+  /** Ties (or unties) the note before the cursor to whatever follows it. */
+  function toggleTie(): void {
+    if (!canTieAtCursor.value) return;
+    document.value = toggleTieBefore(document.value, cursor.value);
   }
 
   /**
@@ -147,12 +171,15 @@ export function useNotationEditor(initial?: NotationDocument) {
     lastRefusal,
     staffCount,
     barQuarters,
+    canTieAtCursor,
+    isTiedAtCursor,
     setDocument,
     setDuration,
     setDots,
     setAlter,
     setRestMode,
     placeAt,
+    toggleTie,
   };
 }
 

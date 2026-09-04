@@ -235,6 +235,26 @@ export function replaceNote(
   return next;
 }
 
+/**
+ * Toggles the tie on the note just before the cursor - the note the student
+ * most recently placed or navigated to.
+ *
+ * A tie is a property of the note it starts from (`tiedToNext`), and its
+ * partner is whatever note follows, in this measure or the next - the
+ * renderer resolves that at draw time. Rests can't be tied, and toggling on
+ * one is a no-op rather than an error: nothing about picking "tie" while
+ * sitting on a rest should look like it worked.
+ */
+export function toggleTieBefore(
+  document: NotationDocument,
+  cursor: NotationCursor,
+): NotationDocument {
+  const target = { ...cursor, noteIndex: cursor.noteIndex - 1 };
+  const note = noteAt(document, target);
+  if (!note || note.isRest) return document;
+  return replaceNote(document, target, { tiedToNext: !note.tiedToNext });
+}
+
 /** Deletes the note before the cursor, the way backspace behaves in text. */
 export function deleteNoteBefore(
   document: NotationDocument,
