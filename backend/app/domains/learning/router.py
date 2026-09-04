@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_current_user, get_db
 from app.domains.learning.schemas import (
+    CompositionSubmissionRead,
     LessonCompleteRead,
     LessonRead,
     ProgressSummary,
@@ -32,7 +33,9 @@ from app.domains.learning.service import (
     get_progress_summary,
     get_roadmap,
     mark_step_seen,
+    submit_composition,
 )
+from app.domains.notation.schemas import NotationDocument
 from app.domains.users.models import User
 
 router = APIRouter(prefix="/learning", tags=["learning"])
@@ -94,6 +97,33 @@ async def answer_quiz_step(
     """
     try:
         return await answer_quiz(db, current_user.id, lesson_slug, step_slug, payload.choice_index)
+    except LessonNotFoundError as exc:
+        raise _lesson_not_found from exc
+    except StepNotFoundError as exc:
+        raise _step_not_found from exc
+    except StepKindError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post(
+    "/lessons/{lesson_slug}/steps/{step_slug}/submit", response_model=CompositionSubmissionRead
+)
+async def submit_composition_step(
+    lesson_slug: str,
+    step_slug: str,
+    document: NotationDocument,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> CompositionSubmissionRead:
+    """Grades a composition submission against the task's requirements.
+
+    Deterministic and free - the checklist and analysis this returns don't
+    touch the AI (see the notation domain's `grading.py`). Retries are
+    unlimited; every submission is kept as its own attempt rather than
+    overwriting the last one.
+    """
+    try:
+        return await submit_composition(db, current_user.id, lesson_slug, step_slug, document)
     except LessonNotFoundError as exc:
         raise _lesson_not_found from exc
     except StepNotFoundError as exc:
