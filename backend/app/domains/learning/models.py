@@ -24,7 +24,18 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -192,4 +203,47 @@ class LessonStepTopic(Base):
         ForeignKey("topics.id", ondelete="CASCADE"),
         primary_key=True,
         index=True,
+    )
+
+
+class StepAttempt(Base):
+    """One attempt at one graded step, kept forever.
+
+    Append-only, and deliberately so. Practice retries are unlimited and
+    unpenalised, but every attempt is still evidence: the skill map reads
+    this table to work out which topics a student keeps getting wrong, and
+    overwriting a failed attempt with the eventual correct one would erase
+    exactly the signal that makes the map worth having.
+
+    The nullable columns are per-kind rather than universal - `is_correct`
+    is a quiz's whole result, `score`/`passed` are a composition's - which is
+    why none of them is required. `result` carries the detail the UI renders:
+    the explanation for a quiz, the requirement checklist and analysis
+    summary for a composition.
+    """
+
+    __tablename__ = "step_attempts"
+    __table_args__ = (Index("ix_step_attempts_user_id_step_id", "user_id", "step_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    step_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("lesson_steps.id", ondelete="CASCADE"), nullable=False
+    )
+    # What the student submitted: `{"choice_index": 2}` for a quiz, the
+    # notation document and its stored MusicXML key for a composition.
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    is_correct: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    # 0-100, and only ever advisory: a composition's *correctness* is
+    # `passed` (every stated requirement met), which is decided by
+    # deterministic rules, never by a score.
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    passed: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    result: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
