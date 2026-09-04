@@ -33,6 +33,13 @@ disallow_untyped_calls = false
 module = "app.domains.analysis.*"
 disallow_untyped_calls = false
 
+[[tool.mypy.overrides]]
+# Same music21 typing gap as app.domains.analysis - this domain builds
+# scores with music21 (Part.append, note.tie, ...) rather than only reading
+# them, which reaches the same untyped methods from the other direction.
+module = "app.domains.notation.*"
+disallow_untyped_calls = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 # Session-scoped, not function-scoped: the app's async engine (db/session.py)
