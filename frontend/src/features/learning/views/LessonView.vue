@@ -19,6 +19,7 @@ import { BaseButton, BaseCard } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
 
 import CompositionStep from "../components/CompositionStep.vue";
+import LessonCompletion from "../components/LessonCompletion.vue";
 import MultipleChoiceStep from "../components/MultipleChoiceStep.vue";
 import ReadingStep from "../components/ReadingStep.vue";
 import { useLearningStore } from "../stores/learning.store";
@@ -135,6 +136,8 @@ async function backToRoadmap(): Promise<void> {
           </BaseButton>
           <BaseButton v-if="!store.isLastStep" @click="goNext">Next</BaseButton>
         </nav>
+
+        <LessonCompletion v-if="store.isLastStep" />
       </template>
     </div>
   </main>
