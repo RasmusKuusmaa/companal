@@ -47,6 +47,14 @@ const LESSON: Lesson = {
   nextLessonSlug: "scales",
 };
 
+/** The nth choice radio, asserted to exist so a missing one fails loudly. */
+function radio(wrapper: ReturnType<typeof mount>, index: number) {
+  const inputs = wrapper.findAll("input[type='radio']");
+  const found = inputs[index];
+  if (!found) throw new Error(`No radio at index ${index} (found ${inputs.length}).`);
+  return found;
+}
+
 async function flush(): Promise<void> {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
@@ -151,7 +159,7 @@ describe("lesson player", () => {
       await store.openLesson("intervals");
 
       const wrapper = mountQuiz();
-      await wrapper.findAll("input[type='radio']")[2].setValue();
+      await radio(wrapper, 2).setValue();
       await wrapper.find("button").trigger("click");
       await flush();
 
@@ -163,7 +171,7 @@ describe("lesson player", () => {
       await store.openLesson("intervals");
 
       const wrapper = mountQuiz();
-      await wrapper.findAll("input[type='radio']")[0].setValue();
+      await radio(wrapper, 0).setValue();
       await wrapper.find("button").trigger("click");
       await flush();
 
@@ -186,7 +194,7 @@ describe("lesson player", () => {
       await store.openLesson("intervals");
 
       const wrapper = mountQuiz();
-      await wrapper.findAll("input[type='radio']")[1].setValue();
+      await radio(wrapper, 1).setValue();
       await wrapper.find("button").trigger("click");
       await flush();
 
@@ -198,7 +206,7 @@ describe("lesson player", () => {
       await store.openLesson("intervals");
 
       const wrapper = mountQuiz();
-      await wrapper.findAll("input[type='radio']")[0].setValue();
+      await radio(wrapper, 0).setValue();
       await wrapper.find("button").trigger("click");
       await flush();
 
@@ -227,7 +235,7 @@ describe("lesson player", () => {
       await store.openLesson("intervals");
 
       const wrapper = mountQuiz();
-      await wrapper.findAll("input[type='radio']")[1].setValue();
+      await radio(wrapper, 1).setValue();
       await wrapper.find("button").trigger("click");
       await flush();
 
