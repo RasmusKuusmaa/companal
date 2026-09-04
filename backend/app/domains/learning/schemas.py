@@ -25,6 +25,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domains.learning.models import CourseLevel, StepKind
+from app.domains.notation.grading import DeterministicGrade
 from app.domains.notation.requirements import Requirement
 from app.domains.notation.schemas import NotationDocument
 
@@ -53,6 +54,8 @@ __all__ = [
     "QuizAnswerResult",
     "StepSeenRead",
     "LessonCompleteRead",
+    "CompositionSubmissionRequest",
+    "CompositionSubmissionRead",
     "CourseProgress",
     "ProgressSummary",
 ]
@@ -279,6 +282,22 @@ class LessonCompleteRead(BaseModel):
     status: LessonProgressStatus
     completed_at: datetime
     next_lesson_slug: str | None = None
+
+
+class CompositionSubmissionRequest(BaseModel):
+    """What the editor sends when a student submits a composition task."""
+
+    document: NotationDocument
+
+
+class CompositionSubmissionRead(DeterministicGrade):
+    """A graded submission, kept as a `StepAttempt` - see `service.py`'s
+    `submit_composition`. Extends `DeterministicGrade` rather than wrapping
+    it, so the checklist and analysis a student sees is exactly what was
+    computed, with just the attempt's own identity riding along."""
+
+    attempt_id: uuid.UUID
+    created_at: datetime
 
 
 # --------------------------------------------------------------------------- #

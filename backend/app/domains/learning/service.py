@@ -20,6 +20,7 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core import storage
 from app.domains.learning.models import (
     Course,
     Lesson,
@@ -32,6 +33,7 @@ from app.domains.learning.models import (
 from app.domains.learning.schemas import (
     CompositionPayload,
     CompositionStepRead,
+    CompositionSubmissionRead,
     CourseProgress,
     CourseRef,
     CourseWithLessons,
@@ -49,6 +51,8 @@ from app.domains.learning.schemas import (
     RoadmapRead,
     StepSeenRead,
 )
+from app.domains.notation.grading import grade_submission
+from app.domains.notation.schemas import NotationDocument
 
 
 class LessonNotFoundError(Exception):
@@ -351,6 +355,67 @@ async def answer_quiz(
         is_correct=is_correct,
         correct_index=quiz.answer_index,
         explanation=quiz.explanation,
+    )
+
+
+def _attempt_storage_key(attempt_id: uuid.UUID) -> str:
+    return f"learning-attempts/{attempt_id}.musicxml"
+
+
+async def submit_composition(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    lesson_slug: str,
+    step_slug: str,
+    document: NotationDocument,
+) -> CompositionSubmissionRead:
+    """Grades a composition submission and keeps it.
+
+    Grading is entirely deterministic here - `grade_submission` never calls
+    the AI (see `notation.grading` and `notation.ai_grading` for where that
+    happens, opt-in, on top of this). Every submission is kept, the same as
+    a quiz attempt: retries are free, and the skill map later reads the
+    full history, not just the latest try.
+
+    The MusicXML is written to storage before the database row - see
+    `projects.service.add_version` for the same ordering and the reasoning
+    behind it: a failed write costs nothing, a failed commit after a
+    successful write leaves only an orphaned file.
+    """
+    lesson = await _get_lesson_by_slug(db, lesson_slug)
+    step = await _get_step(db, lesson, step_slug)
+    if step.kind is not StepKind.COMPOSITION:
+        raise StepKindError(f"step '{step_slug}' is a {step.kind.value} step, not a composition")
+
+    composition = CompositionPayload.model_validate(step.payload)
+    grade, musicxml = grade_submission(document, composition.requirements)
+
+    attempt_id = uuid.uuid4()
+    storage_key = _attempt_storage_key(attempt_id)
+    await storage.save_file(storage_key, musicxml)
+
+    result = grade.model_dump(mode="json")
+    result["storage_key"] = storage_key
+
+    attempt = StepAttempt(
+        id=attempt_id,
+        user_id=user_id,
+        step_id=step.id,
+        payload={"document": document.model_dump(mode="json")},
+        score=grade.overall_score,
+        passed=grade.passed,
+        result=result,
+    )
+    db.add(attempt)
+
+    progress = await _ensure_progress(db, user_id, lesson.id)
+    progress.current_step_id = step.id
+
+    await db.commit()
+    await db.refresh(attempt)
+
+    return CompositionSubmissionRead(
+        attempt_id=attempt.id, created_at=attempt.created_at, **grade.model_dump()
     )
 
 
