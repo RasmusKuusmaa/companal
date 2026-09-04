@@ -367,6 +367,39 @@ def _attempt_storage_key(attempt_id: uuid.UUID) -> str:
     return f"learning-attempts/{attempt_id}.musicxml"
 
 
+async def _reusable_ai_feedback(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    step_id: uuid.UUID,
+    document: NotationDocument,
+    skill_level: SkillLevel,
+) -> CompositionFeedback | None:
+    """An identical resubmission - same document, same requested skill level -
+    reuses the AI commentary from the matching prior attempt instead of
+    paying for another Claude call: resubmitting unchanged work to see the
+    checklist again shouldn't burn quota or spend.
+
+    Compared in Python rather than as a JSONB query - one user's attempts at
+    one step is a small, bounded set, and equality on the decoded payload is
+    simpler to get right than a JSONB containment query.
+    """
+    document_json = document.model_dump(mode="json")
+    attempts = await db.scalars(
+        select(StepAttempt)
+        .where(StepAttempt.user_id == user_id, StepAttempt.step_id == step_id)
+        .order_by(StepAttempt.created_at.desc())
+    )
+    for attempt in attempts:
+        if (
+            attempt.payload.get("document") == document_json
+            and attempt.payload.get("skill_level") == skill_level.value
+        ):
+            cached = attempt.result.get("ai_feedback")
+            if cached is not None:
+                return CompositionFeedback.model_validate(cached)
+    return None
+
+
 async def submit_composition(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -389,7 +422,9 @@ async def submit_composition(
 
     Every submission is kept, the same as a quiz attempt: retries are free,
     and the skill map later reads the full history, not just the latest
-    try.
+    try. Resubmitting the exact same document at the same skill level
+    reuses the AI commentary from that earlier attempt instead of paying
+    for a new Claude call - see `_reusable_ai_feedback`.
 
     The MusicXML is written to storage before the database row - see
     `projects.service.add_version` for the same ordering and the reasoning
@@ -406,20 +441,22 @@ async def submit_composition(
 
     ai_feedback: CompositionFeedback | None = None
     if with_ai_feedback:
-        try:
-            ai_feedback, usage = generate_exercise_feedback(
-                lesson.title,
-                composition.brief,
-                grade.requirement_results,
-                analysis_bundle(grade),
-                skill_level,
-            )
-        except AIGradingError:
-            ai_feedback = None
-        else:
-            await billing_service.record_ai_usage(
-                db, user_id, AiUsageKind.EXERCISE_GRADING, usage
-            )
+        ai_feedback = await _reusable_ai_feedback(db, user_id, step.id, document, skill_level)
+        if ai_feedback is None:
+            try:
+                ai_feedback, usage = generate_exercise_feedback(
+                    lesson.title,
+                    composition.brief,
+                    grade.requirement_results,
+                    analysis_bundle(grade),
+                    skill_level,
+                )
+            except AIGradingError:
+                ai_feedback = None
+            else:
+                await billing_service.record_ai_usage(
+                    db, user_id, AiUsageKind.EXERCISE_GRADING, usage
+                )
 
     attempt_id = uuid.uuid4()
     storage_key = _attempt_storage_key(attempt_id)
@@ -433,7 +470,10 @@ async def submit_composition(
         id=attempt_id,
         user_id=user_id,
         step_id=step.id,
-        payload={"document": document.model_dump(mode="json")},
+        payload={
+            "document": document.model_dump(mode="json"),
+            "skill_level": skill_level.value,
+        },
         score=grade.overall_score,
         passed=grade.passed,
         result=result,
