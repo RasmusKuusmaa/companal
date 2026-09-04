@@ -14,7 +14,7 @@
  * what's currently on screen.
  */
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Renderer, Stave } from "vexflow";
+import { Barline, Renderer, Stave } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
@@ -34,6 +34,8 @@ const host = ref<HTMLDivElement | null>(null);
 const STAFF_HEIGHT = 100;
 const SYSTEM_GAP = 30;
 const PADDING_X = 10;
+/** Left gutter for part names, when any staff has one. */
+const NAME_GUTTER = 64;
 const PADDING_Y = 20;
 /** Extra width for the first measure of a system, which carries the clef. */
 const FIRST_MEASURE_EXTRA = 60;
@@ -81,7 +83,9 @@ function draw(): void {
 
   const total = measureCount(props.document);
   const perSystem = props.measuresPerSystem;
-  const usableWidth = width - PADDING_X * 2;
+  const hasNames = props.document.staves.some((staff) => staff.name);
+  const gutter = hasNames ? NAME_GUTTER : 0;
+  const usableWidth = width - PADDING_X * 2 - gutter;
 
   for (let measureIndex = 0; measureIndex < total; measureIndex += 1) {
     const systemIndex = Math.floor(measureIndex / perSystem);
@@ -93,7 +97,7 @@ function draw(): void {
     const baseWidth = (usableWidth - FIRST_MEASURE_EXTRA) / inThisSystem;
     const measureWidth = columnIndex === 0 ? baseWidth + FIRST_MEASURE_EXTRA : baseWidth;
     const x =
-      PADDING_X + (columnIndex === 0 ? 0 : FIRST_MEASURE_EXTRA + baseWidth * columnIndex);
+      PADDING_X + gutter + (columnIndex === 0 ? 0 : FIRST_MEASURE_EXTRA + baseWidth * columnIndex);
 
     props.document.staves.forEach((staff, staffIndex) => {
       const y =
@@ -102,6 +106,10 @@ function draw(): void {
         staffIndex * STAFF_HEIGHT;
 
       const stave = new Stave(x, y, measureWidth);
+
+      // Clef and key signature restate at the head of every system, the way
+      // they do in print; the time signature appears once, at the start of
+      // the piece, and only reappears if the metre actually changes.
       if (columnIndex === 0) {
         stave.addClef(staff.clef);
         stave.addKeySignature(keySignatureName(props.document.fifths));
@@ -109,7 +117,22 @@ function draw(): void {
           stave.addTimeSignature(`${props.document.time.beats}/${props.document.time.beatType}`);
         }
       }
+
+      if (measureIndex === total - 1) {
+        stave.setEndBarType(Barline.type.END);
+      }
+
       stave.setContext(context).draw();
+
+      // Part names are drawn directly rather than through a stave modifier:
+      // VexFlow 5 has no `Stave.setText`, and a label in the gutter is
+      // simpler than a modifier that would also have to reserve its space.
+      if (staff.name && columnIndex === 0) {
+        context.save();
+        context.setFont("system-ui, sans-serif", 11);
+        context.fillText(staff.name, PADDING_X, y + STAFF_HEIGHT / 2 - 10);
+        context.restore();
+      }
       drawnStaves.push({ staffIndex, measureIndex, stave });
     });
   }
