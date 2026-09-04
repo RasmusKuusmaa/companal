@@ -14,7 +14,7 @@
  * what's currently on screen.
  */
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Barline, Formatter, Renderer, Stave, StaveTie, type StaveNote } from "vexflow";
+import { Barline, Formatter, Renderer, Stave, StaveConnector, StaveTie, type StaveNote } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
@@ -243,6 +243,9 @@ function draw(): void {
     const x =
       PADDING_X + gutter + (columnIndex === 0 ? 0 : FIRST_MEASURE_EXTRA + baseWidth * columnIndex);
 
+    let topStave: Stave | undefined;
+    let bottomStave: Stave | undefined;
+
     props.document.staves.forEach((staff, staffIndex) => {
       const y =
         PADDING_Y +
@@ -280,7 +283,31 @@ function draw(): void {
         context.restore();
       }
       drawnStaves.push({ staffIndex, measureIndex, stave });
+
+      if (staffIndex === 0) topStave = stave;
+      bottomStave = stave;
     });
+
+    // A grand staff reads as one instrument, not two coincidentally
+    // adjacent staves - the brace says so at a glance, and the connecting
+    // barlines make every measure boundary one continuous line top to
+    // bottom instead of two separate marks with a gap between them.
+    if (topStave && bottomStave && props.document.staves.length > 1) {
+      if (columnIndex === 0) {
+        new StaveConnector(topStave, bottomStave)
+          .setType("brace")
+          .setContext(context)
+          .draw();
+        new StaveConnector(topStave, bottomStave)
+          .setType("singleLeft")
+          .setContext(context)
+          .draw();
+      }
+      new StaveConnector(topStave, bottomStave)
+        .setType("singleRight")
+        .setContext(context)
+        .draw();
+    }
   }
 }
 
