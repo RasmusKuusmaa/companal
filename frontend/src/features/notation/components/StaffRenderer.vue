@@ -306,7 +306,9 @@ onBeforeUnmount(() => {
   resizeObserver = null;
 });
 
-watch(() => props.document, draw, { deep: true });
+// Not a deep watch: documents are replaced rather than mutated (see the
+// edit helpers in ../document), so identity changing is the signal.
+watch(() => props.document, draw);
 watch(() => props.measuresPerSystem, draw);
 
 defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => drawnNotes });
