@@ -10,16 +10,32 @@ router.
 
 import asyncio
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 
+from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.domains.notation.builder import to_musicxml_bytes
+from app.domains.notation.importer import NotationImportError, import_musicxml
 from app.domains.notation.schemas import NotationDocument
 from app.domains.users.models import User
 
 router = APIRouter(prefix="/notation", tags=["notation"])
 
 _MUSICXML_CONTENT_TYPE = "application/vnd.recordare.musicxml+xml"
+
+
+async def _read_upload(file: UploadFile) -> bytes:
+    content = await file.read()
+    if not content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="The uploaded file is empty."
+        )
+    if len(content) > settings.MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File exceeds the maximum allowed upload size.",
+        )
+    return content
 
 
 @router.post("/musicxml")
@@ -35,3 +51,21 @@ async def export_musicxml(
     """
     content = await asyncio.to_thread(to_musicxml_bytes, document)
     return Response(content=content, media_type=_MUSICXML_CONTENT_TYPE)
+
+
+@router.post("/import", response_model=NotationDocument)
+async def import_score(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+) -> NotationDocument:
+    """Opens an uploaded score in the editor.
+
+    Only what the editor can represent comes back - see `importer.py` for
+    exactly what that excludes (tuplets, chords, anything past a double
+    sharp/flat). A file outside that is a 400, not a best-effort guess.
+    """
+    content = await _read_upload(file)
+    try:
+        return await asyncio.to_thread(import_musicxml, content, file.filename or "upload.musicxml")
+    except NotationImportError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
