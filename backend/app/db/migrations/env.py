@@ -19,6 +19,7 @@ from app.db.base import Base
 # Import every domain's models so they register on Base.metadata before
 # autogenerate compares it against the live database.
 from app.domains.auth.models import RefreshToken  # noqa: F401
+from app.domains.billing.models import AiUsage, Subscription  # noqa: F401
 from app.domains.feedback.models import Feedback  # noqa: F401
 from app.domains.learning.models import (  # noqa: F401
     Course,
