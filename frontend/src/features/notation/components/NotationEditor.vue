@@ -14,19 +14,26 @@ import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
 import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
+import MeasureControls from "./MeasureControls.vue";
 import RestToggle from "./RestToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
 import TieToggle from "./TieToggle.vue";
 
 const props = defineProps<{
   modelValue: NotationDocument;
+  /** Bounds passed straight to useNotationEditor - see its own docs. */
+  minMeasures?: number;
+  maxMeasures?: number;
 }>();
 
 const emit = defineEmits<{
   (event: "update:modelValue", value: NotationDocument): void;
 }>();
 
-const editor = useNotationEditor(props.modelValue);
+const editor = useNotationEditor(props.modelValue, {
+  minMeasures: props.minMeasures,
+  maxMeasures: props.maxMeasures,
+});
 
 // The document flows both ways: the parent may replace it (loading a
 // starter score, resetting an exercise), and every edit flows back out.
@@ -135,6 +142,13 @@ function handleKeydown(event: KeyboardEvent): void {
         :active="editor.isTiedAtCursor.value"
         :disabled="!editor.canTieAtCursor.value"
         @toggle="editor.toggleTie"
+      />
+      <MeasureControls
+        :count="editor.measureCount.value"
+        :can-add="editor.canAddMeasure.value"
+        :can-remove="editor.canRemoveMeasure.value"
+        @add="editor.addMeasure"
+        @remove="editor.removeMeasure"
       />
     </div>
 

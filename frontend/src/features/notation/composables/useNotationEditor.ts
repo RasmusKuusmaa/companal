@@ -16,6 +16,7 @@ import { computed, ref, shallowRef, toRaw } from "vue";
 
 import { CLEF_MIDDLE_LINE } from "../constants";
 import {
+  appendMeasure,
   createDocument,
   createNote,
   deleteNoteAt,
@@ -24,10 +25,12 @@ import {
   fits,
   insertNote,
   locateNote,
+  measureCount as countMeasures,
   measureQuarters,
   moveCursor,
   nearestOctaveForStep,
   noteAt,
+  removeLastMeasure,
   toggleTieBefore,
 } from "../document";
 import type {
@@ -46,7 +49,23 @@ export interface StaffPlacement {
   octave: number;
 }
 
-export function useNotationEditor(initial?: NotationDocument) {
+export interface NotationEditorOptions {
+  /**
+   * Bounds on how many measures the score may have. Set by a composition
+   * task that names a bar count - "an 8-bar melody" - so the editor can't
+   * drift away from what the brief actually asked for. Undefined means no
+   * bound: free composition and the editor's own defaults have no reason
+   * to enforce a length.
+   */
+  minMeasures?: number;
+  maxMeasures?: number;
+}
+
+export function useNotationEditor(
+  initial?: NotationDocument,
+  options: NotationEditorOptions = {},
+) {
+  const { minMeasures = 1, maxMeasures } = options;
   /**
    * `shallowRef`, not `ref`. Every edit replaces the whole document, so deep
    * reactivity buys nothing - and it actively breaks things: a deeply
@@ -99,6 +118,11 @@ export function useNotationEditor(initial?: NotationDocument) {
 
   const staffCount = computed(() => document.value.staves.length);
   const barQuarters = computed(() => measureQuarters(document.value.time));
+  const measureCount = computed(() => countMeasures(document.value));
+  const canAddMeasure = computed(
+    () => maxMeasures === undefined || measureCount.value < maxMeasures,
+  );
+  const canRemoveMeasure = computed(() => measureCount.value > minMeasures);
 
   /** The note the "tie" control acts on - whichever one the cursor sits after. */
   const noteBeforeCursor = computed(() =>
@@ -164,6 +188,38 @@ export function useNotationEditor(initial?: NotationDocument) {
     const result = deleteNoteAt(document.value, cursor.value);
     document.value = result.document;
     cursor.value = result.cursor;
+  }
+
+  /** Adds an empty measure to the end of every staff. */
+  function addMeasure(): void {
+    if (!canAddMeasure.value) return;
+    document.value = appendMeasure(document.value);
+  }
+
+  /**
+   * Removes the last measure from every staff.
+   *
+   * If the cursor was sitting in the measure that just disappeared, it
+   * moves to the end of the new last measure - the same place a text
+   * cursor lands when the line it was on is deleted, rather than pointing
+   * at a measure that no longer exists.
+   */
+  function removeMeasure(): void {
+    if (!canRemoveMeasure.value) return;
+    const next = removeLastMeasure(document.value);
+    document.value = next;
+
+    const lastIndex = countMeasures(next) - 1;
+    if (cursor.value.measureIndex > lastIndex) {
+      const voice = next.staves[cursor.value.staffIndex]?.measures[lastIndex]?.voices.find(
+        (candidate) => candidate.id === cursor.value.voiceId,
+      );
+      cursor.value = {
+        ...cursor.value,
+        measureIndex: lastIndex,
+        noteIndex: voice?.notes.length ?? 0,
+      };
+    }
   }
 
   /**
@@ -245,6 +301,9 @@ export function useNotationEditor(initial?: NotationDocument) {
     lastRefusal,
     staffCount,
     barQuarters,
+    measureCount,
+    canAddMeasure,
+    canRemoveMeasure,
     canTieAtCursor,
     isTiedAtCursor,
     cursorNoteId,
@@ -261,6 +320,8 @@ export function useNotationEditor(initial?: NotationDocument) {
     moveRight,
     deleteBefore,
     deleteAtCursor,
+    addMeasure,
+    removeMeasure,
   };
 }
 
