@@ -72,28 +72,30 @@ Reading and multiple-choice work end to end. No notation yet.
 
 VexFlow for engraving, custom interaction layer on top. Click **and** keyboard entry from the start.
 
-- [ ] `add vexflow dependency` — pinned in `package.json`
-- [ ] `add notation document types` — `{ key, timeSignature, tempo, staves[{ clef, voices[{ notes[] }] }] }`
-- [ ] `add notation document helpers` — measure/voice traversal, duration arithmetic, insertion points
-- [ ] `add duration and accidental constants` — whole through 32nd, dots, ♯ ♭ ♮ ♯♯ ♭♭
-- [ ] `add staff renderer component` — VexFlow canvas, resize handling
-- [ ] `add clef key and time signature rendering` — from the document, not hardcoded
-- [ ] `add note rendering from the notation document` — notes, rests, dots, accidentals, beams
-- [ ] `add click to pitch mapping` — y-coordinate → staff line/space → diatonic pitch, clef-aware
-- [ ] `add note placement on staff click` — places at the active duration and accidental
-- [ ] `add duration palette toolbar` — active duration, dot toggle
-- [ ] `add accidental palette` — including double accidentals
-- [ ] `add rest entry` — same placement flow, rest glyphs
-- [ ] `add tie entry between adjacent notes` — ties render and survive export
-- [ ] `add note deletion and cursor navigation` — click-select, delete, arrow-key movement
-- [ ] `add keyboard entry for pitch letters` — `A`–`G` places at the cursor, octave follows proximity
-- [ ] `add keyboard shortcuts for durations and dots` — `1`–`7`, `.`; the fast path for anyone who reads music
-- [ ] `add measure add and remove controls` — with the bar count the exercise expects
-- [ ] `add webaudio playback engine` — scheduled oscillator voices with an envelope, no dependency
-- [ ] `add playback transport controls` — play, stop, tempo
-- [ ] `add playback cursor highlight` — follows the sounding note
-- [ ] `add notation document tests` — helpers, insertion, duration maths
-- [ ] `add notation editor component tests` — click mapping, keyboard entry, deletion
+- [x] `add vexflow dependency` — pinned in `package.json`
+- [x] `add notation document types` — `{ key, timeSignature, tempo, staves[{ clef, voices[{ notes[] }] }] }`
+- [x] `add notation document helpers` — measure/voice traversal, duration arithmetic, insertion points
+- [x] `add duration and accidental constants` — whole through 32nd, dots, ♯ ♭ ♮ ♯♯ ♭♭
+- [x] `add staff renderer component` — VexFlow canvas, resize handling
+- [x] `add clef key and time signature rendering` — from the document, not hardcoded
+- [x] `add note rendering from the notation document` — notes, rests, dots, accidentals, beams
+- [x] `add click to pitch mapping` — y-coordinate → staff line/space → diatonic pitch, clef-aware
+- [x] `add note placement on staff click` — places at the active duration and accidental
+- [x] `add duration palette toolbar` — active duration, dot toggle
+- [x] `add accidental palette` — including double accidentals
+- [x] `add rest entry` — same placement flow, rest glyphs
+- [x] `add tie entry between adjacent notes` — ties render and survive export
+- [x] `add note deletion and cursor navigation` — click-select, delete, arrow-key movement
+- [x] `add keyboard entry for pitch letters` — `A`–`G` places at the cursor, octave follows proximity
+- [x] `fix notation editor cloning a reactive document from v-model` — `toRaw()` at the document boundary; a v-model-bound document arrives as a Vue proxy, which `structuredClone` refuses
+- [x] `add keyboard shortcuts for durations and dots` — `1`–`6` (one per named duration), `.`, plus `R`/`T` for the rest and tie toggles already promised in their tooltips
+- [x] `add measure add and remove controls` — with the bar count the exercise expects
+- [x] `add webaudio playback engine` — pure schedule builder: flattens a document into timed pitches, merging tie chains into one sounding event
+- [x] `add webaudio oscillator scheduling to the playback engine` — the AudioContext-touching half: oscillator + gain envelope per note, played via the schedule
+- [x] `add playback transport controls` — play, stop, tempo
+- [x] `add playback cursor highlight` — follows the sounding note
+- [x] `add notation document tests` — helpers, insertion, duration maths
+- [x] `add notation editor component tests` — click mapping, keyboard entry, deletion
 
 ## Phase D — composition grading pipeline
 
