@@ -127,26 +127,26 @@ Editor output becomes MusicXML, gets checked against declarative rules, then opt
 Lands directly after the first AI spend appears. Free gets 5 AI gradings a month; everything
 deterministic stays free forever.
 
-- [ ] `add subscription model` — one row per user, `tier`, `status`, `current_period_end`, dormant Stripe id columns
-- [ ] `add ai usage ledger model` — one row per Claude call with token counts and estimated cost
-- [ ] `add subscription and usage migration`
-- [ ] `add feature matrix for free and premium tiers` — single source of truth in `core/features.py`
-- [ ] `add subscription service with a default free tier` — users without a row are free, no backfill needed
-- [ ] `add require feature dependency` — FastAPI dependency raising 402 with an upgrade payload
-- [ ] `add monthly ai quota enforcement` — counts the ledger over the current period
-- [ ] `add global ai spend cap` — config ceiling that trips before your bill does
-- [ ] `record ai usage on every claude call` — feedback and exercise grading both
-- [ ] `add feedback result reuse to avoid rebilling` — an unchanged submission returns the stored grade
-- [ ] `degrade gracefully when the api key is unset` — deterministic grading everywhere, no upgrade prompts, no 503s
-- [ ] `add subscription and usage endpoints` — current tier, quota remaining, period end
-- [ ] `add stripe webhook route stub` — signature verification and tier transitions, inert without keys
-- [ ] `add billing api client`
-- [ ] `add subscription store`
-- [ ] `add ai usage meter component` — "3 / 5 this month · resets 1 Oct"
-- [ ] `add upgrade card for gated ai feedback` — shown in place of feedback when quota is spent
-- [ ] `add pricing page` — what free actually includes, honestly
-- [ ] `add tier and feature matrix tests`
-- [ ] `add quota enforcement tests` — under, at and over the limit; cap tripped; key absent
+- [x] `add subscription model` — one row per user, `tier`, `status`, `current_period_end`, dormant Stripe id columns
+- [x] `add ai usage ledger model` — one row per Claude call with token counts and estimated cost
+- [x] `add subscription and usage migration`
+- [x] `add feature matrix for free and premium tiers` — single source of truth in `core/features.py`
+- [x] `add subscription service with a default free tier` — users without a row are free, no backfill needed
+- [x] `add require feature dependency` — FastAPI dependency raising 402 with an upgrade payload
+- [x] `add monthly ai quota enforcement` — counts the ledger over the current period
+- [x] `add global ai spend cap` — config ceiling that trips before your bill does
+- [x] `record ai usage on every claude call` — feedback and exercise grading both
+- [x] `add feedback result reuse to avoid rebilling` — an unchanged submission returns the stored grade
+- [x] `degrade gracefully when the api key is unset` — deterministic grading everywhere, no upgrade prompts, no 503s
+- [x] `add subscription and usage endpoints` — current tier, quota remaining, period end
+- [x] `add stripe webhook route stub` — signature verification and tier transitions, inert without keys
+- [x] `add billing api client`
+- [x] `add subscription store`
+- [x] `add ai usage meter component` — "3 / 5 this month · resets 1 Oct"
+- [x] `add upgrade card for gated ai feedback` — shown in place of feedback when quota is spent
+- [x] `add pricing page` — what free actually includes, honestly
+- [x] `add tier and feature matrix tests`
+- [x] `add quota enforcement tests` — under, at and over the limit; cap tripped; key absent
 
 ## Phase F — editor: grand staff, voices, upload
 
