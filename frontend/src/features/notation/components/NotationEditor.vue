@@ -19,6 +19,7 @@ import MeasureControls from "./MeasureControls.vue";
 import PlaybackTransport from "./PlaybackTransport.vue";
 import RestToggle from "./RestToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
+import StaffSelector from "./StaffSelector.vue";
 import TieToggle from "./TieToggle.vue";
 
 const props = defineProps<{
@@ -133,6 +134,11 @@ function handleKeydown(event: KeyboardEvent): void {
 <template>
   <div class="flex flex-col gap-3" tabindex="0" @keydown="handleKeydown">
     <div class="flex flex-wrap items-center gap-4">
+      <StaffSelector
+        :staves="editor.document.value.staves"
+        :active-staff-index="editor.cursor.value.staffIndex"
+        @select="editor.setActiveStaff"
+      />
       <DurationPalette
         :duration="editor.activeDuration.value"
         :dots="editor.activeDots.value"

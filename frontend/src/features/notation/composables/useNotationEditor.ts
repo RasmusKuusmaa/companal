@@ -173,6 +173,26 @@ export function useNotationEditor(
     if (located) cursor.value = located;
   }
 
+  /**
+   * Switches keyboard and click entry to a different staff, landing at the
+   * end of its first voice in the cursor's current measure.
+   *
+   * A plain focus move, not an edit - unlike clicking blank staff space
+   * (`placeAt`), this never places a note, which is what makes it usable
+   * to reach an empty second staff that has nothing on it yet to click.
+   */
+  function setActiveStaff(staffIndex: number): void {
+    const measure = document.value.staves[staffIndex]?.measures[cursor.value.measureIndex];
+    const voice = measure?.voices[0];
+    if (!voice) return;
+    cursor.value = {
+      staffIndex,
+      measureIndex: cursor.value.measureIndex,
+      voiceId: voice.id,
+      noteIndex: voice.notes.length,
+    };
+  }
+
   function moveLeft(): void {
     cursor.value = moveCursor(document.value, cursor.value, -1);
   }
@@ -322,6 +342,7 @@ export function useNotationEditor(
     placeStep,
     toggleTie,
     selectNote,
+    setActiveStaff,
     moveLeft,
     moveRight,
     deleteBefore,
