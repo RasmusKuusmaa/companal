@@ -14,11 +14,12 @@
  * what's currently on screen.
  */
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Barline, Renderer, Stave } from "vexflow";
+import { Barline, Formatter, Renderer, Stave } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
-import type { NotationDocument } from "../types";
+import type { NotationDocument, NotationNote } from "../types";
+import { applyAccidentals, buildBeams, buildTies, buildVoice } from "../vexflow";
 
 const props = withDefaults(
   defineProps<{
@@ -39,6 +40,8 @@ const NAME_GUTTER = 64;
 const PADDING_Y = 20;
 /** Extra width for the first measure of a system, which carries the clef. */
 const FIRST_MEASURE_EXTRA = 60;
+/** Breathing room so notes don't sit against the barline. */
+const NOTE_PADDING = 20;
 
 let renderer: Renderer | null = null;
 let resizeObserver: ResizeObserver | null = null;
@@ -58,8 +61,76 @@ export interface DrawnStave {
 }
 let drawnStaves: DrawnStave[] = [];
 
+/** Where each note ended up, so a click can find the note it landed on. */
+export interface DrawnNote {
+  note: NotationNote;
+  staffIndex: number;
+  measureIndex: number;
+  voiceId: string;
+  noteIndex: number;
+  x: number;
+  width: number;
+}
+let drawnNotes: DrawnNote[] = [];
+
 function systemCount(): number {
   return Math.max(1, Math.ceil(measureCount(props.document) / props.measuresPerSystem));
+}
+
+/**
+ * Draws every voice of one measure onto its stave.
+ *
+ * The voices of a measure are formatted together, not one after another, so
+ * that a soprano crotchet and an alto minim starting on the same beat line
+ * up vertically the way they must in a score.
+ */
+function drawMeasureNotes(
+  context: ReturnType<Renderer["getContext"]>,
+  stave: Stave,
+  staffIndex: number,
+  measureIndex: number,
+): void {
+  const staff = props.document.staves[staffIndex];
+  const measure = staff?.measures[measureIndex];
+  if (!staff || !measure) return;
+
+  const built = measure.voices
+    .filter((voice) => voice.notes.length > 0)
+    .map((voice) => ({ voiceId: voice.id, ...buildVoice(props.document, voice, staff.clef) }));
+  if (built.length === 0) return;
+
+  const voices = built.map((entry) => entry.voice);
+  applyAccidentals(props.document, voices);
+
+  const formatter = new Formatter();
+  formatter.joinVoices(voices);
+  formatter.format(voices, stave.getNoteEndX() - stave.getNoteStartX() - NOTE_PADDING);
+
+  for (const entry of built) {
+    entry.voice.draw(context, stave);
+
+    for (const beam of buildBeams(entry)) {
+      beam.setContext(context).draw();
+    }
+    for (const tie of buildTies(entry)) {
+      tie.setContext(context).draw();
+    }
+
+    entry.notes.forEach((drawn, noteIndex) => {
+      // `getAbsoluteX`/`getWidth` rather than `getBoundingBox`: the bounding
+      // box measures every attached glyph, which drags in canvas text
+      // metrics. The head's x and width are all a hit test needs.
+      drawnNotes.push({
+        note: drawn.note,
+        staffIndex,
+        measureIndex,
+        voiceId: entry.voiceId,
+        noteIndex,
+        x: drawn.staveNote.getAbsoluteX(),
+        width: drawn.staveNote.getWidth(),
+      });
+    });
+  }
 }
 
 function draw(): void {
@@ -80,6 +151,7 @@ function draw(): void {
   context.clear();
 
   drawnStaves = [];
+  drawnNotes = [];
 
   const total = measureCount(props.document);
   const perSystem = props.measuresPerSystem;
@@ -124,6 +196,8 @@ function draw(): void {
 
       stave.setContext(context).draw();
 
+      drawMeasureNotes(context, stave, staffIndex, measureIndex);
+
       // Part names are drawn directly rather than through a stave modifier:
       // VexFlow 5 has no `Stave.setText`, and a label in the gutter is
       // simpler than a modifier that would also have to reserve its space.
@@ -154,7 +228,7 @@ onBeforeUnmount(() => {
 watch(() => props.document, draw, { deep: true });
 watch(() => props.measuresPerSystem, draw);
 
-defineExpose({ redraw: draw });
+defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => drawnNotes });
 </script>
 
 <template>
