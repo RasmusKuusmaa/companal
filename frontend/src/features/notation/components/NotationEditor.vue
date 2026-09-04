@@ -13,6 +13,7 @@ import { useNotationEditor } from "../composables/useNotationEditor";
 import type { NotationDocument } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
+import RestToggle from "./RestToggle.vue";
 import StaffRenderer from "./StaffRenderer.vue";
 
 const props = defineProps<{
@@ -47,6 +48,7 @@ watch(editor.document, (next) => emit("update:modelValue", next));
         @update:dots="editor.setDots"
       />
       <AccidentalPalette :alter="editor.activeAlter.value" @update:alter="editor.setAlter" />
+      <RestToggle :active="editor.activeIsRest.value" @update:active="editor.setRestMode" />
     </div>
 
     <StaffRenderer :document="editor.document.value" @staff-click="editor.placeAt" />

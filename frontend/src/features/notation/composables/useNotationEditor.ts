@@ -57,6 +57,14 @@ export function useNotationEditor(initial?: NotationDocument) {
    * it's chosen for, not to a whole run the way duration does.
    */
   const activeAlter = ref(0);
+  /**
+   * Whether the next placed note is a rest.
+   *
+   * Persistent like duration, not one-shot like the accidental: a bar of
+   * rests is entered as a run of clicks with rest mode held on, the same
+   * way a run of eighths is entered with eighth-note duration held on.
+   */
+  const activeIsRest = ref(false);
 
   /**
    * Set when a note can't be entered - a full bar, most often.
@@ -86,6 +94,10 @@ export function useNotationEditor(initial?: NotationDocument) {
     activeAlter.value = alter;
   }
 
+  function setRestMode(isRest: boolean): void {
+    activeIsRest.value = isRest;
+  }
+
   /**
    * Enters a note where the student clicked.
    *
@@ -112,6 +124,7 @@ export function useNotationEditor(initial?: NotationDocument) {
       alter: activeAlter.value,
       duration: activeDuration.value,
       dots: activeDots.value,
+      isRest: activeIsRest.value,
     });
 
     const result = insertNote(document.value, target, note);
@@ -130,6 +143,7 @@ export function useNotationEditor(initial?: NotationDocument) {
     activeDuration,
     activeDots,
     activeAlter,
+    activeIsRest,
     lastRefusal,
     staffCount,
     barQuarters,
@@ -137,6 +151,7 @@ export function useNotationEditor(initial?: NotationDocument) {
     setDuration,
     setDots,
     setAlter,
+    setRestMode,
     placeAt,
   };
 }
