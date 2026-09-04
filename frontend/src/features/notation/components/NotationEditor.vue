@@ -10,7 +10,7 @@
 import { watch } from "vue";
 
 import { useNotationEditor } from "../composables/useNotationEditor";
-import { PITCH_STEPS } from "../constants";
+import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
 import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
 import DurationPalette from "./DurationPalette.vue";
@@ -54,10 +54,12 @@ function handleStaffClick(click: StaffClick): void {
 }
 
 /**
- * Arrow keys move the cursor, Backspace/Delete remove around it - the same
- * bindings a text editor uses, which is deliberate: anyone who has typed
- * text already knows this vocabulary, and it's one less thing to teach
- * before a student can start writing music.
+ * Arrow keys move the cursor, Backspace/Delete remove around it, digits pick
+ * a duration, "." cycles the dot, R and T toggle rest and tie mode - the
+ * whole vocabulary a reader of music expects, so an exercise can be entered
+ * without leaving the keyboard once it's mastered. The mouse stays the
+ * on-ramp: every one of these has a clickable equivalent in the toolbar
+ * above, which is what a first-time user reaches for.
  *
  * Scoped to this component's own keydown (via the wrapping div's tabindex),
  * not a window listener - so the editor only responds to these keys when
@@ -82,13 +84,35 @@ function handleKeydown(event: KeyboardEvent): void {
       event.preventDefault();
       editor.deleteAtCursor();
       return;
+    case ".":
+      event.preventDefault();
+      editor.setDots(editor.activeDots.value >= MAX_DOTS ? 0 : editor.activeDots.value + 1);
+      return;
   }
 
-  // A-G, unmodified: the letter-name fast path. Anything held with the key
-  // (Ctrl/Cmd/Alt) is left alone so browser and OS shortcuts on those same
-  // letters - Cmd+A select-all, say - keep working.
+  // Everything past this point is a bare letter or digit; a modifier held
+  // down means the browser or OS owns this keystroke instead (Cmd+A
+  // select-all shares a key with the pitch A, for one).
   if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+  const durationSpec = DURATIONS.find((spec) => spec.shortcut === event.key);
+  if (durationSpec) {
+    event.preventDefault();
+    editor.setDuration(durationSpec.name);
+    return;
+  }
+
   const letter = event.key.toUpperCase();
+  if (letter === "R") {
+    event.preventDefault();
+    editor.setRestMode(!editor.activeIsRest.value);
+    return;
+  }
+  if (letter === "T") {
+    event.preventDefault();
+    editor.toggleTie();
+    return;
+  }
   if ((PITCH_STEPS as readonly string[]).includes(letter)) {
     event.preventDefault();
     editor.placeStep(letter as PitchStep);
