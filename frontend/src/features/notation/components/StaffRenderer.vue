@@ -29,8 +29,10 @@ const props = withDefaults(
     measuresPerSystem?: number;
     /** Which voice a click enters into, on staves that carry more than one. */
     activeVoiceId?: string;
+    /** The note to draw as the cursor, so keyboard/click navigation is visible. */
+    cursorNoteId?: string | null;
   }>(),
-  { measuresPerSystem: 4, activeVoiceId: undefined },
+  { measuresPerSystem: 4, activeVoiceId: undefined, cursorNoteId: null },
 );
 
 const emit = defineEmits<{
@@ -140,6 +142,14 @@ function drawMeasureNotes(
   formatter.format(voices, stave.getNoteEndX() - stave.getNoteStartX() - NOTE_PADDING);
 
   for (const entry of built) {
+    for (const drawn of entry.notes) {
+      // Styled before drawing, not after - VexFlow bakes fill/stroke colour
+      // into the glyph at draw time.
+      if (drawn.note.id === props.cursorNoteId) {
+        drawn.staveNote.setStyle({ fillStyle: "#2563eb", strokeStyle: "#2563eb" });
+      }
+    }
+
     entry.voice.draw(context, stave);
 
     for (const beam of buildBeams(entry)) {
@@ -340,6 +350,7 @@ onBeforeUnmount(() => {
 // edit helpers in ../document), so identity changing is the signal.
 watch(() => props.document, draw);
 watch(() => props.measuresPerSystem, draw);
+watch(() => props.cursorNoteId, draw);
 
 defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => drawnNotes });
 </script>

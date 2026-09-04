@@ -17,9 +17,13 @@ import { computed, ref, shallowRef } from "vue";
 import {
   createDocument,
   createNote,
+  deleteNoteAt,
+  deleteNoteBefore,
   fits,
   insertNote,
+  locateNote,
   measureQuarters,
+  moveCursor,
   noteAt,
   toggleTieBefore,
 } from "../document";
@@ -95,6 +99,8 @@ export function useNotationEditor(initial?: NotationDocument) {
     return note !== undefined && !note.isRest;
   });
   const isTiedAtCursor = computed(() => noteBeforeCursor.value?.tiedToNext ?? false);
+  /** Which note to highlight, so the cursor is visible on the staff, not just internal state. */
+  const cursorNoteId = computed(() => noteBeforeCursor.value?.id ?? null);
 
   function setDocument(next: NotationDocument): void {
     document.value = next;
@@ -120,6 +126,34 @@ export function useNotationEditor(initial?: NotationDocument) {
   function toggleTie(): void {
     if (!canTieAtCursor.value) return;
     document.value = toggleTieBefore(document.value, cursor.value);
+  }
+
+  /** Selects an existing note by clicking it - the cursor lands just after it. */
+  function selectNote(noteId: string): void {
+    const located = locateNote(document.value, noteId);
+    if (located) cursor.value = located;
+  }
+
+  function moveLeft(): void {
+    cursor.value = moveCursor(document.value, cursor.value, -1);
+  }
+
+  function moveRight(): void {
+    cursor.value = moveCursor(document.value, cursor.value, 1);
+  }
+
+  /** Backspace: removes the note the cursor sits after. */
+  function deleteBefore(): void {
+    const result = deleteNoteBefore(document.value, cursor.value);
+    document.value = result.document;
+    cursor.value = result.cursor;
+  }
+
+  /** Delete: removes the note the cursor sits before. */
+  function deleteAtCursor(): void {
+    const result = deleteNoteAt(document.value, cursor.value);
+    document.value = result.document;
+    cursor.value = result.cursor;
   }
 
   /**
@@ -173,6 +207,7 @@ export function useNotationEditor(initial?: NotationDocument) {
     barQuarters,
     canTieAtCursor,
     isTiedAtCursor,
+    cursorNoteId,
     setDocument,
     setDuration,
     setDots,
@@ -180,6 +215,11 @@ export function useNotationEditor(initial?: NotationDocument) {
     setRestMode,
     placeAt,
     toggleTie,
+    selectNote,
+    moveLeft,
+    moveRight,
+    deleteBefore,
+    deleteAtCursor,
   };
 }
 

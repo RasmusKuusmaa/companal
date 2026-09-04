@@ -255,6 +255,32 @@ export function toggleTieBefore(
   return replaceNote(document, target, { tiedToNext: !note.tiedToNext });
 }
 
+/**
+ * Finds a note by id and returns a cursor pointing just after it.
+ *
+ * "Just after" rather than "at" it because that's what every other cursor
+ * position in this module means - the point insertion and the arrow keys
+ * work from. Selecting a note by clicking it should behave exactly like
+ * having just typed it.
+ */
+export function locateNote(document: NotationDocument, noteId: string): NotationCursor | undefined {
+  for (let staffIndex = 0; staffIndex < document.staves.length; staffIndex += 1) {
+    const staff = document.staves[staffIndex];
+    if (!staff) continue;
+    for (let measureIndex = 0; measureIndex < staff.measures.length; measureIndex += 1) {
+      const measure = staff.measures[measureIndex];
+      if (!measure) continue;
+      for (const voice of measure.voices) {
+        const noteIndex = voice.notes.findIndex((note) => note.id === noteId);
+        if (noteIndex >= 0) {
+          return { staffIndex, measureIndex, voiceId: voice.id, noteIndex: noteIndex + 1 };
+        }
+      }
+    }
+  }
+  return undefined;
+}
+
 /** Deletes the note before the cursor, the way backspace behaves in text. */
 export function deleteNoteBefore(
   document: NotationDocument,
