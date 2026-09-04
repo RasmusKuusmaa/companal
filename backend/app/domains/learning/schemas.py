@@ -24,6 +24,8 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.domains.feedback.models import SkillLevel
+from app.domains.feedback.schemas import CompositionFeedback
 from app.domains.learning.models import CourseLevel, StepKind
 from app.domains.notation.grading import DeterministicGrade
 from app.domains.notation.requirements import Requirement
@@ -285,19 +287,30 @@ class LessonCompleteRead(BaseModel):
 
 
 class CompositionSubmissionRequest(BaseModel):
-    """What the editor sends when a student submits a composition task."""
+    """What the editor sends when a student submits a composition task.
+
+    `with_ai_feedback` is opt-in and additive: the deterministic checklist
+    and analysis are computed and returned either way, so asking for AI
+    commentary can only add to the response, never gate it. Requesting it
+    without AI configured (or once a quota exists, without one available)
+    is not an error - `ai_feedback` simply comes back `None`.
+    """
 
     document: NotationDocument
+    skill_level: SkillLevel = SkillLevel.BEGINNER
+    with_ai_feedback: bool = False
 
 
 class CompositionSubmissionRead(DeterministicGrade):
     """A graded submission, kept as a `StepAttempt` - see `service.py`'s
     `submit_composition`. Extends `DeterministicGrade` rather than wrapping
     it, so the checklist and analysis a student sees is exactly what was
-    computed, with just the attempt's own identity riding along."""
+    computed, with just the attempt's own identity and any AI commentary
+    riding along."""
 
     attempt_id: uuid.UUID
     created_at: datetime
+    ai_feedback: CompositionFeedback | None = None
 
 
 # --------------------------------------------------------------------------- #

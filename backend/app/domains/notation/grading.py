@@ -9,6 +9,8 @@ a pure function from a document and its requirements to a verdict, which is
 what makes it straightforward to test without either.
 """
 
+from typing import Any
+
 from pydantic import BaseModel
 
 from app.domains.analysis.combined import run_all_analyses
@@ -89,3 +91,27 @@ def grade_submission(
         unavailable=unavailable,
     )
     return grade, content
+
+
+def analysis_bundle(grade: DeterministicGrade) -> dict[str, Any]:
+    """The subset of a grade the AI prompt is given as context.
+
+    Same shape as `feedback.service._bundle_from_analysis` - both hand the
+    model melody/harmony/rhythm plus the overall score and what couldn't be
+    analyzed. The requirement checklist isn't part of this; it's threaded
+    into the prompt separately (see `ai_prompts.build_user_prompt`) since,
+    unlike the analysis, it's ground truth the model must not contradict.
+    """
+    return {
+        "melody_analysis": grade.melody_analysis.model_dump(mode="json")
+        if grade.melody_analysis
+        else None,
+        "harmony_analysis": grade.harmony_analysis.model_dump(mode="json")
+        if grade.harmony_analysis
+        else None,
+        "rhythm_analysis": grade.rhythm_analysis.model_dump(mode="json")
+        if grade.rhythm_analysis
+        else None,
+        "overall_score": grade.overall_score,
+        "unavailable": [item.model_dump(mode="json") for item in grade.unavailable],
+    }

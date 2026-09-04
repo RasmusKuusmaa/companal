@@ -21,6 +21,8 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
+from app.domains.feedback.models import SkillLevel
+from app.domains.feedback.schemas import CompositionFeedback
 from app.domains.learning.models import (
     Course,
     Lesson,
@@ -51,7 +53,8 @@ from app.domains.learning.schemas import (
     RoadmapRead,
     StepSeenRead,
 )
-from app.domains.notation.grading import grade_submission
+from app.domains.notation.ai_grading import AIGradingError, generate_exercise_feedback
+from app.domains.notation.grading import analysis_bundle, grade_submission
 from app.domains.notation.schemas import NotationDocument
 
 
@@ -368,14 +371,23 @@ async def submit_composition(
     lesson_slug: str,
     step_slug: str,
     document: NotationDocument,
+    skill_level: SkillLevel = SkillLevel.BEGINNER,
+    with_ai_feedback: bool = False,
 ) -> CompositionSubmissionRead:
     """Grades a composition submission and keeps it.
 
-    Grading is entirely deterministic here - `grade_submission` never calls
-    the AI (see `notation.grading` and `notation.ai_grading` for where that
-    happens, opt-in, on top of this). Every submission is kept, the same as
-    a quiz attempt: retries are free, and the skill map later reads the
-    full history, not just the latest try.
+    Grading is entirely deterministic - `grade_submission` never calls the
+    AI. `with_ai_feedback` adds commentary on top of that grade; it never
+    gates it. A failure to get AI commentary (no API key configured, the
+    request itself failing) is swallowed rather than raised: the
+    deterministic checklist the student actually needs is already decided
+    by the time AI grading is attempted, and losing that over an
+    unavailable extra would be a worse failure than just not having the
+    extra.
+
+    Every submission is kept, the same as a quiz attempt: retries are free,
+    and the skill map later reads the full history, not just the latest
+    try.
 
     The MusicXML is written to storage before the database row - see
     `projects.service.add_version` for the same ordering and the reasoning
@@ -390,12 +402,26 @@ async def submit_composition(
     composition = CompositionPayload.model_validate(step.payload)
     grade, musicxml = grade_submission(document, composition.requirements)
 
+    ai_feedback: CompositionFeedback | None = None
+    if with_ai_feedback:
+        try:
+            ai_feedback = generate_exercise_feedback(
+                lesson.title,
+                composition.brief,
+                grade.requirement_results,
+                analysis_bundle(grade),
+                skill_level,
+            )
+        except AIGradingError:
+            ai_feedback = None
+
     attempt_id = uuid.uuid4()
     storage_key = _attempt_storage_key(attempt_id)
     await storage.save_file(storage_key, musicxml)
 
     result = grade.model_dump(mode="json")
     result["storage_key"] = storage_key
+    result["ai_feedback"] = ai_feedback.model_dump(mode="json") if ai_feedback else None
 
     attempt = StepAttempt(
         id=attempt_id,
@@ -415,7 +441,10 @@ async def submit_composition(
     await db.refresh(attempt)
 
     return CompositionSubmissionRead(
-        attempt_id=attempt.id, created_at=attempt.created_at, **grade.model_dump()
+        attempt_id=attempt.id,
+        created_at=attempt.created_at,
+        ai_feedback=ai_feedback,
+        **grade.model_dump(),
     )
 
 

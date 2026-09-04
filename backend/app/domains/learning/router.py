@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_current_user, get_db
 from app.domains.learning.schemas import (
     CompositionSubmissionRead,
+    CompositionSubmissionRequest,
     LessonCompleteRead,
     LessonRead,
     ProgressSummary,
@@ -35,7 +36,6 @@ from app.domains.learning.service import (
     mark_step_seen,
     submit_composition,
 )
-from app.domains.notation.schemas import NotationDocument
 from app.domains.users.models import User
 
 router = APIRouter(prefix="/learning", tags=["learning"])
@@ -111,19 +111,30 @@ async def answer_quiz_step(
 async def submit_composition_step(
     lesson_slug: str,
     step_slug: str,
-    document: NotationDocument,
+    payload: CompositionSubmissionRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> CompositionSubmissionRead:
     """Grades a composition submission against the task's requirements.
 
-    Deterministic and free - the checklist and analysis this returns don't
-    touch the AI (see the notation domain's `grading.py`). Retries are
+    The deterministic checklist and analysis are always computed and
+    returned - see the notation domain's `grading.py`. AI commentary is
+    opt-in (`with_ai_feedback`) and additive: asking for it never changes
+    whether the submission passed, and its absence (no API key configured,
+    a failed request) never fails the submission either. Retries are
     unlimited; every submission is kept as its own attempt rather than
     overwriting the last one.
     """
     try:
-        return await submit_composition(db, current_user.id, lesson_slug, step_slug, document)
+        return await submit_composition(
+            db,
+            current_user.id,
+            lesson_slug,
+            step_slug,
+            payload.document,
+            payload.skill_level,
+            payload.with_ai_feedback,
+        )
     except LessonNotFoundError as exc:
         raise _lesson_not_found from exc
     except StepNotFoundError as exc:
