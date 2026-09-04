@@ -51,21 +51,22 @@ stages → lessons → ordered steps, and gets it into the database.
 
 Reading and multiple-choice work end to end. No notation yet.
 
-- [ ] `add learning api client` — `frontend/src/features/learning/api/`
-- [ ] `add learning types` — mirrors the step union
-- [ ] `add learning store` — roadmap cache, current lesson, step cursor
-- [ ] `add markdown renderer utility` — `marked` + sanitizer, shared with lesson content
-- [ ] `add roadmap view with stage sections` — the whole path on one page, nothing greyed out
-- [ ] `add lesson card with progress ring` — status at a glance per lesson
-- [ ] `add lesson player shell with step navigation` — stepper over ordered steps, prev/next, progress bar
-- [ ] `add reading step component` — rendered markdown, musical examples slot
-- [ ] `add multiple choice step component` — choices, selection, submit
-- [ ] `add quiz result reveal with explanation` — correct/incorrect state, explanation, retry
-- [ ] `add lesson completion panel with next lesson link` — what you covered, what's next
-- [ ] `add learning routes` — `/learn`, `/learn/:courseSlug`, `/learn/:courseSlug/:lessonSlug`
-- [ ] `add continue learning card to the dashboard` — jumps to the furthest incomplete lesson
-- [ ] `add roadmap view tests` — renders stages, reflects progress
-- [ ] `add lesson player tests` — step navigation, quiz submit, retry
+- [x] `add learning api client` — `frontend/src/features/learning/api/`
+- [x] `add learning types` — mirrors the step union
+- [x] `add learning store` — roadmap cache, current lesson, step cursor
+- [x] `add markdown renderer utility` — `marked` + sanitizer, shared with lesson content
+- [x] `add roadmap view with stage sections` — the whole path on one page, nothing greyed out
+- [x] `add lesson card with progress ring` — status at a glance per lesson
+- [x] `add lesson player shell with step navigation` — stepper over ordered steps, prev/next, progress bar
+- [x] `add reading step component` — rendered markdown, musical examples slot
+- [x] `add multiple choice step component` — choices, selection, submit
+- [x] `add quiz result reveal with explanation` — correct/incorrect state, explanation, retry
+- [x] `add lesson completion panel with next lesson link` — what you covered, what's next
+- [x] `add learning routes` — `/learn`, `/learn/:lessonSlug` (no course segment: lesson slugs are unique curriculum-wide)
+- [x] `add continue lesson title to the progress summary` — so the dashboard card doesn't fetch the whole roadmap for one line of text
+- [x] `add continue learning card to the dashboard` — jumps to the furthest incomplete lesson
+- [x] `add roadmap view tests` — renders stages, reflects progress
+- [x] `add lesson player tests` — step navigation, quiz submit, retry
 
 ## Phase C — notation editor, single staff
 
