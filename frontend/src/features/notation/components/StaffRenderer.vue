@@ -176,6 +176,15 @@ function drawMeasureNotes(
         drawn.staveNote.setStyle({ fillStyle: "#d97706", strokeStyle: "#d97706" });
       } else if (drawn.note.id === props.cursorNoteId) {
         drawn.staveNote.setStyle({ fillStyle: "#2563eb", strokeStyle: "#2563eb" });
+      } else if (
+        props.activeVoiceId !== undefined &&
+        measure.voices.length > 1 &&
+        entry.voiceId !== props.activeVoiceId
+      ) {
+        // Muted, not coloured differently per voice: the question this
+        // answers is "which voice will typing go into", not "which voice is
+        // which" - a stem direction already tells the two apart.
+        drawn.staveNote.setStyle({ fillStyle: "#94a3b8", strokeStyle: "#94a3b8" });
       }
     }
 
@@ -361,9 +370,15 @@ function handleClick(event: MouseEvent): void {
   const measure = staff?.measures[box.measureIndex];
   if (!staff || !measure) return;
 
-  // With one voice per staff the choice is made for us; multi-voice staves
-  // take the voice the editor is currently on, which the parent supplies.
-  const voiceId = props.activeVoiceId ?? measure.voices[0]?.id;
+  // With one voice per staff the choice is made for us; a multi-voice staff
+  // takes the voice the editor is currently on, which the parent supplies -
+  // but only when that voice actually belongs to *this* staff. A click on a
+  // different staff than the active one falls back to its first voice
+  // instead, since voice ids are unique across the whole document (see
+  // `document.ts`'s `createDocument`) and the active one otherwise
+  // wouldn't exist here at all.
+  const voiceId =
+    measure.voices.find((voice) => voice.id === props.activeVoiceId)?.id ?? measure.voices[0]?.id;
   if (!voiceId) return;
 
   const inVoice = drawnNotes.filter(

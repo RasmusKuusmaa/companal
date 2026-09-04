@@ -38,6 +38,7 @@ import type {
   DurationName,
   NotationCursor,
   NotationDocument,
+  NotationVoice,
   PitchStep,
 } from "../types";
 
@@ -137,6 +138,13 @@ export function useNotationEditor(
   /** Which note to highlight, so the cursor is visible on the staff, not just internal state. */
   const cursorNoteId = computed(() => noteBeforeCursor.value?.id ?? null);
 
+  /** The voices sharing the cursor's staff, for a voice selector to list. */
+  const activeStaffVoices = computed<NotationVoice[]>(
+    () =>
+      document.value.staves[cursor.value.staffIndex]?.measures[cursor.value.measureIndex]
+        ?.voices ?? [],
+  );
+
   function setDocument(next: NotationDocument): void {
     document.value = toRaw(next);
   }
@@ -191,6 +199,18 @@ export function useNotationEditor(
       voiceId: voice.id,
       noteIndex: voice.notes.length,
     };
+  }
+
+  /**
+   * Switches entry to a different voice on the cursor's current staff,
+   * landing at the end of it - the same plain focus move as
+   * `setActiveStaff`, and for the same reason: an empty voice has nothing
+   * on it yet to click.
+   */
+  function setActiveVoice(voiceId: string): void {
+    const voice = activeStaffVoices.value.find((candidate) => candidate.id === voiceId);
+    if (!voice) return;
+    cursor.value = { ...cursor.value, voiceId, noteIndex: voice.notes.length };
   }
 
   function moveLeft(): void {
@@ -332,6 +352,7 @@ export function useNotationEditor(
     canTieAtCursor,
     isTiedAtCursor,
     cursorNoteId,
+    activeStaffVoices,
     setDocument,
     setDuration,
     setDots,
@@ -343,6 +364,7 @@ export function useNotationEditor(
     toggleTie,
     selectNote,
     setActiveStaff,
+    setActiveVoice,
     moveLeft,
     moveRight,
     deleteBefore,

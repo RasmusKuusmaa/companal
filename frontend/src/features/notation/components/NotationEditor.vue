@@ -21,6 +21,7 @@ import RestToggle from "./RestToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
 import StaffSelector from "./StaffSelector.vue";
 import TieToggle from "./TieToggle.vue";
+import VoiceSelector from "./VoiceSelector.vue";
 
 const props = defineProps<{
   modelValue: NotationDocument;
@@ -139,6 +140,11 @@ function handleKeydown(event: KeyboardEvent): void {
         :active-staff-index="editor.cursor.value.staffIndex"
         @select="editor.setActiveStaff"
       />
+      <VoiceSelector
+        :voices="editor.activeStaffVoices.value"
+        :active-voice-id="editor.cursor.value.voiceId"
+        @select="editor.setActiveVoice"
+      />
       <DurationPalette
         :duration="editor.activeDuration.value"
         :dots="editor.activeDots.value"
@@ -170,6 +176,7 @@ function handleKeydown(event: KeyboardEvent): void {
 
     <StaffRenderer
       :document="editor.document.value"
+      :active-voice-id="editor.cursor.value.voiceId"
       :cursor-note-id="editor.cursorNoteId.value"
       :playing-note-ids="playback.activeNoteIds.value"
       @staff-click="handleStaffClick"
