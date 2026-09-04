@@ -17,6 +17,7 @@ from fractions import Fraction
 
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
 from app.domains.notation.requirements import (
+    CadenceRequirement,
     KeyRequirement,
     MeasureCountRequirement,
     RequirementResult,
@@ -118,6 +119,66 @@ def check_measure_count(
         message = f"{actual} measures written, but {requirement.count} were asked for."
 
     return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+# --------------------------------------------------------------------------- #
+# Cadence
+# --------------------------------------------------------------------------- #
+
+# A requirement's plain-English cadence name to the harmony engine's own
+# (type, strength) pair - see harmony.py's `_classify_cadence` for where
+# those values come from. `None` for strength means "any strength counts".
+_CADENCE_MATCH: dict[str, tuple[str, str | None]] = {
+    "perfect_authentic": ("authentic", "perfect-authentic"),
+    "imperfect_authentic": ("authentic", "imperfect-authentic"),
+    "half": ("half", None),
+    "plagal": ("plagal", None),
+    "deceptive": ("deceptive", None),
+}
+
+_CADENCE_LABEL: dict[str, str] = {
+    "perfect_authentic": "a perfect authentic cadence",
+    "imperfect_authentic": "an imperfect authentic cadence",
+    "half": "a half cadence",
+    "plagal": "a plagal cadence",
+    "deceptive": "a deceptive cadence",
+}
+
+
+def check_cadence(
+    context: RequirementContext, requirement: CadenceRequirement
+) -> RequirementResult:
+    label = _CADENCE_LABEL[requirement.cadence]
+
+    if context.harmony is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message=f"Harmony could not be analyzed; expected the piece to end with {label}.",
+        )
+
+    cadences = context.harmony.technical_data.cadences
+    if not cadences:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message=f"No cadence was found at the end of the piece; expected {label}.",
+        )
+
+    final = next((c for c in cadences if c.is_final), cadences[-1])
+    expected_type, expected_strength = _CADENCE_MATCH[requirement.cadence]
+    passed = final.type == expected_type and (
+        expected_strength is None or final.strength == expected_strength
+    )
+
+    if passed:
+        message = f"Correctly ends with {label}."
+    else:
+        message = f"Ends with a {final.type} cadence ({final.strength}), not {label}."
+
+    return RequirementResult(
+        requirement=requirement, passed=passed, message=message, measure=final.measure
+    )
 
 
 def check_time_signature(
