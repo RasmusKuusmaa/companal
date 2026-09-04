@@ -20,7 +20,13 @@ import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
 import { insertionIndexAtX, noteAtX, pitchAtY, staveAtPoint } from "../hit-test";
 import type { NotationDocument, NotationNote, PitchStep } from "../types";
-import { applyAccidentals, buildBeams, buildTies, buildVoice } from "../vexflow";
+import {
+  applyAccidentals,
+  buildBeams,
+  buildTies,
+  buildVoice,
+  stemDirectionForVoice,
+} from "../vexflow";
 
 const props = withDefaults(
   defineProps<{
@@ -136,9 +142,21 @@ function drawMeasureNotes(
   const measure = staff?.measures[measureIndex];
   if (!staff || !measure) return;
 
+  // Stem direction is decided from each voice's position among *all* of the
+  // measure's voices, not just the ones with notes this bar - a voice with
+  // a rest-only or empty bar shouldn't shift every later voice's direction.
   const built = measure.voices
-    .filter((voice) => voice.notes.length > 0)
-    .map((voice) => ({ voiceId: voice.id, ...buildVoice(props.document, voice, staff.clef) }));
+    .map((voice, voiceIndex) => ({ voice, voiceIndex }))
+    .filter((entry) => entry.voice.notes.length > 0)
+    .map(({ voice, voiceIndex }) => ({
+      voiceId: voice.id,
+      ...buildVoice(
+        props.document,
+        voice,
+        staff.clef,
+        stemDirectionForVoice(voiceIndex, measure.voices.length),
+      ),
+    }));
   if (built.length === 0) return;
 
   const voices = built.map((entry) => entry.voice);

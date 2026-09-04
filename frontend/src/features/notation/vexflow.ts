@@ -15,7 +15,7 @@
  * most implementations get subtly wrong.
  */
 
-import { Accidental, Beam, Dot, StaveNote, StaveTie, Voice } from "vexflow";
+import { Accidental, Beam, Dot, Stem, StaveNote, StaveTie, Voice } from "vexflow";
 
 import { CLEF_MIDDLE_LINE, durationSpec, keySignatureName } from "./constants";
 import type { ClefName, NotationDocument, NotationNote, NotationVoice } from "./types";
@@ -47,11 +47,16 @@ function restKey(clef: ClefName): string {
   return `${middle.step.toLowerCase()}/${middle.octave}`;
 }
 
-export function buildStaveNote(note: NotationNote, clef: ClefName): StaveNote {
+export function buildStaveNote(
+  note: NotationNote,
+  clef: ClefName,
+  stemDirection?: number,
+): StaveNote {
   const staveNote = new StaveNote({
     keys: [note.isRest ? restKey(clef) : vexKey(note)],
     duration: durationSpec(note.duration).code,
     ...(note.isRest ? { type: "r" } : {}),
+    ...(stemDirection !== undefined ? { stemDirection } : {}),
     clef,
   });
 
@@ -64,6 +69,21 @@ export function buildStaveNote(note: NotationNote, clef: ClefName): StaveNote {
   }
 
   return staveNote;
+}
+
+/**
+ * Stem direction for one voice among several sharing a staff.
+ *
+ * Standard engraving convention: the first voice (soprano over alto, tenor
+ * over bass) stems up, every other voice stems down - alternating rather
+ * than each note's own pitch deciding, which is what keeps two voices'
+ * stems from colliding into the same space. A staff with only one voice
+ * gets `undefined`, leaving VexFlow's own pitch-based default in place -
+ * the right choice for an ordinary single-line staff.
+ */
+export function stemDirectionForVoice(voiceIndex: number, voiceCount: number): number | undefined {
+  if (voiceCount <= 1) return undefined;
+  return voiceIndex % 2 === 0 ? Stem.UP : Stem.DOWN;
 }
 
 export interface BuiltVoice {
@@ -83,8 +103,12 @@ export function buildVoice(
   document: NotationDocument,
   voice: NotationVoice,
   clef: ClefName,
+  stemDirection?: number,
 ): BuiltVoice {
-  const built = voice.notes.map((note) => ({ note, staveNote: buildStaveNote(note, clef) }));
+  const built = voice.notes.map((note) => ({
+    note,
+    staveNote: buildStaveNote(note, clef, stemDirection),
+  }));
 
   const vfVoice = new Voice({
     numBeats: document.time.beats,
