@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     # clear 503 instead of failing at import/startup time.
     ANTHROPIC_API_KEY: str | None = None
     AI_MODEL: str = "claude-opus-5"
+    # Hard ceiling on estimated Claude spend across every user in the
+    # current calendar month (see `billing.service`). `None` disables the
+    # cap - the default, so local dev without this set never trips it.
+    GLOBAL_AI_MONTHLY_SPEND_CAP_USD: float | None = None
 
     # --- CORS ---
     # Kept as a raw string, not list[str]: pydantic-settings tries to
@@ -66,6 +70,16 @@ class Settings(BaseSettings):
     def validate_secret_key(cls, value: str) -> str:
         if len(value) < 32:
             raise ValueError("SECRET_KEY must be at least 32 characters long")
+        return value
+
+    @field_validator("GLOBAL_AI_MONTHLY_SPEND_CAP_USD", mode="before")
+    @classmethod
+    def blank_spend_cap_means_no_cap(cls, value: object) -> object:
+        # pydantic-settings hands a raw "" for a blank .env value straight to
+        # float parsing rather than treating it as unset - coerce here so
+        # leaving the setting blank actually disables the cap.
+        if isinstance(value, str) and not value.strip():
+            return None
         return value
 
     @field_validator("DATABASE_URL")

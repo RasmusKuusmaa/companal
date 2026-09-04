@@ -13,12 +13,17 @@ from datetime import UTC, datetime
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.features import TIER_MONTHLY_AI_QUOTA
 from app.domains.billing.models import AiUsage, Subscription, SubscriptionStatus, Tier
 
 
 class QuotaExceededError(Exception):
     """Raised when a user has used up their tier's monthly AI quota."""
+
+
+class GlobalSpendCapExceededError(Exception):
+    """Raised when the whole app's monthly AI spend has hit its configured cap."""
 
 
 async def get_tier(db: AsyncSession, user_id: uuid.UUID) -> Tier:
@@ -72,3 +77,26 @@ async def enforce_ai_quota(db: AsyncSession, user_id: uuid.UUID) -> None:
     used = await ai_usage_this_period(db, user_id)
     if used >= quota:
         raise QuotaExceededError
+
+
+async def global_ai_spend_this_period(db: AsyncSession) -> float:
+    total = await db.scalar(
+        select(func.coalesce(func.sum(AiUsage.estimated_cost_usd), 0.0)).where(
+            AiUsage.created_at >= _current_period_start()
+        )
+    )
+    return float(total or 0.0)
+
+
+async def enforce_global_spend_cap(db: AsyncSession) -> None:
+    """Raises `GlobalSpendCapExceededError` once the app-wide monthly spend
+    cap is hit. A no-op when `GLOBAL_AI_MONTHLY_SPEND_CAP_USD` is unset -
+    the default, so local dev is never blocked by it.
+    """
+    cap = settings.GLOBAL_AI_MONTHLY_SPEND_CAP_USD
+    if cap is None:
+        return
+
+    spent = await global_ai_spend_this_period(db)
+    if spent >= cap:
+        raise GlobalSpendCapExceededError
