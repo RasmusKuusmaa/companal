@@ -1,3 +1,88 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/**
+ * Typography for rendered lesson markdown.
+ *
+ * Tailwind's preflight strips the browser's default heading, list and table
+ * styling, which is right for UI chrome and wrong for prose - so anything
+ * coming out of `renderMarkdown` needs its styling handed back explicitly.
+ * Written as one component class rather than a utility soup on the wrapper
+ * because the elements it targets don't exist until the HTML is injected.
+ */
+@layer components {
+  .prose-lesson {
+    @apply text-[15px] leading-7 text-slate-700;
+  }
+
+  .prose-lesson > * + * {
+    @apply mt-4;
+  }
+
+  .prose-lesson h1 {
+    @apply mt-8 text-xl font-semibold text-slate-900 first:mt-0;
+  }
+
+  .prose-lesson h2 {
+    @apply mt-8 text-lg font-semibold text-slate-900 first:mt-0;
+  }
+
+  .prose-lesson h3 {
+    @apply mt-6 text-base font-semibold text-slate-900 first:mt-0;
+  }
+
+  .prose-lesson ul {
+    @apply list-disc space-y-1 pl-6;
+  }
+
+  .prose-lesson ol {
+    @apply list-decimal space-y-1 pl-6;
+  }
+
+  .prose-lesson strong {
+    @apply font-semibold text-slate-900;
+  }
+
+  .prose-lesson em {
+    @apply italic;
+  }
+
+  .prose-lesson a {
+    @apply font-medium text-slate-900 underline underline-offset-2;
+  }
+
+  .prose-lesson code {
+    @apply rounded bg-slate-100 px-1 py-0.5 font-mono text-[13px] text-slate-800;
+  }
+
+  .prose-lesson pre {
+    @apply overflow-x-auto rounded-md bg-slate-900 p-4 text-[13px] text-slate-100;
+  }
+
+  .prose-lesson pre code {
+    @apply bg-transparent p-0 text-inherit;
+  }
+
+  .prose-lesson blockquote {
+    @apply border-l-2 border-slate-300 pl-4 italic text-slate-600;
+  }
+
+  /* Theory content is full of interval and chord tables; they need to
+     scroll on their own rather than widening the page. */
+  .prose-lesson table {
+    @apply block w-full overflow-x-auto border-collapse text-sm;
+  }
+
+  .prose-lesson th {
+    @apply border-b border-slate-300 px-3 py-2 text-left font-semibold text-slate-900;
+  }
+
+  .prose-lesson td {
+    @apply border-b border-slate-200 px-3 py-2 align-top;
+  }
+
+  .prose-lesson hr {
+    @apply my-8 border-slate-200;
+  }
+}
