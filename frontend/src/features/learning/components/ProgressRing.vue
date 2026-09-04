@@ -34,8 +34,15 @@ const isComplete = computed(() => props.total > 0 && props.completed === props.t
     :aria-label="`${completed} of ${total} lessons complete`"
   >
     <svg viewBox="0 0 48 48" class="h-full w-full -rotate-90">
-      <circle cx="24" cy="24" :r="RADIUS" fill="none" stroke="currentColor" stroke-width="4"
-        class="text-slate-200" />
+      <circle
+        cx="24"
+        cy="24"
+        :r="RADIUS"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="4"
+        class="text-slate-200"
+      />
       <circle
         cx="24"
         cy="24"
