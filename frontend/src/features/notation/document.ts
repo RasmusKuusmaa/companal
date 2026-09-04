@@ -110,6 +110,26 @@ export function createDocument(options: CreateDocumentOptions = {}): NotationDoc
   return { fifths, mode, time, tempo, staves };
 }
 
+export interface CreateSatbDocumentOptions {
+  fifths?: number;
+  mode?: "major" | "minor";
+  time?: TimeSignature;
+  tempo?: number;
+  measureCount?: number;
+}
+
+/**
+ * The standard closed-score SATB grand staff: treble (soprano over alto)
+ * and bass (tenor over bass), two voices per staff. Clefs and voice count
+ * are all `createDocument` needs to get this right - stem direction
+ * follows automatically once a staff carries more than one voice (see
+ * `vexflow.ts`'s `stemDirectionForVoice`), so there's nothing SATB-specific
+ * left to set beyond naming the shape.
+ */
+export function createSatbDocument(options: CreateSatbDocumentOptions = {}): NotationDocument {
+  return createDocument({ ...options, clefs: ["treble", "bass"], voicesPerStaff: 2 });
+}
+
 /** Quarter notes in one measure of this time signature. */
 export function measureQuarters(time: TimeSignature): number {
   return time.beats * (4 / time.beatType);
