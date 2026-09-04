@@ -13,14 +13,16 @@ document itself.
 """
 
 from dataclasses import dataclass
+from fractions import Fraction
 
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
 from app.domains.notation.requirements import (
     KeyRequirement,
+    MeasureCountRequirement,
     RequirementResult,
     TimeSignatureRequirement,
 )
-from app.domains.notation.schemas import NotationDocument
+from app.domains.notation.schemas import NotationDocument, NotationVoice, TimeSignature
 
 
 @dataclass
@@ -51,6 +53,69 @@ def check_key(context: RequirementContext, requirement: KeyRequirement) -> Requi
         message = f"Correctly in {context.score.key}."
     else:
         message = f"Written in {context.score.key}, but {requirement.key} was asked for."
+
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
+# --------------------------------------------------------------------------- #
+# Measure count
+# --------------------------------------------------------------------------- #
+
+_BASE_QUARTER_LENGTH: dict[str, Fraction] = {
+    "whole": Fraction(4),
+    "half": Fraction(2),
+    "quarter": Fraction(1),
+    "eighth": Fraction(1, 2),
+    "16th": Fraction(1, 4),
+    "32nd": Fraction(1, 8),
+}
+
+
+def _note_quarters(duration: str, dots: int) -> Fraction:
+    return _BASE_QUARTER_LENGTH[duration] * (Fraction(2) - Fraction(1, 2**dots))
+
+
+def _voice_quarters(voice: NotationVoice) -> Fraction:
+    return sum((_note_quarters(n.duration, n.dots) for n in voice.notes), Fraction(0))
+
+
+def _measure_quarters(time: TimeSignature) -> Fraction:
+    return Fraction(time.beats) * Fraction(4, time.beat_type)
+
+
+def _full_measure_count(document: NotationDocument) -> int:
+    """Counts measures, not counting a short first measure as a full one.
+
+    Only the first measure is treated as a possible anacrusis - this covers
+    "write an 8-bar melody with a pickup", the shape every exercise in the
+    curriculum actually uses, without also trying to infer a shortened
+    final measure, which is a convention this editor doesn't otherwise ask
+    students to observe.
+    """
+    if not document.staves:
+        return 0
+    measures = document.staves[0].measures
+    if not measures:
+        return 0
+
+    expected = _measure_quarters(document.time)
+    first_length = max(
+        (_voice_quarters(voice) for voice in measures[0].voices), default=Fraction(0)
+    )
+    is_anacrusis = 0 < first_length < expected
+    return len(measures) - 1 if is_anacrusis else len(measures)
+
+
+def check_measure_count(
+    context: RequirementContext, requirement: MeasureCountRequirement
+) -> RequirementResult:
+    actual = _full_measure_count(context.document)
+    passed = actual == requirement.count
+
+    if passed:
+        message = f"Correctly {requirement.count} measures long."
+    else:
+        message = f"{actual} measures written, but {requirement.count} were asked for."
 
     return RequirementResult(requirement=requirement, passed=passed, message=message)
 
