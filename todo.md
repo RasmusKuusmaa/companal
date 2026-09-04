@@ -101,26 +101,26 @@ VexFlow for engraving, custom interaction layer on top. Click **and** keyboard e
 
 Editor output becomes MusicXML, gets checked against declarative rules, then optionally graded by Claude.
 
-- [ ] `add notation document schemas on the backend` — Pydantic mirror of the editor document
-- [ ] `add music21 builder from a notation document` — the one place MusicXML is written
-- [ ] `add musicxml export endpoint` — `POST /notation/musicxml`, used for preview and submission
-- [ ] `add musicxml import to a notation document` — music21 → editor document
-- [ ] `add musicxml import endpoint` — `POST /notation/import`, lets an uploaded score open in the editor
-- [ ] `add requirement rule schemas` — declarative rules stored on the composition step payload
-- [ ] `add key and time signature validators` — asserts the brief's key and meter
-- [ ] `add measure count and length validators` — "exactly 8 measures", anacrusis-aware
-- [ ] `add cadence requirement validator` — asserts PAC/IAC/HC/plagal/deceptive using the existing cadence classifier
-- [ ] `add range and motion validators` — vocal range, max leap, step/leap ratio, leap recovery
-- [ ] `add pitch content validators` — diatonic-only, required scale degrees, forbidden pitches
-- [ ] `add requirement validator runner` — runs every rule, returns a pass/fail checklist with bar numbers
-- [ ] `add composition submission storage` — MusicXML written through `core.storage`, notation JSON on the attempt
-- [ ] `add composition submission endpoint` — accepts a notation document, converts, validates, analyzes, stores
-- [ ] `add deterministic grade assembly` — checklist + melody/harmony/rhythm scores, no AI involved
-- [ ] `add exercise grading prompt template` — lesson topic, brief, rule results and analysis; never rewrites the student's music
-- [ ] `add ai exercise grading service` — structured output, mirrors `feedback/ai_service.py`
-- [ ] `add ai grading to composition submissions` — opt-in per submission, deterministic grade always returned first
-- [ ] `add requirement validator tests` — one per rule type, pass and fail
-- [ ] `add composition submission tests` — round-trip, storage, grading shape
+- [x] `add notation document schemas on the backend` — Pydantic mirror of the editor document
+- [x] `add music21 builder from a notation document` — the one place MusicXML is written
+- [x] `add musicxml export endpoint` — `POST /notation/musicxml`, used for preview and submission
+- [x] `add musicxml import to a notation document` — music21 → editor document
+- [x] `add musicxml import endpoint` — `POST /notation/import`, lets an uploaded score open in the editor
+- [x] `add requirement rule schemas` — declarative rules stored on the composition step payload
+- [x] `add key and time signature validators` — asserts the brief's key and meter
+- [x] `add measure count and length validators` — "exactly 8 measures", anacrusis-aware
+- [x] `add cadence requirement validator` — asserts PAC/IAC/HC/plagal/deceptive using the existing cadence classifier
+- [x] `add range and motion validators` — vocal range, max leap, step/leap ratio, leap recovery
+- [x] `add pitch content validators` — diatonic-only, required scale degrees, forbidden pitches
+- [x] `add requirement validator runner` — runs every rule, returns a pass/fail checklist with bar numbers
+- [x] `add composition submission storage` — MusicXML written through `core.storage`, notation JSON on the attempt
+- [x] `add composition submission endpoint` — accepts a notation document, converts, validates, analyzes, stores
+- [x] `add deterministic grade assembly` — checklist + melody/harmony/rhythm scores, no AI involved
+- [x] `add exercise grading prompt template` — lesson topic, brief, rule results and analysis; never rewrites the student's music
+- [x] `add ai exercise grading service` — structured output, mirrors `feedback/ai_service.py`
+- [x] `add ai grading to composition submissions` — opt-in per submission, deterministic grade always returned first
+- [x] `add requirement validator tests` — one per rule type, pass and fail
+- [x] `add composition submission tests` — round-trip, storage, grading shape
 
 ## Phase E — tiers, quota and cost control
 
