@@ -164,6 +164,19 @@ class TestFirstSpecies:
         assert "parallel_fifth" in kinds
         assert "cadence" in kinds
 
+    def test_a_counterpoint_left_entirely_as_rests_does_not_pass(self) -> None:
+        # A rest is skipped by align_intervals rather than guessed at (see
+        # its own docstring), which - without a dedicated check - would let
+        # a counterpoint of nothing but rests sail through every other rule
+        # with no aligned intervals left to violate.
+        cp = [_note("C", 4, is_rest=True)] * 5
+        lines = identify_lines(_document(_CF_5_BAR, [[n] for n in cp]), 0)
+        assert lines is not None
+        findings = check_first_species(lines)
+
+        assert not all(f.passed for f in findings)
+        assert {f.kind for f in findings if not f.passed} == {"missing_note"}
+
 
 class TestSecondAndThirdSpecies:
     _CLEAN_CP = [
@@ -198,6 +211,15 @@ class TestSecondAndThirdSpecies:
         assert "dissonance" in kinds
         assert "unrecovered_leap" in kinds
 
+    def test_a_counterpoint_left_entirely_as_rests_does_not_pass(self) -> None:
+        cp = [[_note("C", 4, "half", is_rest=True), _note("C", 4, "half", is_rest=True)]] * 5
+        lines = identify_lines(_document(_CF_5_BAR, cp), 0)
+        assert lines is not None
+        findings = check_second_and_third_species(lines)
+
+        assert not all(f.passed for f in findings)
+        assert {f.kind for f in findings if not f.passed} == {"missing_note"}
+
 
 class TestFourthSpecies:
     _CF_3_BAR = [_note("C", 3, "whole"), _note("D", 3, "whole"), _note("C", 3, "whole")]
@@ -224,6 +246,15 @@ class TestFourthSpecies:
         findings = check_fourth_species(lines)
 
         assert any(f.kind == "unprepared_dissonance" and not f.passed for f in findings)
+
+    def test_a_counterpoint_left_entirely_as_rests_does_not_pass(self) -> None:
+        cp = [[_note("C", 5, "whole", is_rest=True)]] * 3
+        lines = identify_lines(_document(self._CF_3_BAR, cp), 0)
+        assert lines is not None
+        findings = check_fourth_species(lines)
+
+        assert not all(f.passed for f in findings)
+        assert {f.kind for f in findings if not f.passed} == {"missing_note"}
 
 
 class TestBuildCounterpointReport:

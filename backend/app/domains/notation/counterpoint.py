@@ -394,12 +394,36 @@ def _check_cadence_formula(aligned: list[AlignedInterval]) -> list[CounterpointF
     return findings
 
 
+def _check_no_missing_notes(lines: CounterpointLines) -> list[CounterpointFindingRead]:
+    """Every measure needs at least one real note in the counterpoint.
+
+    `align_intervals` skips rests rather than guessing at them (see its own
+    docstring), which is correct for a legitimate leading rest - but it
+    means a measure left **entirely** as a rest produces no aligned
+    interval at all, and every other check here operates on that empty
+    list and passes vacuously. This is what actually catches an unwritten
+    measure - including a counterpoint made of nothing but rests, which
+    would otherwise sail through every rule with nothing to violate.
+    """
+    return [
+        CounterpointFindingRead(
+            kind="missing_note",
+            measure=measure_index + 1,
+            passed=False,
+            message=f"Measure {measure_index + 1}: no note was written in the counterpoint.",
+        )
+        for measure_index, cp_notes in enumerate(lines.counterpoint_by_measure)
+        if all(note.is_rest for note in cp_notes)
+    ]
+
+
 def check_first_species(lines: CounterpointLines) -> list[CounterpointFindingRead]:
     """The rules a first-species (1:1) exercise is marked on: every interval
     consonant, no parallel fifths or octaves, a preference for contrary
     motion, and a correct closing cadence."""
     aligned = align_intervals(lines)
     return [
+        *_check_no_missing_notes(lines),
         *_check_consonance_only(aligned),
         *_check_no_parallel_perfects(aligned),
         *_check_contrary_motion_preference(aligned),
@@ -527,6 +551,7 @@ def check_second_and_third_species(lines: CounterpointLines) -> list[Counterpoin
     aligned = align_intervals(lines)
     downbeats = [interval for interval in aligned if interval.is_downbeat]
     return [
+        *_check_no_missing_notes(lines),
         *_check_downbeat_consonance(aligned),
         *_check_weak_beat_dissonance(aligned),
         *_check_no_parallel_perfects(downbeats),
@@ -602,6 +627,7 @@ def check_fourth_species(lines: CounterpointLines) -> list[CounterpointFindingRe
     unprepared."""
     aligned = align_intervals(lines)
     return [
+        *_check_no_missing_notes(lines),
         *_check_suspensions(aligned),
         *_check_cadence_formula(aligned),
     ]
