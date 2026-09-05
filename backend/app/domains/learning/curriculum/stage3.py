@@ -115,5 +115,84 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="phrase-structure-period-and-sentence",
+            title="Phrase Structure: Period and Sentence",
+            summary="The two classic ways short musical ideas combine into a phrase.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="phrase-structure-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Phrase structure: period and sentence\n\n"
+                            "## Period\n\n"
+                            "A **period** is two phrases that together form one "
+                            "complete musical thought: an **antecedent** ending with a "
+                            "weaker cadence (typically half or imperfect authentic), "
+                            "answered by a **consequent** that ends with a stronger one "
+                            "(typically perfect authentic). If the two phrases begin "
+                            "with the same or very similar material, it's a **parallel "
+                            "period**; if they begin differently, it's a **contrasting "
+                            "period**. Either way, the pattern is question-then-answer: "
+                            "the antecedent opens something the consequent resolves.\n\n"
+                            "## Sentence\n\n"
+                            "A **sentence** is built differently. It opens with a "
+                            "**presentation** - a short basic idea immediately repeated, "
+                            "often at a different pitch level - and then moves into a "
+                            "**continuation**: the material fragments into smaller "
+                            "pieces, the harmonic rhythm often speeds up, and the phrase "
+                            "drives forward to its cadence. Where a period balances two "
+                            "roughly equal halves, a sentence accelerates toward its "
+                            "ending."
+                        )
+                    },
+                    topics=["phrase-structure"],
+                ),
+                StepDef(
+                    slug="phrase-structure-quiz-antecedent",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In a parallel period, the antecedent phrase typically "
+                            "ends with:"
+                        ),
+                        "choices": [
+                            "A weaker cadence, such as a half or imperfect authentic",
+                            "The same perfect authentic cadence as the consequent",
+                            "No cadence at all",
+                            "A deceptive cadence, always",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The antecedent poses the question with a weaker cadence; "
+                            "the consequent answers it with something more conclusive."
+                        ),
+                    },
+                    topics=["phrase-structure"],
+                ),
+                StepDef(
+                    slug="phrase-structure-quiz-sentence-opening",
+                    kind="quiz",
+                    payload={
+                        "question": "A sentence structure begins with:",
+                        "choices": [
+                            "A presentation phrase - a basic idea plus its repetition",
+                            "A continuation phrase",
+                            "A retransition back to the opening key",
+                            "A full restatement of the whole theme",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A sentence opens by presenting its basic idea and "
+                            "immediately repeating it, before the continuation phrase "
+                            "fragments and drives to a cadence."
+                        ),
+                    },
+                    topics=["phrase-structure"],
+                ),
+            ],
+        ),
     ],
 )
