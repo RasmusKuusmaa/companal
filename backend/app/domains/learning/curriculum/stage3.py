@@ -624,5 +624,147 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="third-species-counterpoint",
+            title="Third Species Counterpoint",
+            summary="Four notes against one, and the fuller dissonance treatment it allows.",
+            estimated_minutes=18,
+            steps=[
+                StepDef(
+                    slug="third-species-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Third species counterpoint\n\n"
+                            "Third species keeps every rule second species introduced - "
+                            "consonant downbeats, weak-beat dissonance only as a passing "
+                            "or neighbor tone, leaps answered by step - and simply adds "
+                            "more subdivision: **four quarter notes** against each whole "
+                            "note of the cantus firmus, in 4/4.\n\n"
+                            "That extra room changes the flavor more than the rules. "
+                            "With four notes to place instead of two, there's more space "
+                            "for genuine melodic shape within a single measure - a "
+                            "stepwise run, a turn around a neighbor tone - while the "
+                            "underlying discipline is unchanged: the first note of the "
+                            "measure still has to be consonant, and any dissonant note "
+                            "elsewhere still has to be reached and left by step, whether "
+                            "that step lands inside the measure or carries across into "
+                            "the next one."
+                        )
+                    },
+                    topics=["third-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="third-species-quiz-notes-per-measure",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "How many notes fill each measure of a third species "
+                            "exercise in 4/4?"
+                        ),
+                        "choices": [
+                            "Four quarter notes",
+                            "Two half notes",
+                            "One whole note",
+                            "Eight eighth notes",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Third species subdivides each of the cantus firmus's whole "
+                            "notes into four quarter notes in the counterpoint."
+                        ),
+                    },
+                    topics=["third-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="third-species-quiz-downbeat-rule",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Third species keeps second species's rule for the "
+                            "downbeat - what is it?"
+                        ),
+                        "choices": [
+                            "It must be consonant against the cantus firmus",
+                            "It may be freely dissonant",
+                            "It must repeat the previous measure's downbeat",
+                            "It must always be approached by leap",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "However many notes fill the measure, the first one still "
+                            "carries the real harmonic weight and must be consonant."
+                        ),
+                    },
+                    topics=["third-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="third-species-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The cantus firmus below is given and locked. Write a "
+                            "third species counterpoint above it: four quarter notes "
+                            "against each whole note, except the final measure, which "
+                            "closes on a single whole note."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "species_counterpoint",
+                                "species": 3,
+                                "cantus_firmus_staff_index": 0,
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "cantus-firmus",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "cf-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"cf{i}",
+                                                            "step": step,
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, step in enumerate(["C", "D", "E", "D", "C"])
+                                    ],
+                                },
+                                {
+                                    "id": "counterpoint",
+                                    "clef": "treble",
+                                    "measures": (
+                                        _blank_measures(4, "cp-voice", "quarter", 4)
+                                        + _blank_measures(
+                                            1, "cp-voice", "whole", 1, id_offset=4
+                                        )
+                                    ),
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["third-species-counterpoint"],
+                ),
+            ],
+        ),
     ],
 )
