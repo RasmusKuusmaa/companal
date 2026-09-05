@@ -178,5 +178,94 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="sonata-form",
+            title="Sonata Form",
+            summary="The three-part drama of exposition, development, and recapitulation.",
+            estimated_minutes=16,
+            steps=[
+                StepDef(
+                    slug="sonata-form-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Sonata form\n\n"
+                            "**Sonata form** is a large three-part structure built "
+                            "around a harmonic drama rather than just a sequence of "
+                            "themes:\n\n"
+                            "- **Exposition**: presents a **first theme (or theme "
+                            "group)** in the tonic, moves through a **transition** "
+                            "to a **second theme** in a contrasting key (the "
+                            "dominant, in a major-key sonata; the relative major, in "
+                            "a minor-key one), and closes with **closing material** "
+                            "confirming that new key. The exposition is "
+                            "conventionally repeated.\n"
+                            "- **Development**: takes fragments of the exposition's "
+                            "themes and works them through a series of unstable, "
+                            "often rapidly modulating keys - the harmonically "
+                            "restless heart of the movement, building tension toward "
+                            "the return.\n"
+                            "- **Recapitulation**: restates the exposition's material "
+                            "in the same order, but now with the second theme "
+                            "**also in the tonic** rather than the contrasting key - "
+                            "resolving the exposition's central harmonic tension by "
+                            "bringing everything home.\n\n"
+                            "That single move - the second theme returning in the "
+                            "tonic instead of its original key - is the defining "
+                            "harmonic event of sonata form, and the entire "
+                            "development section exists to build toward it."
+                        )
+                    },
+                    topics=["sonata-form"],
+                ),
+                StepDef(
+                    slug="sonata-form-quiz-second-theme-key",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In a major-key sonata's exposition, what key is the "
+                            "second theme normally in, and where is it in the "
+                            "recapitulation?"
+                        ),
+                        "choices": [
+                            "The dominant in the exposition; the tonic in the "
+                            "recapitulation",
+                            "The tonic in both the exposition and recapitulation",
+                            "The subdominant in the exposition; the dominant in "
+                            "the recapitulation",
+                            "The relative minor in both sections",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The second theme's key shift - dominant in the "
+                            "exposition, resolved to tonic in the recapitulation - "
+                            "is sonata form's central harmonic event."
+                        ),
+                    },
+                    topics=["sonata-form"],
+                ),
+                StepDef(
+                    slug="sonata-form-quiz-development",
+                    kind="quiz",
+                    payload={
+                        "question": "The development section is best characterized by:",
+                        "choices": [
+                            "Harmonic instability, working fragments of the "
+                            "exposition's themes through shifting keys",
+                            "A stable, unchanging tonic throughout",
+                            "Introducing entirely new themes not heard before",
+                            "An exact repeat of the exposition",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The development is defined by harmonic restlessness - "
+                            "fragmenting and modulating existing thematic material "
+                            "rather than presenting new themes or staying put."
+                        ),
+                    },
+                    topics=["sonata-form"],
+                ),
+            ],
+        ),
     ],
 )
