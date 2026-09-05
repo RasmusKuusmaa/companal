@@ -1138,4 +1138,304 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="comprehensive-final-exam",
+        title="Comprehensive Final Exam",
+        description=(
+            "A cumulative check across the whole course - fundamentals, "
+            "chords and figures, voice leading, counterpoint, chromaticism, "
+            "and form - capped with a four-part harmonization."
+        ),
+        course_slug=None,
+        questions=[
+            ExamQuestionDef(
+                slug="final-exam-key-signature",
+                kind="quiz",
+                payload={
+                    "question": "How many flats are in the key signature of Eb major?",
+                    "choices": ["3", "2", "4", "1"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Eb major's key signature has three flats: Bb, Eb, and Ab."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-inversion-figure",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A first-inversion triad is figured with which symbol?"
+                    ),
+                    "choices": ["6", "6/4", "7", "5/3"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "First inversion - the chord's third in the bass - is "
+                        "figured with a plain 6."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-parallel-prohibition",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "Two voices moving in the same direction by the same "
+                        "perfect interval, such as two fifths in a row, "
+                        "violates which rule?"
+                    ),
+                    "choices": [
+                        "The parallel fifths and octaves prohibition",
+                        "The leading tone doubling rule",
+                        "The rule against voice crossing",
+                        "The rule against spacing beyond an octave",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Parallel perfect fifths (and octaves) between two "
+                        "voices are forbidden in standard four-part voice "
+                        "leading."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-species-counterpoint",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In first species counterpoint, every interval against "
+                        "the cantus firmus must be:"
+                    ),
+                    "choices": [
+                        "Consonant",
+                        "Dissonant on the downbeat only",
+                        "A perfect interval only",
+                        "Approached by leap",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "With one note against one, first species has no room "
+                        "to prepare or resolve a dissonance - every interval "
+                        "must be consonant."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-secondary-dominant",
+                kind="quiz",
+                payload={
+                    "question": "A secondary dominant tonicizes its target by:",
+                    "choices": [
+                        "Borrowing that chord's own dominant from outside the "
+                        "home key",
+                        "Modulating permanently to that chord's key",
+                        "Doubling that chord's root",
+                        "Removing the leading tone entirely",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A secondary dominant briefly borrows the target "
+                        "chord's own dominant to lean on it, without "
+                        "modulating anywhere."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-neapolitan",
+                kind="quiz",
+                payload={
+                    "question": "The Neapolitan sixth chord is built on which scale degree?",
+                    "choices": [
+                        "The lowered 2nd scale degree",
+                        "The lowered 6th scale degree",
+                        "The raised 4th scale degree",
+                        "The dominant",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "N6 is a major triad on the lowered supertonic, almost "
+                        "always in first inversion."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-sonata-form",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In sonata form, the recapitulation resolves the "
+                        "exposition's central tension by:"
+                    ),
+                    "choices": [
+                        "Restating the second theme in the tonic instead of "
+                        "its original contrasting key",
+                        "Skipping the second theme entirely",
+                        "Repeating the development section",
+                        "Introducing a brand new theme",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The second theme's return in the tonic - rather than "
+                        "its exposition key - is what the whole movement's "
+                        "harmonic drama resolves toward."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-cadence-strength",
+                kind="quiz",
+                payload={
+                    "question": "Which cadence is the most conclusive?",
+                    "choices": [
+                        "Perfect authentic cadence",
+                        "Half cadence",
+                        "Plagal cadence",
+                        "Deceptive cadence",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Root-position V to root-position I, soprano landing "
+                        "on the tonic, is the strongest, most final cadence in "
+                        "the common-practice vocabulary."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="final-exam-harmonization-task",
+                kind="composition",
+                payload={
+                    "brief": (
+                        "The soprano line below is given and locked. Add "
+                        "alto, tenor and bass parts to harmonize it in "
+                        "four-part texture, ending with a perfect authentic "
+                        "cadence."
+                    ),
+                    "requirements": [
+                        {"type": "key", "key": "F major"},
+                        {"type": "measure_count", "count": 4},
+                        {"type": "cadence", "cadence": "perfect_authentic"},
+                    ],
+                    "starter_notation": {
+                        "fifths": -1,
+                        "mode": "major",
+                        "time": {"beats": 4, "beat_type": 4},
+                        "tempo": 90,
+                        "staves": [
+                            {
+                                "id": "soprano",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "soprano-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"soprano-voice-{i}",
+                                                        "step": step,
+                                                        "octave": octave,
+                                                        "alter": alter,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": False,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i, (step, octave, alter) in enumerate(
+                                        [("A", 4, -1), ("B", 4, -1), ("G", 4, 0), ("F", 4, 0)]
+                                    )
+                                ],
+                            },
+                            {
+                                "id": "alto",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "alto-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"alto-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                            {
+                                "id": "tenor",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "tenor-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"tenor-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                            {
+                                "id": "bass",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "bass-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"bass-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                        ],
+                    },
+                    "locked_staff_indices": [0],
+                },
+            ),
+        ],
+    ),
 ]
