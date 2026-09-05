@@ -20,8 +20,10 @@ from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion
 from app.domains.exams.schemas import (
     ExamAnswerPayload,
     ExamAnswerRead,
+    ExamAttemptHistoryRead,
     ExamAttemptResultRead,
     ExamAttemptStartRead,
+    ExamAttemptSummary,
     ExamCompositionQuestionRead,
     ExamQuestionRead,
     ExamQuestionResultRead,
@@ -422,3 +424,29 @@ async def grade_attempt(
         submitted_at=attempt.submitted_at,
         question_results=question_results,
     )
+
+
+async def get_attempt_history(
+    db: AsyncSession, user_id: uuid.UUID, exam_slug: str
+) -> ExamAttemptHistoryRead:
+    """Every attempt this student has made at this exam, newest first - the
+    side-by-side view that makes improvement, or its absence, visible.
+    """
+    exam = await _get_exam_by_slug(db, exam_slug)
+    rows = await db.scalars(
+        select(ExamAttempt)
+        .where(ExamAttempt.user_id == user_id, ExamAttempt.exam_id == exam.id)
+        .order_by(ExamAttempt.attempt_number.desc())
+    )
+    attempts = [
+        ExamAttemptSummary(
+            attempt_id=row.id,
+            attempt_number=row.attempt_number,
+            score=row.score,
+            max_score=row.max_score,
+            started_at=row.started_at,
+            submitted_at=row.submitted_at,
+        )
+        for row in rows.all()
+    ]
+    return ExamAttemptHistoryRead(exam_slug=exam.slug, attempts=attempts)

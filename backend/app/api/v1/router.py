@@ -6,6 +6,7 @@ from app.api.v1 import health
 from app.domains.analysis.router import router as analysis_router
 from app.domains.auth.router import router as auth_router
 from app.domains.billing.router import router as billing_router
+from app.domains.exams.router import router as exams_router
 from app.domains.feedback.router import router as feedback_router
 from app.domains.learning.router import router as learning_router
 from app.domains.notation.router import router as notation_router
@@ -20,3 +21,4 @@ api_router.include_router(analysis_router)
 api_router.include_router(feedback_router)
 api_router.include_router(learning_router)
 api_router.include_router(notation_router)
+api_router.include_router(exams_router)
