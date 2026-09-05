@@ -324,5 +324,145 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="first-species-counterpoint",
+            title="First Species Counterpoint",
+            summary="Note-against-note writing against a cantus firmus.",
+            estimated_minutes=18,
+            steps=[
+                StepDef(
+                    slug="first-species-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# First species counterpoint\n\n"
+                            "Species counterpoint is a discipline for training the ear "
+                            "and the pen at once: write one line against another - the "
+                            "given **cantus firmus** - following a strict set of rules, "
+                            "then relax those rules one species at a time. **First "
+                            "species** is the strictest: exactly one note in the "
+                            "counterpoint against each note of the cantus firmus.\n\n"
+                            "## The rules\n\n"
+                            "- Every interval against the cantus firmus must be "
+                            "**consonant** - a unison, third, fifth, sixth or octave. "
+                            "There's no rhythmic subdivision to hide a dissonance "
+                            "against, so none is allowed.\n"
+                            "- No parallel fifths or parallel octaves between the two "
+                            "lines.\n"
+                            "- Favor **contrary motion**, especially moving into a "
+                            "perfect interval.\n"
+                            "- Begin and end on a perfect consonance (a unison, fifth "
+                            "or octave), with the final note approached by **step**.\n\n"
+                            "Every one of these constraints exists to keep the "
+                            "counterpoint independent of the cantus firmus - its own "
+                            "line, not a shadow of the given one."
+                        )
+                    },
+                    topics=["first-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="first-species-quiz-consonance",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In first species counterpoint, what's the rule for "
+                            "consonance?"
+                        ),
+                        "choices": [
+                            "Every interval against the cantus firmus must be consonant",
+                            "Dissonance is allowed on the downbeat only",
+                            "Any interval is fine as long as it eventually resolves",
+                            "Only perfect intervals (unisons, fifths, octaves) are allowed",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "With one note against one note and no rhythmic "
+                            "subdivision, first species has nowhere to place a passing "
+                            "dissonance - every interval must be consonant."
+                        ),
+                    },
+                    topics=["first-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="first-species-quiz-ending",
+                    kind="quiz",
+                    payload={
+                        "question": "How should a first species exercise typically end?",
+                        "choices": [
+                            "On a perfect unison or octave, approached by step",
+                            "On a perfect fifth, approached by leap",
+                            "On any consonant interval, approached however",
+                            "On a major third",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The final interval should be a perfect unison or octave, "
+                            "with the counterpoint arriving there by step for a clean, "
+                            "conclusive close."
+                        ),
+                    },
+                    topics=["first-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="first-species-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The cantus firmus below is given and locked. Write a "
+                            "first species (note-against-note) counterpoint above it."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "species_counterpoint",
+                                "species": 1,
+                                "cantus_firmus_staff_index": 0,
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "cantus-firmus",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "cf-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"cf{i}",
+                                                            "step": step,
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, step in enumerate(["C", "D", "E", "D", "C"])
+                                    ],
+                                },
+                                {
+                                    "id": "counterpoint",
+                                    "clef": "treble",
+                                    "measures": _blank_measures(5, "cp-voice"),
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["first-species-counterpoint"],
+                ),
+            ],
+        ),
     ],
 )
