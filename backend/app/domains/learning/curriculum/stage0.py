@@ -424,5 +424,97 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="minor-scales-natural-harmonic-melodic",
+            title="Minor Scales: Natural, Harmonic and Melodic",
+            summary="The three forms of minor and why each one exists.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="minor-scales-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Minor scales: natural, harmonic and melodic\n\n"
+                            "## Natural minor\n\n"
+                            "The **natural minor** scale is the pattern W-H-W-W-H-W-W. It "
+                            "shares a key signature with a major scale a minor third above "
+                            "it - A natural minor uses exactly the same notes as C major, "
+                            "just starting from A.\n\n"
+                            "## Harmonic minor\n\n"
+                            "Natural minor's 7th scale degree sits a whole step below the "
+                            "tonic, which is a weak pull home. **Harmonic minor** raises "
+                            "that 7th degree by a half step, turning it into a proper "
+                            "leading tone a half step below the tonic - at the cost of an "
+                            "unusual augmented second between the (unraised) 6th degree "
+                            "and the (raised) 7th.\n\n"
+                            "## Melodic minor\n\n"
+                            "**Melodic minor** smooths that awkward gap by raising the 6th "
+                            "degree too, but only going **up**. Coming back down, both "
+                            "raised degrees revert, and melodic minor descending is "
+                            "identical to natural minor. This asymmetry exists purely for "
+                            "melodic smoothness - the raised 6th and 7th pull upward toward "
+                            "the tonic, and there's no need for that pull on the way back "
+                            "down."
+                        )
+                    },
+                    topics=["minor-scales"],
+                ),
+                StepDef(
+                    slug="minor-scales-quiz-harmonic",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Which scale degree does harmonic minor raise, compared to "
+                            "natural minor?"
+                        ),
+                        "choices": ["The 7th", "The 6th", "Both the 6th and 7th", "The 3rd"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Harmonic minor raises only the 7th degree, turning it into a "
+                            "true leading tone a half step below the tonic."
+                        ),
+                    },
+                    topics=["minor-scales"],
+                ),
+                StepDef(
+                    slug="minor-scales-quiz-melodic-descending",
+                    kind="quiz",
+                    payload={
+                        "question": "Descending, melodic minor is identical to:",
+                        "choices": [
+                            "Harmonic minor",
+                            "Natural minor",
+                            "The parallel major",
+                            "The Dorian mode",
+                        ],
+                        "answer_index": 1,
+                        "explanation": (
+                            "Melodic minor only raises the 6th and 7th degrees ascending; "
+                            "coming back down, both revert and it matches natural minor "
+                            "exactly."
+                        ),
+                    },
+                    topics=["minor-scales"],
+                ),
+                StepDef(
+                    slug="minor-scales-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "Write a one-octave ascending A natural minor scale in quarter "
+                            "notes."
+                        ),
+                        "requirements": [
+                            {"type": "key", "key": "a minor"},
+                            {"type": "diatonic_only"},
+                            {"type": "required_scale_degrees", "degrees": [1, 2, 3, 4, 5, 6, 7]},
+                            {"type": "measure_count", "count": 2},
+                        ],
+                    },
+                    topics=["minor-scales"],
+                ),
+            ],
+        ),
     ],
 )
