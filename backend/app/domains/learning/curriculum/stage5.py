@@ -267,5 +267,97 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="theme-and-variations",
+            title="Theme and Variations",
+            summary="Stating an idea plainly, then transforming it again and again.",
+            estimated_minutes=13,
+            steps=[
+                StepDef(
+                    slug="theme-variations-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Theme and variations\n\n"
+                            "**Theme and variations** states a clear, usually simple "
+                            "**theme**, then follows it with a series of "
+                            "**variations**, each one transforming the theme in a "
+                            "different way while keeping something recognizable "
+                            "underneath - most often its harmonic plan (the "
+                            "underlying chord progression) or its phrase structure, "
+                            "even when the melody itself is decorated beyond easy "
+                            "recognition.\n\n"
+                            "Typical variation techniques include:\n\n"
+                            "- **Melodic decoration/embellishment** - filling in the "
+                            "theme's melody with faster figuration around the same "
+                            "harmonic skeleton.\n"
+                            "- **Changing mode** - a variation in the parallel minor "
+                            "(or major) of an otherwise unchanged harmonic plan.\n"
+                            "- **Changing texture or accompaniment** - the same "
+                            "harmony, presented in a new figuration pattern (broken "
+                            "chords, a walking bass, a new countermelody).\n"
+                            "- **Changing tempo or meter** - slowing a variation "
+                            "into an expressive, ornamented adagio, or recasting it "
+                            "in a new meter entirely.\n\n"
+                            "Because so much can change on the surface, the "
+                            "underlying harmonic plan is what actually holds a set "
+                            "of variations together - a listener can lose the "
+                            "melody entirely and still track the form by ear "
+                            "through the recurring chord progression."
+                        )
+                    },
+                    topics=["theme-and-variations"],
+                ),
+                StepDef(
+                    slug="theme-variations-quiz-what-stays",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In theme and variations, what most reliably stays "
+                            "recognizable across variations even when the melody is "
+                            "heavily decorated?"
+                        ),
+                        "choices": [
+                            "The underlying harmonic plan (chord progression) or "
+                            "phrase structure",
+                            "The exact rhythm of the melody",
+                            "The instrumentation",
+                            "The tempo, which never changes",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The harmonic skeleton (and/or phrase structure) is "
+                            "what typically survives from variation to variation, "
+                            "even when the surface melody is transformed beyond "
+                            "easy recognition."
+                        ),
+                    },
+                    topics=["theme-and-variations"],
+                ),
+                StepDef(
+                    slug="theme-variations-quiz-technique",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Recasting a variation's harmonic plan in the parallel "
+                            "minor is an example of which variation technique?"
+                        ),
+                        "choices": [
+                            "Changing mode",
+                            "Melodic decoration",
+                            "Changing meter",
+                            "Retrograde inversion",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Shifting a variation into the parallel minor (or "
+                            "major), while keeping the harmonic plan otherwise "
+                            "intact, is a change of mode."
+                        ),
+                    },
+                    topics=["theme-and-variations"],
+                ),
+            ],
+        ),
     ],
 )
