@@ -6,3 +6,6 @@ dist-ssr/
 .env.*.local
 coverage/
 .vite/
+playwright-report/
+test-results/
+blob-report/

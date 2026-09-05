@@ -25,7 +25,19 @@ npm run type-check     # vue-tsc only
 npm run lint            # eslint --fix
 npm run format            # prettier --write
 npm run test                # vitest run
+npm run test:e2e             # playwright test - see e2e/ below
 ```
+
+## End-to-end tests
+
+`e2e/` holds Playwright specs that drive the real app in a real browser
+against a real backend - unlike `tests/unit`, nothing here is mocked.
+`playwright.config.ts` starts both servers itself: the frontend (`npm run
+dev`) and the API, via `../backend/scripts/run_e2e_server.sh`, which
+migrates and seeds its own `cadence_e2e` database from scratch on every
+run so a run here never depends on (or pollutes) local dev data or
+`pytest`'s own database. First run only: `npx playwright install
+chromium`.
 
 ## Layout
 

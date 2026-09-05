@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/node20/tsconfig.json",
-  "include": ["vite.config.ts", "tailwind.config.ts", "postcss.config.js"],
+  "include": ["vite.config.ts", "tailwind.config.ts", "postcss.config.js", "playwright.config.ts"],
   "compilerOptions": {
     "composite": true,
     "outDir": "./node_modules/.tsc-cache/node",
