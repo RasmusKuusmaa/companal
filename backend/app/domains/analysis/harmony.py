@@ -53,6 +53,7 @@ from app.domains.analysis.schemas import (
     VoiceLeapRead,
 )
 from app.domains.analysis.service import AnalysisError, _parse_score
+from app.domains.analysis.voicing import ChordTones, build_voicing_report
 
 _STEP_MAX_SEMITONES = 2
 # A voice moving more than a sixth in one chord change is a notable leap;
@@ -1227,6 +1228,41 @@ def _parallel_issue(label: str, found: list[ParallelMotionRead]) -> str:
 # --------------------------------------------------------------------------- #
 
 
+def _chord_tones(slices: list[_Slice]) -> list[ChordTones]:
+    """Reads each slice's root/third/seventh pitch classes, for the doubling
+    and missing-third checks in `voicing.py`."""
+    tones: list[ChordTones] = []
+    for slice_ in slices:
+        root = _chord_attr(slice_.chord, "root")
+        third = _chord_attr(slice_.chord, "third")
+        seventh = _chord_attr(slice_.chord, "seventh")
+        tones.append(
+            ChordTones(
+                root=root.pitchClass if root is not None else None,
+                third=third.pitchClass if third is not None else None,
+                seventh=seventh.pitchClass if seventh is not None else None,
+            )
+        )
+    return tones
+
+
+def _leading_tone_pitch_class(key_obj: Any | None) -> int | None:
+    """A half step below the tonic, regardless of mode.
+
+    Not `key_obj.pitchFromDegree(7)`: that reads the key's own scale, which
+    for a minor key gives the natural-minor subtonic rather than the raised
+    leading tone a dominant-function chord actually uses. The rule this
+    supports ("don't double the leading tone") is about that half-step
+    pull toward the tonic, which holds regardless of mode.
+    """
+    if key_obj is None:
+        return None
+    tonic = _chord_attr(key_obj, "tonic")
+    if tonic is None:
+        return None
+    return int((tonic.pitchClass - 1) % 12)
+
+
 def analyze_harmony_from_score(score: Score) -> HarmonyAnalysis:
     """Run the full harmony analysis on an already-parsed music21 Score."""
     slices = _extract_slices(score)
@@ -1241,6 +1277,14 @@ def analyze_harmony_from_score(score: Score) -> HarmonyAnalysis:
 
     chords = _build_chords(slices, key_obj)
     progression = _build_progression(chords)
+    voicing_report = build_voicing_report(
+        voice_source,
+        voice_ids,
+        grid,
+        [s.measure for s in slices],
+        _chord_tones(slices),
+        _leading_tone_pitch_class(key_obj),
+    )
 
     technical = HarmonyTechnicalData(
         key=str(key_obj) if key_obj is not None else None,
@@ -1254,6 +1298,7 @@ def analyze_harmony_from_score(score: Score) -> HarmonyAnalysis:
         cadences=_build_cadences(chords, progression),
         voice_leading=_build_voice_leading(slices, voice_source, voice_ids, grid),
         dissonances=_build_dissonances(slices, chords, voice_ids, grid, key_obj),
+        voicing=voicing_report,
     )
 
     score_value, strengths, issues = _score_harmony(technical)

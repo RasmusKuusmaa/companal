@@ -355,27 +355,6 @@ class DissonanceData(BaseModel):
     ends_dissonant: bool
 
 
-class HarmonyTechnicalData(BaseModel):
-    key: str | None
-    key_confidence: float | None
-    mode: str | None
-    chord_count: int
-    measure_count: int
-    chords: list[HarmonicChordRead]
-    progression: list[ProgressionStepRead]
-    functional: FunctionalData
-    cadences: list[HarmonicCadenceRead]
-    voice_leading: VoiceLeadingData
-    dissonances: DissonanceData
-
-
-class HarmonyAnalysis(BaseModel):
-    score: float
-    strengths: list[str]
-    issues: list[str]
-    technical_data: HarmonyTechnicalData
-
-
 # --------------------------------------------------------------------------- #
 # SATB voicing checks
 #
@@ -459,6 +438,30 @@ class VoicingReport(BaseModel):
     spacing_violations: list[VoiceSpacingViolationRead]
     doubling_violations: list[VoiceDoublingViolationRead]
     overlaps: list[VoiceOverlapViolationRead]
+
+
+class HarmonyTechnicalData(BaseModel):
+    key: str | None
+    key_confidence: float | None
+    mode: str | None
+    chord_count: int
+    measure_count: int
+    chords: list[HarmonicChordRead]
+    progression: list[ProgressionStepRead]
+    functional: FunctionalData
+    cadences: list[HarmonicCadenceRead]
+    voice_leading: VoiceLeadingData
+    dissonances: DissonanceData
+    # `None` unless the texture is a genuine four-real-voice score - see
+    # `voicing.py`'s module docstring.
+    voicing: VoicingReport | None = None
+
+
+class HarmonyAnalysis(BaseModel):
+    score: float
+    strengths: list[str]
+    issues: list[str]
+    technical_data: HarmonyTechnicalData
 
 
 # --------------------------------------------------------------------------- #
