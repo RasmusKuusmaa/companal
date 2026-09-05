@@ -5,26 +5,37 @@ from typing import Any
 from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef
 
 
-def _blank_measures(count: int, voice_id: str) -> list[dict[str, Any]]:
-    """`count` empty (whole-rest) measures for one voice - a blank starting
-    point with the right shape, not a hint at any particular solution."""
+def _blank_measures(
+    count: int,
+    voice_id: str,
+    duration: str = "whole",
+    notes_per_measure: int = 1,
+    id_offset: int = 0,
+) -> list[dict[str, Any]]:
+    """`count` empty (rest-only) measures for one voice - a blank starting
+    point with the right shape, not a hint at any particular solution.
+    `notes_per_measure` rests of `duration` each, for species that need
+    more than one note against the cantus firmus's one whole note.
+    `id_offset` keeps measure ids unique when concatenating calls (a
+    trailing single-note measure after several multi-note ones, say)."""
     return [
         {
-            "id": f"m{i}",
+            "id": f"m{id_offset + i}",
             "voices": [
                 {
                     "id": voice_id,
                     "notes": [
                         {
-                            "id": f"{voice_id}-{i}",
+                            "id": f"{voice_id}-{id_offset + i}-{j}",
                             "step": "C",
                             "octave": 4,
                             "alter": 0,
-                            "duration": "whole",
+                            "duration": duration,
                             "dots": 0,
                             "is_rest": True,
                             "tied_to_next": False,
                         }
+                        for j in range(notes_per_measure)
                     ],
                 }
             ],
@@ -461,6 +472,155 @@ COURSE = CourseDef(
                         "locked_staff_indices": [0],
                     },
                     topics=["first-species-counterpoint"],
+                ),
+            ],
+        ),
+        LessonDef(
+            slug="second-species-counterpoint",
+            title="Second Species Counterpoint",
+            summary="Two notes against one, and the dissonant passing tone it allows.",
+            estimated_minutes=18,
+            steps=[
+                StepDef(
+                    slug="second-species-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Second species counterpoint\n\n"
+                            "Second species relaxes first species by exactly one thing: "
+                            "the counterpoint now moves in **two notes against each one** "
+                            "of the cantus firmus, instead of one against one.\n\n"
+                            "That extra note per measure opens the door to a controlled "
+                            "dissonance:\n\n"
+                            "- The **downbeat** (the first of the two notes) must still "
+                            "be consonant against the cantus firmus - the strong beat "
+                            "carries the real harmonic weight of the measure.\n"
+                            "- The **weak beat** may be dissonant, but only as a "
+                            "**passing tone** or **neighbor tone** - approached and left "
+                            "by step, never by leap.\n"
+                            "- Leaps of a fourth or larger still need to be answered by "
+                            "a step in the opposite direction.\n"
+                            "- Parallel fifths and octaves are checked **downbeat to "
+                            "downbeat** - that's where the real harmonic motion between "
+                            "the two lines actually happens.\n\n"
+                            "The final measure conventionally drops back to a single "
+                            "whole note, the same clean unison-or-octave close first "
+                            "species ends on."
+                        )
+                    },
+                    topics=["second-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="second-species-quiz-weak-beat",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In second species, a dissonant weak beat is only allowed "
+                            "if it functions as a:"
+                        ),
+                        "choices": [
+                            "Passing tone or neighbor tone",
+                            "Suspension",
+                            "Anticipation",
+                            "Appoggiatura",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A weak-beat dissonance in second species has to be "
+                            "approached and left by step - exactly what defines a "
+                            "passing or neighbor tone."
+                        ),
+                    },
+                    topics=["second-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="second-species-quiz-downbeat",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In second species, which beat of each measure must be "
+                            "consonant?"
+                        ),
+                        "choices": [
+                            "The downbeat",
+                            "The weak beat",
+                            "Both beats may freely be dissonant",
+                            "Neither beat is required to be consonant",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The downbeat carries the measure's real harmony and must "
+                            "be consonant; only the weak beat may pass through a "
+                            "dissonance."
+                        ),
+                    },
+                    topics=["second-species-counterpoint"],
+                ),
+                StepDef(
+                    slug="second-species-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The cantus firmus below is given and locked. Write a "
+                            "second species counterpoint above it: two half notes "
+                            "against each whole note, except the final measure, which "
+                            "closes on a single whole note."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "species_counterpoint",
+                                "species": 2,
+                                "cantus_firmus_staff_index": 0,
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "cantus-firmus",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "cf-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"cf{i}",
+                                                            "step": step,
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, step in enumerate(["C", "D", "E", "D", "C"])
+                                    ],
+                                },
+                                {
+                                    "id": "counterpoint",
+                                    "clef": "treble",
+                                    "measures": (
+                                        _blank_measures(4, "cp-voice", "half", 2)
+                                        + _blank_measures(
+                                            1, "cp-voice", "whole", 1, id_offset=4
+                                        )
+                                    ),
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["second-species-counterpoint"],
                 ),
             ],
         ),
