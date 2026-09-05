@@ -440,6 +440,19 @@ class VoicingReport(BaseModel):
     overlaps: list[VoiceOverlapViolationRead]
 
 
+class NonChordToneRead(BaseModel):
+    """One melodic note that isn't a chord tone of the harmony under it,
+    classified by how it's approached and left (see `analysis.nct`)."""
+
+    # passing / neighbor / suspension / anticipation / appoggiatura /
+    # escape / unclassified
+    kind: str
+    voice: str
+    chord_index: int
+    measure: int
+    pitch: str
+
+
 class HarmonyTechnicalData(BaseModel):
     key: str | None
     key_confidence: float | None
@@ -455,6 +468,7 @@ class HarmonyTechnicalData(BaseModel):
     # `None` unless the texture is a genuine four-real-voice score - see
     # `voicing.py`'s module docstring.
     voicing: VoicingReport | None = None
+    non_chord_tones: list[NonChordToneRead]
 
 
 class HarmonyAnalysis(BaseModel):

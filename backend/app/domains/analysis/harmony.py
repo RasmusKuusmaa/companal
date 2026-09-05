@@ -38,6 +38,7 @@ from music21 import note as m21note
 from music21 import roman, stream, voiceLeading
 from music21.stream.base import Score
 
+from app.domains.analysis.nct import classify_non_chord_tones
 from app.domains.analysis.schemas import (
     DissonanceData,
     DissonanceRead,
@@ -1246,6 +1247,34 @@ def _chord_tones(slices: list[_Slice]) -> list[ChordTones]:
     return tones
 
 
+_MIN_PITCHES_FOR_ROOT = 3
+
+
+def _chord_tone_pitch_classes(slices: list[_Slice]) -> list[set[int]]:
+    """The pitch classes music21 identifies as members of each slice's
+    chord (root, third, fifth, seventh) - not every pitch sounding in the
+    sonority, which is exactly what a non-chord tone (`analysis.nct`) is
+    not.
+
+    Empty for a sonority of fewer than three distinct pitches: music21's
+    `.root()` on a bare dyad picks whichever note fits its interval-
+    stacking heuristic best, which is frequently *not* the actual bass -
+    a fourth or a second between two voices has no reliable root to find,
+    and guessing one would misclassify the other note as a chord tone
+    when it's exactly the kind of note this module exists to catch.
+    """
+    classes: list[set[int]] = []
+    for slice_ in slices:
+        members: set[int] = set()
+        if len(set(slice_.pitches)) >= _MIN_PITCHES_FOR_ROOT:
+            for name in ("root", "third", "fifth", "seventh"):
+                tone = _chord_attr(slice_.chord, name)
+                if tone is not None:
+                    members.add(tone.pitchClass)
+        classes.append(members)
+    return classes
+
+
 def _leading_tone_pitch_class(key_obj: Any | None) -> int | None:
     """A half step below the tonic, regardless of mode.
 
@@ -1285,6 +1314,9 @@ def analyze_harmony_from_score(score: Score) -> HarmonyAnalysis:
         _chord_tones(slices),
         _leading_tone_pitch_class(key_obj),
     )
+    non_chord_tones = classify_non_chord_tones(
+        voice_ids, grid, [s.measure for s in slices], _chord_tone_pitch_classes(slices)
+    )
 
     technical = HarmonyTechnicalData(
         key=str(key_obj) if key_obj is not None else None,
@@ -1299,6 +1331,7 @@ def analyze_harmony_from_score(score: Score) -> HarmonyAnalysis:
         voice_leading=_build_voice_leading(slices, voice_source, voice_ids, grid),
         dissonances=_build_dissonances(slices, chords, voice_ids, grid, key_obj),
         voicing=voicing_report,
+        non_chord_tones=non_chord_tones,
     )
 
     score_value, strengths, issues = _score_harmony(technical)
