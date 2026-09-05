@@ -18,6 +18,7 @@ import ArticulationPalette from "./ArticulationPalette.vue";
 import BeamToggle from "./BeamToggle.vue";
 import CopyPasteControls from "./CopyPasteControls.vue";
 import DurationPalette from "./DurationPalette.vue";
+import ExportControls from "./ExportControls.vue";
 import MeasureControls from "./MeasureControls.vue";
 import PlaybackTransport from "./PlaybackTransport.vue";
 import RestToggle from "./RestToggle.vue";
@@ -257,6 +258,7 @@ function handleKeydown(event: KeyboardEvent): void {
         @stop="playback.stop"
         @update:tempo="editor.setTempo"
       />
+      <ExportControls :document="editor.document.value" />
     </div>
 
     <StaffRenderer

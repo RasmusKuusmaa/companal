@@ -162,4 +162,19 @@ export const notationApi = {
     const { data } = await httpClient.post<NotationDocumentDto>("/notation/import", formData);
     return notationDocumentFromDto(data);
   },
+
+  /**
+   * Renders a notation document to a MusicXML file, for a student to
+   * download and open in whatever notation software they already use.
+   * The same conversion (`builder.to_musicxml_bytes`) grading runs
+   * internally - what comes back here is exactly what the grader saw.
+   */
+  async exportMusicXml(document: NotationDocument): Promise<Blob> {
+    const { data } = await httpClient.post<Blob>(
+      "/notation/musicxml",
+      notationDocumentToDto(document),
+      { responseType: "blob" },
+    );
+    return data;
+  },
 };
