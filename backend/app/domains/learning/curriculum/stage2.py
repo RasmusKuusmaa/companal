@@ -442,5 +442,82 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="first-inversion-triads-and-doubling-choices",
+            title="First Inversion Triads and Doubling Choices",
+            summary="Why the bass, not the root, usually gets doubled in first inversion.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="first-inversion-doubling-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# First inversion triads and doubling choices\n\n"
+                            "In first inversion, the chord's **third** sits in the bass "
+                            "instead of the root. Doubling that bass note is generally "
+                            "avoided as a default habit - it's not forbidden, but it "
+                            "tends to overemphasize the third at the expense of the root, "
+                            "which is usually the note you want to feel most strongly. "
+                            "More often, one of the upper voices gets doubled instead - "
+                            "whichever choice produces the smoothest connection to the "
+                            "surrounding chords.\n\n"
+                            "## The diminished exception\n\n"
+                            "A first-inversion diminished triad - most often the "
+                            "leading-tone chord, **vii°6** - flips this guideline. Its "
+                            "root and fifth form a tritone with each other and both carry "
+                            "strong pulls toward resolution, so doubling either one "
+                            "doubles that instability. Doubling the **bass note** (the "
+                            "diminished triad's third) instead is the standard, safer "
+                            "choice here."
+                        )
+                    },
+                    topics=["first-inversion-triads"],
+                ),
+                StepDef(
+                    slug="first-inversion-doubling-quiz-default",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In first inversion, which note is usually avoided as the "
+                            "doubling choice?"
+                        ),
+                        "choices": [
+                            "The bass note (the chord's third)",
+                            "The chord's root",
+                            "The chord's fifth",
+                            "No note is preferred - any is equally fine",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Doubling the bass in first inversion overemphasizes the "
+                            "third at the root's expense, so an upper voice is usually "
+                            "doubled instead."
+                        ),
+                    },
+                    topics=["first-inversion-triads"],
+                ),
+                StepDef(
+                    slug="first-inversion-doubling-quiz-diminished",
+                    kind="quiz",
+                    payload={
+                        "question": "In vii°6, which note is the preferred doubling choice?",
+                        "choices": [
+                            "The bass note (the diminished triad's third)",
+                            "The leading tone itself",
+                            "The note that forms a tritone with the leading tone",
+                            "vii°6 should never have a doubled note",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "vii°6's root and fifth form the unstable tritone, so the "
+                            "bass note - the triad's third - is doubled instead, "
+                            "leaving that tritone's two notes each appearing only once."
+                        ),
+                    },
+                    topics=["first-inversion-triads"],
+                ),
+            ],
+        ),
     ],
 )
