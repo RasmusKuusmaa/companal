@@ -319,22 +319,22 @@ composition task where the topic calls for one, and its topic tags.
 
 ## Phase K — polish, tests and docs
 
-- [ ] `add selection and range operations to the editor`
-- [ ] `add copy and paste in the editor`
-- [ ] `add undo and redo in the editor`
-- [ ] `add beaming control`
-- [ ] `add slurs and articulations`
-- [ ] `add score export to musicxml download`
-- [ ] `add print friendly score view`
-- [ ] `add keyboard shortcut help panel`
-- [ ] `add empty and error states across learning views`
-- [ ] `add mobile layout for the roadmap and lesson player`
-- [ ] `add end to end lesson flow test`
-- [ ] `add end to end composition submission test`
-- [ ] `add ci workflow for backend and frontend`
-- [ ] `document the curriculum authoring format`
-- [ ] `document local setup without an api key`
-- [ ] `update readme with the learning platform`
+- [x] `add selection and range operations to the editor`
+- [x] `add copy and paste in the editor`
+- [x] `add undo and redo in the editor`
+- [x] `add beaming control`
+- [x] `add slurs and articulations`
+- [x] `add score export to musicxml download`
+- [x] `add print friendly score view`
+- [x] `add keyboard shortcut help panel`
+- [x] `add empty and error states across learning views`
+- [x] `add mobile layout for the roadmap and lesson player`
+- [x] `add end to end lesson flow test`
+- [x] `add end to end composition submission test`
+- [x] `add ci workflow for backend and frontend`
+- [x] `document the curriculum authoring format`
+- [x] `document local setup without an api key`
+- [x] `update readme with the learning platform`
 
 ---
 
