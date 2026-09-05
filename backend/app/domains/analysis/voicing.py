@@ -24,6 +24,7 @@ from music21 import note as m21note
 
 from app.domains.analysis.schemas import (
     VoiceDoublingViolationRead,
+    VoiceOverlapViolationRead,
     VoiceRangeViolationRead,
     VoiceSpacingViolationRead,
 )
@@ -246,4 +247,51 @@ def check_doubling(
                 )
             )
 
+    return violations
+
+
+# --------------------------------------------------------------------------- #
+# Overlap
+# --------------------------------------------------------------------------- #
+
+# All three adjacent pairs, unlike spacing's upper-only pairs - overlap is
+# about voice independence, which matters just as much between tenor and
+# bass as it does higher in the texture.
+_ADJACENT_PAIRS: tuple[tuple[int, int], ...] = ((SOPRANO, ALTO), (ALTO, TENOR), (TENOR, BASS))
+
+
+def check_overlaps(chords: list[VoicedChord]) -> list[VoiceOverlapViolationRead]:
+    """Flags a voice moving into the pitch territory an adjacent voice just
+    vacated - distinct from a crossing, which is two voices out of order at
+    the same instant (see `VoiceOverlapViolationRead`).
+
+    Only checked between genuinely consecutive slices - `chords` can skip
+    an index when a voice rested there (see `four_part_chords`), and
+    comparing across that gap would be judging a transition that was never
+    actually played.
+    """
+    violations: list[VoiceOverlapViolationRead] = []
+    for i in range(len(chords) - 1):
+        before, after = chords[i], chords[i + 1]
+        if after.slice_index != before.slice_index + 1:
+            continue
+
+        for upper_pos, lower_pos in _ADJACENT_PAIRS:
+            upper_before, upper_after = before.pitch(upper_pos), after.pitch(upper_pos)
+            lower_before, lower_after = before.pitch(lower_pos), after.pitch(lower_pos)
+            overlapped = (
+                midi(upper_after) < midi(lower_before) or midi(lower_after) > midi(upper_before)
+            )
+            if overlapped:
+                violations.append(
+                    VoiceOverlapViolationRead(
+                        upper_voice=_VOICE_NAMES[upper_pos],
+                        lower_voice=_VOICE_NAMES[lower_pos],
+                        from_index=before.slice_index,
+                        to_index=after.slice_index,
+                        measure=after.measure,
+                        upper_motion=f"{upper_before}->{upper_after}",
+                        lower_motion=f"{lower_before}->{lower_after}",
+                    )
+                )
     return violations

@@ -426,6 +426,25 @@ class VoiceDoublingViolationRead(BaseModel):
     pitches: list[str]
 
 
+class VoiceOverlapViolationRead(BaseModel):
+    """A voice moving into the pitch territory an adjacent voice just left.
+
+    Distinct from a crossing (`VoiceCrossingRead`): a crossing is two
+    voices out of order *at the same instant*; an overlap can happen even
+    when neither chord itself is out of order - the upper voice steps down
+    past where the lower voice just was, or the reverse (see
+    `voicing.check_overlaps`).
+    """
+
+    upper_voice: str
+    lower_voice: str
+    from_index: int
+    to_index: int
+    measure: int
+    upper_motion: str
+    lower_motion: str
+
+
 # --------------------------------------------------------------------------- #
 # Rhythm analysis
 #
