@@ -14,14 +14,18 @@ from collections.abc import Sequence
 
 from app.core.logging import configure_logging
 from app.db.session import AsyncSessionLocal, engine
+from app.domains.exams.content import EXAMS
+from app.domains.exams.seeding import ExamSeedReport, UnknownCourseError, seed_exams
 from app.domains.learning.curriculum import COURSES, TOPICS
 from app.domains.learning.seeding import SeedReport, UnknownTopicError, seed_curriculum
 
 
-async def _seed_curriculum() -> SeedReport:
+async def _seed_curriculum() -> tuple[SeedReport, ExamSeedReport]:
     try:
         async with AsyncSessionLocal() as db:
-            return await seed_curriculum(db, topics=TOPICS, courses=COURSES)
+            curriculum_report = await seed_curriculum(db, topics=TOPICS, courses=COURSES)
+            exam_report = await seed_exams(db, exams=EXAMS)
+            return curriculum_report, exam_report
     finally:
         # The CLI owns the process, so it owns the engine's lifetime too -
         # the app's lifespan handler isn't running to dispose it here.
@@ -30,15 +34,20 @@ async def _seed_curriculum() -> SeedReport:
 
 def _run_seed_curriculum() -> int:
     try:
-        report = asyncio.run(_seed_curriculum())
+        curriculum_report, exam_report = asyncio.run(_seed_curriculum())
     except UnknownTopicError as exc:
         print(f"curriculum is invalid: {exc}", file=sys.stderr)
         return 1
+    except UnknownCourseError as exc:
+        print(f"exams are invalid: {exc}", file=sys.stderr)
+        return 1
 
-    print(f"topics:  {report.topics}")
-    print(f"courses: {report.courses}")
-    print(f"lessons: {report.lessons}")
-    print(f"steps:   {report.steps}")
+    print(f"topics:  {curriculum_report.topics}")
+    print(f"courses: {curriculum_report.courses}")
+    print(f"lessons: {curriculum_report.lessons}")
+    print(f"steps:   {curriculum_report.steps}")
+    print(f"exams:     {exam_report.exams}")
+    print(f"questions: {exam_report.questions}")
     return 0
 
 
