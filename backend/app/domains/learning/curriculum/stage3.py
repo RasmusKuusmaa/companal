@@ -1,6 +1,36 @@
 """Stage 3 - Line and counterpoint: melody, phrase, cadence, and species."""
 
+from typing import Any
+
 from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef
+
+
+def _blank_measures(count: int, voice_id: str) -> list[dict[str, Any]]:
+    """`count` empty (whole-rest) measures for one voice - a blank starting
+    point with the right shape, not a hint at any particular solution."""
+    return [
+        {
+            "id": f"m{i}",
+            "voices": [
+                {
+                    "id": voice_id,
+                    "notes": [
+                        {
+                            "id": f"{voice_id}-{i}",
+                            "step": "C",
+                            "octave": 4,
+                            "alter": 0,
+                            "duration": "whole",
+                            "dots": 0,
+                            "is_rest": True,
+                            "tied_to_next": False,
+                        }
+                    ],
+                }
+            ],
+        }
+        for i in range(count)
+    ]
 
 COURSE = CourseDef(
     slug="line-and-counterpoint",
@@ -191,6 +221,106 @@ COURSE = CourseDef(
                         ),
                     },
                     topics=["phrase-structure"],
+                ),
+            ],
+        ),
+        LessonDef(
+            slug="cadence-types-and-their-strength",
+            title="Cadence Types and Their Strength",
+            summary="Authentic, half, plagal and deceptive cadences, and how final each feels.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="cadence-types-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Cadence types and their strength\n\n"
+                            "- **Perfect authentic (PAC)** - V (or V7) to I, both in "
+                            "root position, soprano landing on the tonic. The strongest, "
+                            "most conclusive close there is.\n"
+                            "- **Imperfect authentic (IAC)** - the same V-I motion, but "
+                            "with an inversion involved or the soprano landing somewhere "
+                            "other than the tonic. Still a real ending, just a softer "
+                            "one.\n"
+                            "- **Half cadence** - the phrase ends *on* V rather than "
+                            "moving through it. It doesn't close anything; it reads as a "
+                            "question mark, expecting more music to follow.\n"
+                            "- **Plagal cadence** - IV to I, the \"amen\" cadence. "
+                            "Conclusive, but gentler than an authentic close - there's no "
+                            "leading tone doing the pulling.\n"
+                            "- **Deceptive cadence** - V moves to vi instead of the "
+                            "expected I. The ear is set up for a full stop and gets a "
+                            "surprise redirection instead.\n\n"
+                            "Authentic and plagal cadences close a phrase; half and "
+                            "deceptive cadences deliberately don't - they're for pausing "
+                            "or surprising, not for ending."
+                        )
+                    },
+                    topics=["cadence-types"],
+                ),
+                StepDef(
+                    slug="cadence-types-quiz-strongest",
+                    kind="quiz",
+                    payload={
+                        "question": "Which cadence type is the strongest, most conclusive close?",
+                        "choices": ["Perfect authentic", "Half", "Deceptive", "Plagal"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A perfect authentic cadence - root-position V to root-"
+                            "position I, soprano on the tonic - is the most conclusive "
+                            "close in the common-practice vocabulary."
+                        ),
+                    },
+                    topics=["cadence-types"],
+                ),
+                StepDef(
+                    slug="cadence-types-quiz-half",
+                    kind="quiz",
+                    payload={
+                        "question": "A half cadence ends on which chord?",
+                        "choices": ["V", "I", "IV", "vi"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A half cadence arrives on the dominant and stops there - "
+                            "an open question, not a resolution."
+                        ),
+                    },
+                    topics=["cadence-types"],
+                ),
+                StepDef(
+                    slug="cadence-types-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "Write a four-measure phrase in C major that ends with a "
+                            "half cadence."
+                        ),
+                        "requirements": [
+                            {"type": "key", "key": "C major"},
+                            {"type": "measure_count", "count": 4},
+                            {"type": "cadence", "cadence": "half"},
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "soprano",
+                                    "clef": "treble",
+                                    "measures": _blank_measures(4, "soprano-voice"),
+                                },
+                                {
+                                    "id": "bass",
+                                    "clef": "bass",
+                                    "measures": _blank_measures(4, "bass-voice"),
+                                },
+                            ],
+                        },
+                    },
+                    topics=["cadence-types"],
                 ),
             ],
         ),
