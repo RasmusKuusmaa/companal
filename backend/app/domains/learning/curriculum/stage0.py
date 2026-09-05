@@ -516,5 +516,81 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="intervals-number-quality-and-inversion",
+            title="Intervals: Number, Quality and Inversion",
+            summary="Naming the distance between two pitches and what happens when it inverts.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="intervals-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Intervals: number, quality and inversion\n\n"
+                            "An interval names the distance between two pitches with two "
+                            "pieces of information: a **number** and a **quality**.\n\n"
+                            "## Number\n\n"
+                            "Count the letter names from the lower note to the higher one, "
+                            "inclusive. C up to G is C-D-E-F-G: five letters, so it's some "
+                            "kind of fifth. C up to E is C-D-E: three letters, a third.\n\n"
+                            "## Quality\n\n"
+                            "Unisons, fourths, fifths and octaves can be **perfect**, "
+                            "**augmented** or **diminished**. Seconds, thirds, sixths and "
+                            "sevenths can be **major**, **minor**, **augmented** or "
+                            "**diminished**. Major is a half step larger than minor; "
+                            "augmented is a half step larger than perfect or major; "
+                            "diminished is a half step smaller than perfect or minor.\n\n"
+                            "## Inversion\n\n"
+                            "Move the lower note up an octave (or the upper note down one) "
+                            "and the interval **inverts**. The numbers always add up to 9: "
+                            "a second inverts to a seventh, a third to a sixth, a fourth to "
+                            "a fifth. Quality flips too, but perfect stays perfect: major "
+                            "becomes minor, minor becomes major, augmented becomes "
+                            "diminished, and diminished becomes augmented."
+                        )
+                    },
+                    topics=["intervals"],
+                ),
+                StepDef(
+                    slug="intervals-quiz-c-to-g",
+                    kind="quiz",
+                    payload={
+                        "question": "What is the interval from C up to G?",
+                        "choices": [
+                            "Perfect fourth",
+                            "Perfect fifth",
+                            "Major sixth",
+                            "Minor fifth",
+                        ],
+                        "answer_index": 1,
+                        "explanation": (
+                            "C-D-E-F-G is five letter names, and the natural white-key "
+                            "distance from C to G is a perfect fifth (7 semitones)."
+                        ),
+                    },
+                    topics=["intervals"],
+                ),
+                StepDef(
+                    slug="intervals-quiz-inversion",
+                    kind="quiz",
+                    payload={
+                        "question": "A major third inverts to a:",
+                        "choices": [
+                            "Minor sixth",
+                            "Major sixth",
+                            "Perfect sixth",
+                            "Diminished sixth",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A third inverts to a sixth (3 + 6 = 9), and major inverts to "
+                            "minor - so a major third inverts to a minor sixth."
+                        ),
+                    },
+                    topics=["intervals"],
+                ),
+            ],
+        ),
     ],
 )
