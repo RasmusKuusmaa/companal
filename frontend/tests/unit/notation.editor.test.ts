@@ -517,3 +517,62 @@ describe("NotationEditor: copy and paste", () => {
     expect(wrapper.emitted("update:modelValue")).toBeUndefined();
   });
 });
+
+describe("NotationEditor: undo and redo", () => {
+  it("ctrl+z steps back one edit at a time", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "z", ctrlKey: true });
+
+    const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(notes.map((note) => note.step)).toEqual(["C"]);
+  });
+
+  it("ctrl+shift+z re-applies what ctrl+z just undid", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "z", ctrlKey: true });
+    await root.trigger("keydown", { key: "z", ctrlKey: true, shiftKey: true });
+
+    const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(notes.map((note) => note.step)).toEqual(["C", "D"]);
+  });
+
+  it("a new edit after undoing clears what would have been redone", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "e" });
+    await root.trigger("keydown", { key: "z", ctrlKey: true }); // back to C, D
+    await root.trigger("keydown", { key: "f" }); // a fresh edit: C, D, F
+    await root.trigger("keydown", { key: "z", ctrlKey: true, shiftKey: true }); // nothing to redo now
+
+    const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(notes.map((note) => note.step)).toEqual(["C", "D", "F"]);
+  });
+
+  it("ctrl+z with nothing to undo is a no-op", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "z", ctrlKey: true });
+
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+  });
+});

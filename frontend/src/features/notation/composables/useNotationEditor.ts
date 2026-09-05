@@ -206,8 +206,75 @@ export function useNotationEditor(
   const canCopy = computed(() => hasSelection.value);
   const canPaste = computed(() => copiedNotes.value.length > 0);
 
+  /**
+   * Undo/redo as a stack of whole previous states (document + cursor),
+   * not a log of inverse operations - the same choice `../document`'s own
+   * "replace, don't mutate" design already implies. Capped so an
+   * hours-long editing session doesn't grow it without bound.
+   */
+  const MAX_HISTORY = 100;
+  interface HistoryEntry {
+    document: NotationDocument;
+    cursor: NotationCursor;
+  }
+  const undoStack = shallowRef<HistoryEntry[]>([]);
+  const redoStack = shallowRef<HistoryEntry[]>([]);
+  const canUndo = computed(() => undoStack.value.length > 0);
+  const canRedo = computed(() => redoStack.value.length > 0);
+
+  /**
+   * Applies an edit's result, recording the state it replaces as an undo
+   * step first - unless nothing actually changed, which every edit
+   * helper in `../document` signals by returning the very same document
+   * reference it was given, not a new one. A real edit always clears the
+   * redo stack: redoing past it would resurrect a future that a new edit
+   * has since made impossible.
+   */
+  function commit(nextDocument: NotationDocument, nextCursor: NotationCursor = cursor.value): void {
+    if (nextDocument !== document.value) {
+      const entry: HistoryEntry = { document: document.value, cursor: cursor.value };
+      const grown = [...undoStack.value, entry];
+      undoStack.value = grown.length > MAX_HISTORY ? grown.slice(grown.length - MAX_HISTORY) : grown;
+      redoStack.value = [];
+    }
+    document.value = nextDocument;
+    cursor.value = nextCursor;
+  }
+
+  /** Steps back to the state before the last edit, if there was one. */
+  function undo(): void {
+    const entry = undoStack.value[undoStack.value.length - 1];
+    if (!entry) return;
+    redoStack.value = [...redoStack.value, { document: document.value, cursor: cursor.value }];
+    undoStack.value = undoStack.value.slice(0, -1);
+    document.value = entry.document;
+    cursor.value = entry.cursor;
+    clearSelection();
+  }
+
+  /** Re-applies the edit undo just stepped back from, if there is one. */
+  function redo(): void {
+    const entry = redoStack.value[redoStack.value.length - 1];
+    if (!entry) return;
+    undoStack.value = [...undoStack.value, { document: document.value, cursor: cursor.value }];
+    redoStack.value = redoStack.value.slice(0, -1);
+    document.value = entry.document;
+    cursor.value = entry.cursor;
+    clearSelection();
+  }
+
+  /**
+   * Replaces the document wholesale - the parent loading a starter score
+   * or resetting an exercise, not an edit the student made. Starts a fresh
+   * undo history rather than treating the swap as one more step in the old
+   * document's: undoing back into a different exercise entirely would be
+   * bizarre.
+   */
   function setDocument(next: NotationDocument): void {
     document.value = toRaw(next);
+    undoStack.value = [];
+    redoStack.value = [];
+    clearSelection();
   }
 
   function setDuration(duration: DurationName): void {
@@ -227,7 +294,7 @@ export function useNotationEditor(
   }
 
   function setTempo(quarterNotesPerMinute: number): void {
-    document.value = setDocumentTempo(document.value, quarterNotesPerMinute);
+    commit(setDocumentTempo(document.value, quarterNotesPerMinute));
   }
 
   /** Ties (or unties) the note before the cursor to whatever follows it. */
@@ -237,7 +304,7 @@ export function useNotationEditor(
       lastRefusal.value = LOCKED_STAFF_MESSAGE;
       return;
     }
-    document.value = toggleTieBefore(document.value, cursor.value);
+    commit(toggleTieBefore(document.value, cursor.value));
   }
 
   /** Selects an existing note by clicking it - the cursor lands just after it. */
@@ -295,13 +362,12 @@ export function useNotationEditor(
       (anchor.measureIndex === focus.measureIndex && anchor.noteIndex <= focus.noteIndex);
     const start = anchorIsEarlier ? anchor : focus;
 
-    document.value = deleteNotes(document.value, anchor.staffIndex, anchor.voiceId, selectedNoteIds.value);
-    cursor.value = {
+    commit(deleteNotes(document.value, anchor.staffIndex, anchor.voiceId, selectedNoteIds.value), {
       staffIndex: anchor.staffIndex,
       measureIndex: start.measureIndex,
       voiceId: anchor.voiceId,
       noteIndex: start.noteIndex,
-    };
+    });
     clearSelection();
   }
 
@@ -357,8 +423,7 @@ export function useNotationEditor(
       return;
     }
 
-    document.value = workingDocument;
-    cursor.value = workingCursor;
+    commit(workingDocument, workingCursor);
     clearSelection();
     lastRefusal.value =
       insertedCount === copiedNotes.value.length
@@ -421,8 +486,7 @@ export function useNotationEditor(
       return;
     }
     const result = deleteNoteBefore(document.value, cursor.value);
-    document.value = result.document;
-    cursor.value = result.cursor;
+    commit(result.document, result.cursor);
   }
 
   /** Delete: removes the note the cursor sits before, or the whole selection if there is one. */
@@ -436,14 +500,13 @@ export function useNotationEditor(
       return;
     }
     const result = deleteNoteAt(document.value, cursor.value);
-    document.value = result.document;
-    cursor.value = result.cursor;
+    commit(result.document, result.cursor);
   }
 
   /** Adds an empty measure to the end of every staff. */
   function addMeasure(): void {
     if (!canAddMeasure.value) return;
-    document.value = appendMeasure(document.value);
+    commit(appendMeasure(document.value));
   }
 
   /**
@@ -457,19 +520,20 @@ export function useNotationEditor(
   function removeMeasure(): void {
     if (!canRemoveMeasure.value) return;
     const next = removeLastMeasure(document.value);
-    document.value = next;
 
     const lastIndex = countMeasures(next) - 1;
+    let nextCursor = cursor.value;
     if (cursor.value.measureIndex > lastIndex) {
       const voice = next.staves[cursor.value.staffIndex]?.measures[lastIndex]?.voices.find(
         (candidate) => candidate.id === cursor.value.voiceId,
       );
-      cursor.value = {
+      nextCursor = {
         ...cursor.value,
         measureIndex: lastIndex,
         noteIndex: voice?.notes.length ?? 0,
       };
     }
+    commit(next, nextCursor);
   }
 
   /**
@@ -538,8 +602,7 @@ export function useNotationEditor(
     });
 
     const result = insertNote(document.value, target, note);
-    document.value = result.document;
-    cursor.value = result.cursor;
+    commit(result.document, result.cursor);
     lastRefusal.value = result.inserted ? "" : "That bar is full.";
     // One-shot: the next note goes back to "whatever the bar/key implies"
     // unless the student picks another accidental for it specifically.
@@ -571,6 +634,8 @@ export function useNotationEditor(
     hasSelection,
     canCopy,
     canPaste,
+    canUndo,
+    canRedo,
     isStaffLocked,
     setDocument,
     setDuration,
@@ -589,6 +654,8 @@ export function useNotationEditor(
     deleteSelection,
     copySelection,
     pasteAtCursor,
+    undo,
+    redo,
     setActiveStaff,
     setActiveVoice,
     moveLeft,

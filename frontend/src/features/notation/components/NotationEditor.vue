@@ -22,6 +22,7 @@ import RestToggle from "./RestToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
 import StaffSelector from "./StaffSelector.vue";
 import TieToggle from "./TieToggle.vue";
+import UndoRedoControls from "./UndoRedoControls.vue";
 import VoiceSelector from "./VoiceSelector.vue";
 
 const props = defineProps<{
@@ -109,9 +110,9 @@ function handleKeydown(event: KeyboardEvent): void {
       return;
   }
 
-  // Copy/paste are the one pair of shortcuts that keep their usual
-  // Ctrl/Cmd modifier - overriding the browser's own copy/paste on a page
-  // with a notation editor on it would be more surprising than reusing it.
+  // Copy/paste/undo/redo are the shortcuts that keep their usual Ctrl/Cmd
+  // modifier - overriding the browser's own versions on a page with a
+  // notation editor on it would be more surprising than reusing them.
   if ((event.ctrlKey || event.metaKey) && !event.altKey) {
     const letter = event.key.toLowerCase();
     if (letter === "c") {
@@ -122,6 +123,12 @@ function handleKeydown(event: KeyboardEvent): void {
     if (letter === "v") {
       event.preventDefault();
       editor.pasteAtCursor();
+      return;
+    }
+    if (letter === "z") {
+      event.preventDefault();
+      if (event.shiftKey) editor.redo();
+      else editor.undo();
       return;
     }
   }
@@ -188,6 +195,12 @@ function handleKeydown(event: KeyboardEvent): void {
         :can-paste="editor.canPaste.value"
         @copy="editor.copySelection"
         @paste="editor.pasteAtCursor"
+      />
+      <UndoRedoControls
+        :can-undo="editor.canUndo.value"
+        :can-redo="editor.canRedo.value"
+        @undo="editor.undo"
+        @redo="editor.redo"
       />
       <MeasureControls
         :count="editor.measureCount.value"
