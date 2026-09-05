@@ -315,5 +315,85 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="modal-mixture",
+            title="Modal Mixture",
+            summary="Borrowing chords from the parallel mode for color.",
+            estimated_minutes=13,
+            steps=[
+                StepDef(
+                    slug="modal-mixture-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Modal mixture\n\n"
+                            "**Modal mixture** (also called borrowed chords) is "
+                            "borrowing a chord from the **parallel mode** - major "
+                            "borrowing from minor, or minor borrowing from major - "
+                            "without actually modulating anywhere. The key signature and "
+                            "the tonic both stay put; only the color of one chord "
+                            "changes.\n\n"
+                            "In major keys, the most common borrowings come from parallel "
+                            "minor: **iv** (instead of IV), **bVI**, **bIII**, and **bVII** "
+                            "all show up constantly in otherwise major-key music, each "
+                            "one darkening the harmony for a moment. The minor iv "
+                            "resolving to I is common enough to have its own name, the "
+                            "**\"borrowed\" or \"minor\" plagal cadence**, valued for a "
+                            "bittersweet color a major IV can't produce.\n\n"
+                            "Mixture is written with the borrowed scale degree's actual "
+                            "accidental worked into the roman numeral - a lowered 6th "
+                            "scale degree in a major key produces **bVI**, a lowered "
+                            "3rd produces **bIII**. Unlike a secondary dominant, a "
+                            "borrowed chord doesn't tonicize anything or point toward a "
+                            "new key - it's simply a color drawn from the parallel mode, "
+                            "with the actual tonic never in question."
+                        )
+                    },
+                    topics=["modal-mixture"],
+                ),
+                StepDef(
+                    slug="modal-mixture-quiz-definition",
+                    kind="quiz",
+                    payload={
+                        "question": "Modal mixture borrows a chord from:",
+                        "choices": [
+                            "The parallel mode (major from minor, or minor from major)",
+                            "The relative mode",
+                            "A secondary key a fifth away",
+                            "The dominant key",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Mixture borrows color from the parallel mode - same tonic, "
+                            "opposite mode - without changing key."
+                        ),
+                    },
+                    topics=["modal-mixture"],
+                ),
+                StepDef(
+                    slug="modal-mixture-quiz-iv",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In a major key, a minor iv borrowed from the parallel minor, "
+                            "resolving to I, is known as:"
+                        ),
+                        "choices": [
+                            "The borrowed (minor) plagal cadence",
+                            "A deceptive cadence",
+                            "A Phrygian half cadence",
+                            "A secondary dominant resolution",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "iv-I, with iv borrowed from the parallel minor, is the "
+                            "borrowed or minor plagal cadence - prized for a darker color "
+                            "than the ordinary major IV-I plagal cadence."
+                        ),
+                    },
+                    topics=["modal-mixture"],
+                ),
+            ],
+        ),
     ],
 )
