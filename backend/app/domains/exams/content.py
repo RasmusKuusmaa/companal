@@ -938,4 +938,204 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="form-and-composition-exam",
+        title="Form and Composition Exam",
+        description=(
+            "Binary and ternary form, minuet and trio, rondo, sonata form, "
+            "theme and variations, motivic development, and writing a "
+            "complete short piece."
+        ),
+        course_slug="form-and-composition",
+        questions=[
+            ExamQuestionDef(
+                slug="form-exam-ternary",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "What distinguishes ternary form (A B A) from rounded "
+                        "binary (A B A')?"
+                    ),
+                    "choices": [
+                        "Ternary's B is a complete, self-sufficient contrasting "
+                        "section, and its final A is an essentially exact return",
+                        "Ternary form never repeats any section",
+                        "Rounded binary always modulates and ternary never does",
+                        "Ternary form has no B section at all",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Ternary's middle section stands on its own rather "
+                        "than developing A, and its return is a full, "
+                        "essentially exact restatement."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="form-exam-rondo",
+                kind="quiz",
+                payload={
+                    "question": "In rondo form, the refrain (A) always returns in:",
+                    "choices": [
+                        "The tonic key",
+                        "A new key each time",
+                        "The dominant key",
+                        "The relative minor",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The refrain's return in the tonic anchors a rondo, "
+                        "letting its episodes wander harmonically without "
+                        "losing the sense of home."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="form-exam-sonata",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In sonata form, what is the defining harmonic event of "
+                        "the recapitulation?"
+                    ),
+                    "choices": [
+                        "The second theme returns in the tonic instead of its "
+                        "exposition key",
+                        "The first theme is omitted entirely",
+                        "The exposition is repeated exactly",
+                        "The development section is restated in full",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The second theme's key shift - dominant (or relative "
+                        "major) in the exposition, resolved to tonic in the "
+                        "recapitulation - is sonata form's central event."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="form-exam-variation-technique",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "Recasting a theme and variations movement's harmonic "
+                        "plan in the parallel minor is an example of:"
+                    ),
+                    "choices": [
+                        "Changing mode",
+                        "Retrograde",
+                        "Fragmentation",
+                        "Augmentation",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Shifting a variation into the parallel minor (or "
+                        "major), while keeping the harmonic plan otherwise "
+                        "intact, is a change of mode."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="form-exam-motivic-development",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "Playing a motive's notes in reverse order is called:"
+                    ),
+                    "choices": ["Retrograde", "Inversion", "Sequence", "Augmentation"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Retrograde reverses the order the motive's notes are "
+                        "played in - a distinct transformation from melodic "
+                        "inversion, which mirrors contour instead."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="form-exam-short-piece-task",
+                kind="composition",
+                payload={
+                    "brief": (
+                        "Write a complete eight-measure short piece in D "
+                        "major: an antecedent phrase (measures 1-4) followed "
+                        "by a consequent phrase (measures 5-8) that closes "
+                        "with a perfect authentic cadence. Keep the melody "
+                        "diatonic, keep leaps recovered by step, and stay "
+                        "within a reasonable range."
+                    ),
+                    "requirements": [
+                        {"type": "key", "key": "D major"},
+                        {"type": "time_signature", "value": "4/4"},
+                        {"type": "measure_count", "count": 8},
+                        {"type": "diatonic_only"},
+                        {"type": "max_leap", "semitones": 9},
+                        {"type": "leap_recovery", "max_unresolved": 1},
+                        {"type": "cadence", "cadence": "perfect_authentic"},
+                    ],
+                    "starter_notation": {
+                        "fifths": 2,
+                        "mode": "major",
+                        "time": {"beats": 4, "beat_type": 4},
+                        "tempo": 90,
+                        "staves": [
+                            {
+                                "id": "soprano",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "soprano-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"soprano-voice-{i}",
+                                                        "step": "D",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(8)
+                                ],
+                            },
+                            {
+                                "id": "bass",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "bass-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"bass-voice-{i}",
+                                                        "step": "D",
+                                                        "octave": 3,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(8)
+                                ],
+                            },
+                        ],
+                    },
+                },
+            ),
+        ],
+    ),
 ]
