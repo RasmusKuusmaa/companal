@@ -83,8 +83,9 @@ async function backToRoadmap(): Promise<void> {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
-        <div class="mt-4">
-          <BaseButton variant="secondary" @click="backToRoadmap">Back to the roadmap</BaseButton>
+        <div class="mt-4 flex gap-2">
+          <BaseButton variant="secondary" @click="load(lessonSlug)">Try again</BaseButton>
+          <BaseButton variant="ghost" @click="backToRoadmap">Back to the roadmap</BaseButton>
         </div>
       </BaseCard>
 

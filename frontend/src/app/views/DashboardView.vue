@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 
 import { useAuthStore } from "@/features/auth/stores/auth.store";
@@ -8,14 +8,24 @@ import CoverageSummaryCard from "@/features/learning/components/CoverageSummaryC
 import ProjectList from "@/features/projects/components/ProjectList.vue";
 import { useProjectsStore } from "@/features/projects/stores/projects.store";
 import { BaseButton, BaseCard } from "@/shared/components/base";
+import { toApiProblem } from "@/shared/utils/api-error";
 
 const router = useRouter();
 const authStore = useAuthStore();
 const projectsStore = useProjectsStore();
 
-onMounted(() => {
-  void projectsStore.fetchAll();
-});
+const loadError = ref("");
+
+async function loadProjects(): Promise<void> {
+  loadError.value = "";
+  try {
+    await projectsStore.fetchAll();
+  } catch (error) {
+    loadError.value = toApiProblem(error).detail ?? "Could not load your compositions.";
+  }
+}
+
+onMounted(loadProjects);
 
 async function handleLogout(): Promise<void> {
   await authStore.logout();
@@ -51,6 +61,10 @@ async function handleLogout(): Promise<void> {
         </div>
 
         <p v-if="projectsStore.isLoading" class="text-sm text-slate-500">Loading…</p>
+        <div v-else-if="loadError" class="space-y-3">
+          <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+          <BaseButton variant="secondary" @click="loadProjects">Try again</BaseButton>
+        </div>
         <ProjectList v-else :compositions="projectsStore.compositions" />
       </BaseCard>
     </div>

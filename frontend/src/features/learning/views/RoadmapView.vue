@@ -52,7 +52,8 @@ const levelLabel: Record<string, string> = {
   advanced: "Advanced",
 };
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  loadError.value = "";
   try {
     await Promise.all([store.fetchRoadmap(), store.fetchProgress()]);
   } catch (error) {
@@ -66,7 +67,9 @@ onMounted(async () => {
   } catch {
     // Sections simply render without an exam link - see above.
   }
-});
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -92,6 +95,9 @@ onMounted(async () => {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+        <div class="mt-4">
+          <BaseButton variant="secondary" @click="load">Try again</BaseButton>
+        </div>
       </BaseCard>
 
       <BaseCard v-else-if="!hasCurriculum">

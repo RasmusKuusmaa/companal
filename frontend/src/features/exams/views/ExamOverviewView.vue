@@ -41,14 +41,17 @@ function hasHistory(examSlug: string): boolean {
   return (store.historyByExamSlug[examSlug]?.attempts.length ?? 0) > 0;
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  loadError.value = "";
   try {
     await store.fetchExams();
     await Promise.all(store.exams.map((exam) => store.fetchHistory(exam.slug)));
   } catch (error) {
     loadError.value = toApiProblem(error).detail ?? "Could not load the exams.";
   }
-});
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -66,6 +69,9 @@ onMounted(async () => {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+        <div class="mt-4">
+          <BaseButton variant="secondary" @click="load">Try again</BaseButton>
+        </div>
       </BaseCard>
 
       <BaseCard v-else-if="!hasExams">

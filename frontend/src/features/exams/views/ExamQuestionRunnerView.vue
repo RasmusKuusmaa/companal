@@ -90,7 +90,8 @@ async function submitExam(): Promise<void> {
   }
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  loadError.value = "";
   try {
     const attempt = await store.startAttempt(examSlug.value);
     for (const question of attempt.exam.questions) {
@@ -101,7 +102,9 @@ onMounted(async () => {
   } catch (error) {
     loadError.value = toApiProblem(error).detail ?? "Could not start this exam.";
   }
-});
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -111,6 +114,9 @@ onMounted(async () => {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+        <div class="mt-4">
+          <BaseButton variant="secondary" @click="load">Try again</BaseButton>
+        </div>
       </BaseCard>
 
       <template v-else-if="exam">

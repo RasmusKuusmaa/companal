@@ -9,7 +9,7 @@
  */
 import { computed, onMounted, ref } from "vue";
 
-import { BaseCard } from "@/shared/components/base";
+import { BaseButton, BaseCard } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
 
 import TopicDetailPanel from "../components/TopicDetailPanel.vue";
@@ -95,13 +95,16 @@ function statusClasses(status: MasteryStatus): string {
   return STATUS_CLASSES[status];
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  loadError.value = "";
   try {
     await store.fetchSkillMap();
   } catch (error) {
     loadError.value = toApiProblem(error).detail ?? "Could not load the skill map.";
   }
-});
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -118,6 +121,9 @@ onMounted(async () => {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+        <div class="mt-4">
+          <BaseButton variant="secondary" @click="load">Try again</BaseButton>
+        </div>
       </BaseCard>
 
       <BaseCard v-else-if="!hasTopics">

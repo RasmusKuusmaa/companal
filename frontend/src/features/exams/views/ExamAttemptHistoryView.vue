@@ -7,7 +7,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 
-import { BaseCard } from "@/shared/components/base";
+import { BaseButton, BaseCard } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
 
 import { useExamsStore } from "../stores/exams.store";
@@ -35,7 +35,9 @@ function formatDate(iso: string | null): string {
   });
 }
 
-onMounted(async () => {
+async function load(): Promise<void> {
+  loadError.value = "";
+  isLoading.value = true;
   try {
     await store.fetchHistory(examSlug.value);
   } catch (error) {
@@ -43,7 +45,9 @@ onMounted(async () => {
   } finally {
     isLoading.value = false;
   }
-});
+}
+
+onMounted(load);
 </script>
 
 <template>
@@ -63,6 +67,9 @@ onMounted(async () => {
 
       <BaseCard v-else-if="loadError">
         <p class="text-sm text-red-600" role="alert">{{ loadError }}</p>
+        <div class="mt-4">
+          <BaseButton variant="secondary" @click="load">Try again</BaseButton>
+        </div>
       </BaseCard>
 
       <BaseCard v-else-if="!hasAttempts">
