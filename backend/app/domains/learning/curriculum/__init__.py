@@ -10,7 +10,7 @@ list of courses is a legitimate no-op, not an error, so the loader and its
 tests work from here on.
 """
 
-from app.domains.learning.curriculum import stage0, stage1, stage2
+from app.domains.learning.curriculum import stage0, stage1, stage2, stage3
 from app.domains.learning.curriculum.definitions import (
     CourseDef,
     LessonDef,
@@ -21,4 +21,4 @@ from app.domains.learning.curriculum.topics import TOPICS
 
 __all__ = ["CourseDef", "LessonDef", "StepDef", "TopicDef", "TOPICS", "COURSES"]
 
-COURSES: list[CourseDef] = [stage0.COURSE, stage1.COURSE, stage2.COURSE]
+COURSES: list[CourseDef] = [stage0.COURSE, stage1.COURSE, stage2.COURSE, stage3.COURSE]
