@@ -600,5 +600,193 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="the-dominant-seventh-and-its-resolution",
+            title="The Dominant Seventh and Its Resolution",
+            summary="Why the seventh falls and the leading tone rises when V7 resolves to I.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="dominant-seventh-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# The dominant seventh and its resolution\n\n"
+                            "The **dominant seventh** chord (V7) is a major triad with a "
+                            "minor seventh on top - in C major, G-B-D-F. It contains two "
+                            "notes that form a **tritone** with each other (B and F), and "
+                            "that tritone is what gives V7 its strong pull toward the "
+                            "tonic.\n\n"
+                            "Both tritone members have a required direction of travel "
+                            "when V7 resolves to I:\n\n"
+                            "- The **leading tone** (the chord's third, B) resolves "
+                            "**up** by step to the tonic.\n"
+                            "- The **chordal seventh** (F, the key's 4th scale degree) "
+                            "resolves **down** by step to the third of the tonic chord.\n\n"
+                            "Since V7 has four distinct notes but a root-position tonic "
+                            "triad only needs three, one voice of the resolution usually "
+                            "lands on a doubled tonic root rather than a fifth - a small, "
+                            "expected compromise for keeping both tendency tones moving "
+                            "the way they want to."
+                        )
+                    },
+                    topics=["dominant-seventh-resolution"],
+                ),
+                StepDef(
+                    slug="dominant-seventh-quiz-tendency-tones",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Which two members of a V7 chord must resolve in specific, "
+                            "opposite directions?"
+                        ),
+                        "choices": [
+                            "The leading tone (up) and the chordal seventh (down)",
+                            "The root and the fifth",
+                            "The bass and the soprano, always by leap",
+                            "There are no required resolutions in a V7 chord",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The leading tone and the chordal seventh form the chord's "
+                            "tritone, and each has a required direction: the leading "
+                            "tone rises, the seventh falls."
+                        ),
+                    },
+                    topics=["dominant-seventh-resolution"],
+                ),
+                StepDef(
+                    slug="dominant-seventh-quiz-seventh-direction",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "The chordal seventh of a V7 chord resolves by step in "
+                            "which direction?"
+                        ),
+                        "choices": ["Down", "Up", "It holds over, unchanged", "Either, freely"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The chordal seventh always falls by step to the third of "
+                            "the following tonic chord."
+                        ),
+                    },
+                    topics=["dominant-seventh-resolution"],
+                ),
+                StepDef(
+                    slug="dominant-seventh-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The bass line below is given and locked: V7 resolving to "
+                            "I. Realize the V7 chord in full, then resolve it - let the "
+                            "leading tone rise and the chordal seventh fall by step."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "figured_bass",
+                                "bass_staff_index": 0,
+                                "figures": ["7", ""],
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "bass",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "bass-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"b{i}",
+                                                            "step": step,
+                                                            "octave": octave,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, (step, octave) in enumerate(
+                                            [("G", 2), ("C", 3)]
+                                        )
+                                    ],
+                                },
+                                {
+                                    "id": "upper",
+                                    "clef": "treble",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "v1",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u1-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                                {
+                                                    "id": "v2",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u2-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                                {
+                                                    "id": "v3",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u3-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                            ],
+                                        }
+                                        for i in range(2)
+                                    ],
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["dominant-seventh-resolution"],
+                ),
+            ],
+        ),
     ],
 )
