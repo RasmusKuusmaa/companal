@@ -209,25 +209,25 @@ What you've covered, what you're good at, what needs work — in one glance.
 
 One per stage plus a comprehensive final. Retake as often as you like; every attempt is kept and graded.
 
-- [ ] `add exam and exam question models` — questions parallel lesson steps but live separately
-- [ ] `add exam attempt and answer models` — `attempt_number`, `score`, `max_score`, per-answer results
-- [ ] `add exam tables migration`
-- [ ] `add exam schemas`
-- [ ] `add exam service for starting an attempt` — a new attempt never touches previous ones
-- [ ] `add exam answer submission` — answers held until the attempt is submitted
-- [ ] `add exam grading and scoring` — MCQ sections scored against keys
-- [ ] `add exam composition section grading` — the Phase D pipeline, rule-graded for free users
-- [ ] `add ai exam rubric grading for premium` — written commentary per composition section
-- [ ] `add exam attempt history endpoint` — every attempt with date and score
-- [ ] `add exam endpoints`
-- [ ] `add exam api client`
-- [ ] `add exam overview view` — scope, past attempts, start button
-- [ ] `add exam question runner` — sectioned, no answer reveal until submission
-- [ ] `add exam result view` — score, per-question breakdown, links to weak topics
-- [ ] `add exam attempt history view` — attempts side by side so improvement is visible
-- [ ] `add exam entry points to the roadmap` — an exam sits at the end of each stage
-- [ ] `add exam service tests` — scoring, retakes, attempt isolation
-- [ ] `add exam router tests`
+- [x] `add exam and exam question models` — questions parallel lesson steps but live separately
+- [x] `add exam attempt and answer models` — `attempt_number`, `score`, `max_score`, per-answer results
+- [x] `add exam tables migration`
+- [x] `add exam schemas`
+- [x] `add exam service for starting an attempt` — a new attempt never touches previous ones
+- [x] `add exam answer submission` — answers held until the attempt is submitted
+- [x] `add exam grading and scoring` — MCQ sections scored against keys
+- [x] `add exam composition section grading` — the Phase D pipeline, rule-graded for free users
+- [x] `add ai exam rubric grading for premium` — written commentary per composition section
+- [x] `add exam attempt history endpoint` — every attempt with date and score
+- [x] `add exam endpoints`
+- [x] `add exam api client`
+- [x] `add exam overview view` — scope, past attempts, start button
+- [x] `add exam question runner` — sectioned, no answer reveal until submission
+- [x] `add exam result view` — score, per-question breakdown, links to weak topics
+- [x] `add exam attempt history view` — attempts side by side so improvement is visible
+- [x] `add exam entry points to the roadmap` — an exam sits at the end of each stage
+- [x] `add exam service tests` — scoring, retakes, attempt isolation
+- [x] `add exam router tests`
 
 ## Phase J — curriculum content
 
