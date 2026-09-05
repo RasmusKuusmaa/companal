@@ -16,14 +16,34 @@ highest voice (soprano), `voice_ids[-1]` the lowest (bass) - see
 `harmony._voice_grid_from_parts`.
 """
 
+from collections import Counter
 from dataclasses import dataclass
 from typing import cast
 
 from music21 import note as m21note
 
-from app.domains.analysis.schemas import VoiceRangeViolationRead, VoiceSpacingViolationRead
+from app.domains.analysis.schemas import (
+    VoiceDoublingViolationRead,
+    VoiceRangeViolationRead,
+    VoiceSpacingViolationRead,
+)
 
 SOPRANO, ALTO, TENOR, BASS = 0, 1, 2, 3
+
+
+@dataclass
+class ChordTones:
+    """A slice's chord-tone pitch classes, read off the music21 chord
+    harmony.py already built (`_chord_attr(chord, "root"/"third"/"seventh")`).
+
+    `None` when music21 couldn't identify that tone on a degenerate
+    sonority - `check_doubling` treats an unknown tone as nothing to check,
+    not as absent.
+    """
+
+    root: int | None
+    third: int | None
+    seventh: int | None
 
 
 @dataclass
@@ -41,6 +61,7 @@ class VoicedChord:
     alto: str
     tenor: str
     bass: str
+    chord_tones: ChordTones | None = None
 
     def pitch(self, position: int) -> str:
         return (self.soprano, self.alto, self.tenor, self.bass)[position]
@@ -51,12 +72,17 @@ def four_part_chords(
     voice_ids: list[str],
     grid: dict[str, list[str | None]],
     measures: list[int],
+    chord_tones: list[ChordTones] | None = None,
 ) -> list[VoicedChord]:
     """The subset of slices usable for SATB-specific checks.
 
     Requires a real four-voice texture (`voice_source == "parts"`, exactly
     four voice ids) - see the module docstring for why the positional
     fallback is excluded - and all four voices sounding at that slice.
+
+    `chord_tones`, when given, is parallel to `measures` (one entry per
+    slice) - only `check_doubling` needs it, so range and spacing checks
+    can build their chords without it.
     """
     if voice_source != "parts" or len(voice_ids) != 4:
         return []
@@ -69,7 +95,13 @@ def four_part_chords(
         soprano, alto, tenor, bass = cast(list[str], pitches)
         chords.append(
             VoicedChord(
-                slice_index=i, measure=measure, soprano=soprano, alto=alto, tenor=tenor, bass=bass
+                slice_index=i,
+                measure=measure,
+                soprano=soprano,
+                alto=alto,
+                tenor=tenor,
+                bass=bass,
+                chord_tones=chord_tones[i] if chord_tones is not None else None,
             )
         )
     return chords
@@ -157,4 +189,61 @@ def check_spacing(chords: list[VoicedChord]) -> list[VoiceSpacingViolationRead]:
                         interval_semitones=gap,
                     )
                 )
+    return violations
+
+
+# --------------------------------------------------------------------------- #
+# Doubling
+# --------------------------------------------------------------------------- #
+
+
+def check_doubling(
+    chords: list[VoicedChord], leading_tone_pc: int | None
+) -> list[VoiceDoublingViolationRead]:
+    """Flags the three classic four-part doubling faults.
+
+    A doubled leading tone almost always produces parallel octaves or an
+    unresolved duplicate when it resolves up to the tonic; a doubled
+    chordal seventh does the same on its resolution down. A missing third
+    is checked against the chord music21 actually identified, not
+    invented - a sonority with no clear third (a bare fifth, a cluster)
+    has nothing here to be missing.
+    """
+    violations: list[VoiceDoublingViolationRead] = []
+    for chord in chords:
+        pitches = [chord.soprano, chord.alto, chord.tenor, chord.bass]
+        pitch_classes = [pitch_class(p) for p in pitches]
+        counts = Counter(pitch_classes)
+
+        if leading_tone_pc is not None and counts[leading_tone_pc] > 1:
+            violations.append(
+                VoiceDoublingViolationRead(
+                    kind="doubled_leading_tone",
+                    chord_index=chord.slice_index,
+                    measure=chord.measure,
+                    pitches=pitches,
+                )
+            )
+
+        tones = chord.chord_tones
+        if tones is not None and tones.seventh is not None and counts[tones.seventh] > 1:
+            violations.append(
+                VoiceDoublingViolationRead(
+                    kind="doubled_seventh",
+                    chord_index=chord.slice_index,
+                    measure=chord.measure,
+                    pitches=pitches,
+                )
+            )
+
+        if tones is not None and tones.third is not None and counts[tones.third] == 0:
+            violations.append(
+                VoiceDoublingViolationRead(
+                    kind="missing_third",
+                    chord_index=chord.slice_index,
+                    measure=chord.measure,
+                    pitches=pitches,
+                )
+            )
+
     return violations

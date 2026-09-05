@@ -412,6 +412,20 @@ class VoiceSpacingViolationRead(BaseModel):
     interval_semitones: int
 
 
+class VoiceDoublingViolationRead(BaseModel):
+    """A doubling or missing chord-tone fault in one SATB sonority.
+
+    `kind` is one of `doubled_leading_tone`, `doubled_seventh` or
+    `missing_third` (see `voicing.check_doubling`). `pitches` is the full
+    voicing, soprano to bass, for context in the message.
+    """
+
+    kind: str
+    chord_index: int
+    measure: int
+    pitches: list[str]
+
+
 # --------------------------------------------------------------------------- #
 # Rhythm analysis
 #
