@@ -346,4 +346,261 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="voice-leading-exam",
+        title="Voice Leading Exam",
+        description=(
+            "Four-part texture, the parallel prohibitions, connecting triads, "
+            "the six-four chord, dominant sevenths, and non-chord tones."
+        ),
+        course_slug="voice-leading",
+        questions=[
+            ExamQuestionDef(
+                slug="voice-leading-exam-parallels",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "Which motion between two voices is forbidden when it "
+                        "produces two consecutive perfect fifths or octaves?"
+                    ),
+                    "choices": [
+                        "Parallel motion",
+                        "Contrary motion",
+                        "Oblique motion",
+                        "Similar motion by step",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Parallel perfect fifths or octaves - both voices moving "
+                        "the same direction by the same perfect interval - are "
+                        "forbidden in standard four-part voice leading."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="voice-leading-exam-doubling",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In a first-inversion vii°6 chord, which note is "
+                        "conventionally doubled instead of the bass?"
+                    ),
+                    "choices": [
+                        "The bass note is not doubled; another chord tone is "
+                        "doubled instead",
+                        "The bass note is always doubled",
+                        "The chord's fifth is always omitted entirely",
+                        "The root is always doubled, even though it's diminished",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "vii°6's bass is the chord's third (the leading tone), "
+                        "which shouldn't be doubled - another chord tone is "
+                        "doubled instead, the standard exception to 'double the "
+                        "bass in first inversion'."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="voice-leading-exam-six-four",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A six-four chord that sits between two statements of "
+                        "the same root-position chord, approached and left by "
+                        "step in the bass, is called a:"
+                    ),
+                    "choices": [
+                        "Passing six-four",
+                        "Cadential six-four",
+                        "Pedal six-four",
+                        "Neapolitan six-four",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A passing six-four connects two chords a step apart in "
+                        "the bass by filling in the space between them."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="voice-leading-exam-dominant-seventh",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In a V7-I resolution, the chordal seventh normally "
+                        "resolves by:"
+                    ),
+                    "choices": [
+                        "Stepping down",
+                        "Leaping up a fourth",
+                        "Staying on the same note",
+                        "Stepping up",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The dominant seventh's chordal seventh is a dissonance "
+                        "that resolves down by step into the tonic chord."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="voice-leading-exam-nct",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A non-chord tone approached by step and left by step "
+                        "in the same direction is called a:"
+                    ),
+                    "choices": [
+                        "Passing tone",
+                        "Neighbor tone",
+                        "Suspension",
+                        "Appoggiatura",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A passing tone fills in the space between two chord "
+                        "tones a third apart, approached and left by step in "
+                        "the same direction."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="voice-leading-exam-harmonization-task",
+                kind="composition",
+                payload={
+                    "brief": (
+                        "The soprano line below is given and locked. Add alto, "
+                        "tenor and bass parts to harmonize it in four-part "
+                        "texture, ending with a perfect authentic cadence."
+                    ),
+                    "requirements": [
+                        {"type": "key", "key": "G major"},
+                        {"type": "measure_count", "count": 4},
+                        {"type": "cadence", "cadence": "perfect_authentic"},
+                    ],
+                    "starter_notation": {
+                        "fifths": 1,
+                        "mode": "major",
+                        "time": {"beats": 4, "beat_type": 4},
+                        "tempo": 90,
+                        "staves": [
+                            {
+                                "id": "soprano",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "soprano-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"soprano-voice-{i}",
+                                                        "step": step,
+                                                        "octave": octave,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": False,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i, (step, octave) in enumerate(
+                                        [("B", 4), ("C", 5), ("A", 4), ("G", 4)]
+                                    )
+                                ],
+                            },
+                            {
+                                "id": "alto",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "alto-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"alto-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                            {
+                                "id": "tenor",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "tenor-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"tenor-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                            {
+                                "id": "bass",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "bass-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"bass-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(4)
+                                ],
+                            },
+                        ],
+                    },
+                    "locked_staff_indices": [0],
+                },
+            ),
+        ],
+    ),
 ]
