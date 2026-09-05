@@ -1,0 +1,73 @@
+# Render Blueprint - see https://render.com/docs/blueprint-spec.
+#
+# Deploys the whole app as three resources: the Postgres database, the API
+# (backend/Dockerfile - its entrypoint migrates the database and rewrites
+# DATABASE_URL's scheme on container start, see docker-entrypoint.sh), and
+# the frontend as a static site. Point Render at this repo ("New +" ->
+# "Blueprint") and it provisions all three together.
+#
+# Two manual steps after the first deploy - see the comments below on
+# DATABASE_URL and CORS_ORIGINS/VITE_API_BASE_URL for why they can't be
+# wired up automatically.
+
+databases:
+  # No `plan` - omitting it is Render's own documented way to get the free
+  # tier (0.1c-256mb), rather than relying on "free" being a literal alias
+  # here too.
+  - name: cadence-db
+    databaseName: cadence
+    user: cadence
+
+services:
+  - type: web
+    name: cadence-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      # Render's `fromDatabase.connectionString` gives a bare
+      # `postgresql://...` URL; this app requires the asyncpg driver
+      # scheme. `docker-entrypoint.sh` rewrites the scheme at container
+      # start, so paste the connection string from the cadence-db page
+      # (Info tab) here as-is - don't add "+asyncpg" by hand.
+      - key: DATABASE_URL
+        sync: false
+      # Render can't predict a service's public URL inside this file (see
+      # the frontend service's own VITE_API_BASE_URL comment) - fill this
+      # in with the frontend's actual URL after its first deploy. Until
+      # then the API works, but the frontend's requests will be rejected
+      # by CORS.
+      - key: CORS_ORIGINS
+        sync: false
+      # Optional - leave unset for deterministic-only grading (no AI
+      # feedback). See backend/README.md's "Running without an Anthropic
+      # API key".
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+  - type: web
+    name: cadence-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      # Read at build time (Vite inlines `import.meta.env.VITE_*`), so this
+      # has to be set before the first build, and the site rebuilt if it
+      # ever changes. Fill in with the API service's actual URL once it's
+      # deployed - Render assigns `https://<name>.onrender.com` from the
+      # service name above, but only after the first deploy confirms
+      # nothing else on Render already claimed it.
+      - key: VITE_API_BASE_URL
+        value: https://cadence-api.onrender.com/api/v1
+    routes:
+      # A client-side router (Vue Router) needs every path to resolve to
+      # index.html - without this, refreshing on e.g. /learn/some-lesson
+      # 404s instead of letting the app's own router take over.
+      - type: rewrite
+        source: /*
+        destination: /index.html

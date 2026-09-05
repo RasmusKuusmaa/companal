@@ -78,8 +78,10 @@ cp .env.example .env
 # edit .env: SECRET_KEY at minimum
 
 docker compose up --build
-docker compose exec api alembic upgrade head
 ```
+
+Migrations run automatically on container start (`scripts/docker-entrypoint.sh`,
+the image's `ENTRYPOINT`) - no separate `alembic upgrade head` step needed.
 
 ## Tests
 
