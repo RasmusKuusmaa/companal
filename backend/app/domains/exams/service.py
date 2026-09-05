@@ -7,6 +7,7 @@ no field on the read model for it to leak through.
 """
 
 import uuid
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -16,14 +17,20 @@ from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion
 from app.domains.exams.schemas import (
     ExamAnswerPayload,
     ExamAnswerRead,
+    ExamAttemptResultRead,
     ExamAttemptStartRead,
     ExamCompositionQuestionRead,
     ExamQuestionRead,
+    ExamQuestionResultRead,
     ExamQuizQuestionRead,
     ExamRead,
 )
 from app.domains.learning.models import Course
 from app.domains.learning.schemas import CompositionPayload, QuizPayload
+
+
+class UnsupportedQuestionKindError(Exception):
+    """This question's kind can't be graded yet."""
 
 
 class ExamNotFoundError(Exception):
@@ -202,3 +209,86 @@ async def answer_question(
     await db.commit()
 
     return ExamAnswerRead(question_id=question.id, answered=True)
+
+
+def _grade_quiz_question(
+    question: ExamQuestion, answer: ExamAnswer | None
+) -> ExamQuestionResultRead:
+    quiz = QuizPayload.model_validate(question.payload)
+    choice_index = None
+    if answer is not None and answer.payload.get("kind") == "quiz":
+        choice_index = answer.payload.get("choice_index")
+    is_correct = choice_index == quiz.answer_index
+    score = 1.0 if is_correct else 0.0
+
+    detail = {
+        "choice_index": choice_index,
+        "correct_index": quiz.answer_index,
+        "is_correct": is_correct,
+        "explanation": quiz.explanation,
+    }
+
+    # The held answer keeps its own verdict too, alongside the attempt's
+    # total - a question with no held answer simply has nothing to update.
+    if answer is not None:
+        answer.score = score
+        answer.max_score = 1.0
+        answer.result = detail
+
+    return ExamQuestionResultRead(
+        question_id=question.id,
+        kind=ExamQuestionKind.QUIZ,
+        score=score,
+        max_score=1.0,
+        detail=detail,
+    )
+
+
+def _grade_question(question: ExamQuestion, answer: ExamAnswer | None) -> ExamQuestionResultRead:
+    if question.kind is ExamQuestionKind.QUIZ:
+        return _grade_quiz_question(question, answer)
+    raise UnsupportedQuestionKindError(question.kind)
+
+
+async def _answers_by_question(
+    db: AsyncSession, attempt_id: uuid.UUID
+) -> dict[uuid.UUID, ExamAnswer]:
+    rows = await db.scalars(select(ExamAnswer).where(ExamAnswer.attempt_id == attempt_id))
+    return {row.question_id: row for row in rows.all()}
+
+
+async def grade_attempt(
+    db: AsyncSession, user_id: uuid.UUID, attempt_id: uuid.UUID
+) -> ExamAttemptResultRead:
+    """Grades every held answer and marks the attempt submitted.
+
+    A one-way door: once graded, `answer_question` refuses new answers for
+    this attempt (see `ExamAttemptAlreadySubmittedError`), and grading
+    itself can only happen once for the same reason - a second submission
+    isn't a re-grade, it's a new attempt (see `start_attempt`).
+    """
+    attempt = await _get_attempt(db, user_id, attempt_id)
+    if attempt.submitted_at is not None:
+        raise ExamAttemptAlreadySubmittedError
+
+    questions = await _exam_questions(db, attempt.exam_id)
+    answers = await _answers_by_question(db, attempt.id)
+
+    question_results = [
+        _grade_question(question, answers.get(question.id)) for question in questions
+    ]
+
+    attempt.score = sum(result.score for result in question_results)
+    attempt.max_score = sum(result.max_score for result in question_results)
+    attempt.submitted_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(attempt)
+
+    return ExamAttemptResultRead(
+        attempt_id=attempt.id,
+        attempt_number=attempt.attempt_number,
+        score=attempt.score,
+        max_score=attempt.max_score,
+        submitted_at=attempt.submitted_at,
+        question_results=question_results,
+    )

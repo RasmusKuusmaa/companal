@@ -20,6 +20,7 @@ from app.domains.exams.service import (
     ExamNotFoundError,
     ExamQuestionNotFoundError,
     answer_question,
+    grade_attempt,
     start_attempt,
 )
 from app.domains.learning.curriculum.definitions import CourseDef
@@ -435,3 +436,106 @@ class TestAnswerQuestion:
                 quiz_id,
                 ExamQuizAnswerPayload(choice_index=0),
             )
+
+
+class TestGradeAttempt:
+    async def _started_quiz_only(
+        self, db_session: AsyncSession
+    ) -> tuple[uuid.UUID, uuid.UUID, list[uuid.UUID]]:
+        """Seeds a three-question quiz-only exam (each with `answer_index`
+        1), starts an attempt, and returns (user_id, attempt_id,
+        question_ids)."""
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(
+                    slug="final-exam",
+                    title="Final",
+                    description="d",
+                    questions=[_quiz("q1"), _quiz("q2"), _quiz("q3")],
+                )
+            ],
+        )
+        user = await _make_user(db_session)
+        start = await start_attempt(db_session, user.id, "final-exam")
+        return user.id, start.attempt_id, [q.id for q in start.exam.questions]
+
+    async def test_scores_correct_wrong_and_unanswered_questions(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started_quiz_only(db_session)
+        await answer_question(
+            db_session, user_id, attempt_id, question_ids[0], ExamQuizAnswerPayload(choice_index=1)
+        )
+        await answer_question(
+            db_session, user_id, attempt_id, question_ids[1], ExamQuizAnswerPayload(choice_index=0)
+        )
+        # question_ids[2] is left unanswered.
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        assert result.score == 1.0
+        assert result.max_score == 3.0
+        by_question = {r.question_id: r for r in result.question_results}
+        assert by_question[question_ids[0]].detail["is_correct"] is True
+        assert by_question[question_ids[1]].detail["is_correct"] is False
+        assert by_question[question_ids[2]].detail["is_correct"] is False
+        assert by_question[question_ids[2]].detail["choice_index"] is None
+
+    async def test_marks_the_attempt_submitted(self, db_session: AsyncSession) -> None:
+        user_id, attempt_id, _question_ids = await self._started_quiz_only(db_session)
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        attempt = await db_session.get(ExamAttempt, attempt_id)
+        assert attempt is not None
+        assert attempt.submitted_at == result.submitted_at
+        assert attempt.score == result.score
+        assert attempt.max_score == result.max_score
+
+    async def test_grading_persists_each_answers_own_verdict(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started_quiz_only(db_session)
+        await answer_question(
+            db_session, user_id, attempt_id, question_ids[0], ExamQuizAnswerPayload(choice_index=1)
+        )
+
+        await grade_attempt(db_session, user_id, attempt_id)
+
+        answer = await db_session.scalar(
+            select(ExamAnswer).where(
+                ExamAnswer.attempt_id == attempt_id, ExamAnswer.question_id == question_ids[0]
+            )
+        )
+        assert answer is not None
+        assert answer.score == 1.0
+        assert answer.max_score == 1.0
+        assert answer.result["is_correct"] is True
+
+    async def test_grading_twice_raises(self, db_session: AsyncSession) -> None:
+        user_id, attempt_id, _question_ids = await self._started_quiz_only(db_session)
+        await grade_attempt(db_session, user_id, attempt_id)
+
+        with pytest.raises(ExamAttemptAlreadySubmittedError):
+            await grade_attempt(db_session, user_id, attempt_id)
+
+    async def test_answering_after_grading_raises(self, db_session: AsyncSession) -> None:
+        user_id, attempt_id, question_ids = await self._started_quiz_only(db_session)
+        await grade_attempt(db_session, user_id, attempt_id)
+
+        with pytest.raises(ExamAttemptAlreadySubmittedError):
+            await answer_question(
+                db_session,
+                user_id,
+                attempt_id,
+                question_ids[0],
+                ExamQuizAnswerPayload(choice_index=1),
+            )
+
+    async def test_grading_someone_elses_attempt_raises(self, db_session: AsyncSession) -> None:
+        _user_id, attempt_id, _question_ids = await self._started_quiz_only(db_session)
+        someone_else = await _make_user(db_session, "someone-else@example.com")
+
+        with pytest.raises(ExamAttemptNotFoundError):
+            await grade_attempt(db_session, someone_else.id, attempt_id)
