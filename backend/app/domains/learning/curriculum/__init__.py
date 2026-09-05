@@ -5,9 +5,9 @@ treats them as authoritative - anything in the database whose slug isn't
 found here is removed. Adding a stage means writing its module and appending
 it to `COURSES`; that list *is* the roadmap's order.
 
-Both lists are empty until the content lands in Phase J. Seeding an empty
-curriculum is a legitimate no-op, not an error, so the loader and its tests
-work from here on.
+`COURSES` is empty until the stage shells land (Phase J). Seeding an empty
+list of courses is a legitimate no-op, not an error, so the loader and its
+tests work from here on.
 """
 
 from app.domains.learning.curriculum.definitions import (
@@ -16,9 +16,8 @@ from app.domains.learning.curriculum.definitions import (
     StepDef,
     TopicDef,
 )
+from app.domains.learning.curriculum.topics import TOPICS
 
 __all__ = ["CourseDef", "LessonDef", "StepDef", "TopicDef", "TOPICS", "COURSES"]
-
-TOPICS: list[TopicDef] = []
 
 COURSES: list[CourseDef] = []
