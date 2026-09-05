@@ -345,5 +345,84 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="major-scales-and-key-signatures",
+            title="Major Scales and Key Signatures",
+            summary="Building major scales and reading the key signatures that name them.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="major-scales-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Major scales and key signatures\n\n"
+                            "A major scale is built from a fixed pattern of whole steps "
+                            "(W) and half steps (H): **W-W-H-W-W-W-H**. Starting on C and "
+                            "following that pattern uses only the white keys - C-D-E-F-"
+                            "G-A-B-C - which is why C major has no sharps or flats.\n\n"
+                            "Start the same pattern on any other note and some steps land "
+                            "on black keys instead, which is exactly what a **key "
+                            "signature** records: the sharps or flats needed to keep that "
+                            "same W-W-H-W-W-W-H shape starting from a different note.\n\n"
+                            "## The order of sharps and flats\n\n"
+                            "Sharps are always added in the order **F-C-G-D-A-E-B**, and "
+                            "flats in the exact reverse, **B-E-A-D-G-C-F**. G major has one "
+                            "sharp (F#); D major has two (F#, C#); F major has one flat "
+                            "(Bb); Bb major has two (Bb, Eb). Each new sharp or flat is "
+                            "added to all the ones before it, never replacing them."
+                        )
+                    },
+                    topics=["major-scales-and-key-signatures"],
+                ),
+                StepDef(
+                    slug="major-scales-quiz-pattern",
+                    kind="quiz",
+                    payload={
+                        "question": "What is the whole-step/half-step pattern of a major scale?",
+                        "choices": [
+                            "W-W-H-W-W-W-H",
+                            "W-H-W-W-H-W-W",
+                            "H-W-W-H-W-W-W",
+                            "W-W-W-H-W-W-H",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Every major scale follows whole-whole-half-whole-whole-whole-"
+                            "half, wherever it starts - that's what makes it a major scale."
+                        ),
+                    },
+                    topics=["major-scales-and-key-signatures"],
+                ),
+                StepDef(
+                    slug="major-scales-quiz-d-major",
+                    kind="quiz",
+                    payload={
+                        "question": "How many sharps does D major have?",
+                        "choices": ["1", "2", "3", "0"],
+                        "answer_index": 1,
+                        "explanation": (
+                            "Following the sharp order F-C-G-D-A-E-B, D major needs the "
+                            "first two: F# and C#."
+                        ),
+                    },
+                    topics=["major-scales-and-key-signatures"],
+                ),
+                StepDef(
+                    slug="major-scales-task",
+                    kind="composition",
+                    payload={
+                        "brief": "Write a one-octave ascending C major scale in quarter notes.",
+                        "requirements": [
+                            {"type": "key", "key": "C major"},
+                            {"type": "diatonic_only"},
+                            {"type": "required_scale_degrees", "degrees": [1, 2, 3, 4, 5, 6, 7]},
+                            {"type": "measure_count", "count": 2},
+                        ],
+                    },
+                    topics=["major-scales-and-key-signatures"],
+                ),
+            ],
+        ),
     ],
 )
