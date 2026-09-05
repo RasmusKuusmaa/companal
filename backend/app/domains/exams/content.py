@@ -165,4 +165,185 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="chords-and-figures-exam",
+        title="Chords and Figures Exam",
+        description=(
+            "Triads, inversions, figured bass, seventh chords, roman numerals "
+            "and harmonic function."
+        ),
+        course_slug="chords-and-figures",
+        questions=[
+            ExamQuestionDef(
+                slug="chords-exam-triad-quality",
+                kind="quiz",
+                payload={
+                    "question": "A triad built C-Eb-Gb is:",
+                    "choices": ["Diminished", "Minor", "Augmented", "Major"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A minor third stacked on a minor third (C-Eb, Eb-Gb) "
+                        "produces a diminished triad."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chords-exam-inversion-figure",
+                kind="quiz",
+                payload={
+                    "question": "A second-inversion triad is figured:",
+                    "choices": ["6/4", "6", "7", "no figure at all"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "6/4 names the sixth and fourth above the bass, which "
+                        "is the fifth of the chord sitting in the bass - second "
+                        "inversion."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chords-exam-seventh-chord-figure",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A seventh chord in third inversion (the seventh in the "
+                        "bass) is figured:"
+                    ),
+                    "choices": ["4/2", "6/5", "4/3", "7"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "4/2 (often abbreviated 2) is third inversion - the "
+                        "chord's seventh in the bass."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chords-exam-roman-numeral-minor",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In natural minor, the roman numeral for the triad built "
+                        "on the tonic is:"
+                    ),
+                    "choices": ["i", "I", "i°", "I+"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The tonic triad in natural minor is a minor triad - "
+                        "lowercase roman numeral i."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chords-exam-harmonic-function",
+                kind="quiz",
+                payload={
+                    "question": "Which chord family does ii belong to?",
+                    "choices": ["Predominant", "Tonic", "Dominant", "None of these"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "ii is a predominant chord, typically preparing the "
+                        "arrival of V."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chords-exam-figured-bass-task",
+                kind="composition",
+                payload={
+                    "brief": (
+                        "The bass line below is given and locked. Add upper "
+                        "notes that realize each measure's figure: blank, then "
+                        "6, then blank, then 6, then blank again."
+                    ),
+                    "requirements": [
+                        {
+                            "type": "figured_bass",
+                            "bass_staff_index": 0,
+                            "figures": ["", "6", "", "6", ""],
+                        }
+                    ],
+                    "starter_notation": {
+                        "fifths": 0,
+                        "mode": "major",
+                        "time": {"beats": 4, "beat_type": 4},
+                        "tempo": 90,
+                        "staves": [
+                            {
+                                "id": "bass",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "bass-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"bass-{i}",
+                                                        "step": step,
+                                                        "octave": octave,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": False,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i, (step, octave) in enumerate(
+                                        [("C", 3), ("E", 3), ("F", 3), ("G", 3), ("C", 3)]
+                                    )
+                                ],
+                            },
+                            {
+                                "id": "upper",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "v1",
+                                                "notes": [
+                                                    {
+                                                        "id": f"u1-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            },
+                                            {
+                                                "id": "v2",
+                                                "notes": [
+                                                    {
+                                                        "id": f"u2-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            },
+                                        ],
+                                    }
+                                    for i in range(5)
+                                ],
+                            },
+                        ],
+                    },
+                    "locked_staff_indices": [0],
+                },
+            ),
+        ],
+    ),
 ]
