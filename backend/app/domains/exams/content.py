@@ -785,4 +785,157 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="chromaticism-exam",
+        title="Chromaticism Exam",
+        description=(
+            "Secondary dominants and leading-tone chords, tonicization versus "
+            "modulation, pivot chords, modal mixture, the Neapolitan sixth, "
+            "and augmented sixth chords."
+        ),
+        course_slug="chromaticism",
+        questions=[
+            ExamQuestionDef(
+                slug="chromaticism-exam-secondary-dominant",
+                kind="quiz",
+                payload={
+                    "question": "In C major, V/vi is built on which note?",
+                    "choices": ["E", "A", "D", "G"],
+                    "answer_index": 0,
+                    "explanation": (
+                        "V/vi tonicizes vi (A minor), and the dominant of A "
+                        "minor is built on E."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-secondary-leading-tone",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A secondary leading-tone chord differs from the "
+                        "matching secondary dominant in that it is built as a:"
+                    ),
+                    "choices": [
+                        "Diminished triad or diminished seventh chord",
+                        "Major triad",
+                        "Augmented triad",
+                        "Half-diminished seventh chord only",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Where a secondary dominant is major or dominant "
+                        "seventh, the matching secondary leading-tone chord is "
+                        "diminished - a triad or a diminished seventh chord."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-modulation-test",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "What confirms that a passage has genuinely modulated "
+                        "rather than merely tonicized a chord?"
+                    ),
+                    "choices": [
+                        "A cadence establishing the new key",
+                        "The presence of any accidental",
+                        "A change of time signature",
+                        "A change of tempo",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A confirming cadence in the new key is the test that "
+                        "separates a real modulation from a passing "
+                        "tonicization."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-pivot-chord",
+                kind="quiz",
+                payload={
+                    "question": "A strong pivot chord for a modulation is one that:",
+                    "choices": [
+                        "Is diatonic in both the old key and the new key",
+                        "Contains an accidental from the new key",
+                        "Only exists in the new key",
+                        "Is always a secondary dominant",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The smoothest pivot chords are diatonic in both keys, "
+                        "so nothing sounds chromatic at the moment of the pivot "
+                        "itself."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-modal-mixture",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In a major key, a borrowed bVI chord is drawn from:"
+                    ),
+                    "choices": [
+                        "The parallel minor",
+                        "The relative minor",
+                        "The dominant key",
+                        "The subdominant key",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Modal mixture borrows chords from the parallel mode - "
+                        "a major key's bVI comes from its parallel minor."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-neapolitan",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "The Neapolitan chord (N6) is a major triad built on "
+                        "which scale degree, and in what inversion is it "
+                        "normally found?"
+                    ),
+                    "choices": [
+                        "The lowered 2nd scale degree, in first inversion",
+                        "The lowered 6th scale degree, in root position",
+                        "The raised 4th scale degree, in second inversion",
+                        "The tonic, in root position",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "N6 is a major triad on the lowered supertonic, almost "
+                        "always heard in first inversion with its third in the "
+                        "bass."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="chromaticism-exam-augmented-sixth",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "Which augmented sixth chord is spelled enharmonically "
+                        "identical to a dominant seventh chord?"
+                    ),
+                    "choices": [
+                        "The German sixth",
+                        "The Italian sixth",
+                        "The French sixth",
+                        "None of them are",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "The German sixth adds the lowered 3rd scale degree, "
+                        "which spells exactly like a dominant seventh chord, "
+                        "despite functioning as a predominant."
+                    ),
+                },
+            ),
+        ],
+    ),
 ]
