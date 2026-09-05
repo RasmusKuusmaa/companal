@@ -84,5 +84,74 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="secondary-leading-tone-chords",
+            title="Secondary Leading-Tone Chords",
+            summary="The diminished-seventh cousin of the secondary dominant.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="secondary-leading-tone-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Secondary leading-tone chords\n\n"
+                            "Every secondary dominant has a close relative built the "
+                            "same way a plain vii° relates to V: a **secondary "
+                            "leading-tone chord**, labeled vii°/x (or vii°7/x for the "
+                            "seventh-chord form), sits a half step below whatever chord "
+                            "it tonicizes, exactly like V/x does, but as a diminished "
+                            "triad or diminished seventh instead of a major or dominant "
+                            "seventh chord.\n\n"
+                            "In C major, vii°7/V - the secondary leading-tone seventh "
+                            "of G - is built on F#, a half step below G. It tonicizes V "
+                            "the same way V/V does, and the two are often "
+                            "interchangeable: a secondary leading-tone chord is a common "
+                            "substitute for a secondary dominant, especially when a "
+                            "smooth, stepwise bass line matters more than a leap to a "
+                            "dominant root."
+                        )
+                    },
+                    topics=["secondary-leading-tone-chords"],
+                ),
+                StepDef(
+                    slug="secondary-leading-tone-quiz-viio7-of-v",
+                    kind="quiz",
+                    payload={
+                        "question": "In C major, vii°7/V is built on which note?",
+                        "choices": ["F#", "B", "D", "G"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "vii°7/V sits a half step below V's own root, G - that's F#."
+                        ),
+                    },
+                    topics=["secondary-leading-tone-chords"],
+                ),
+                StepDef(
+                    slug="secondary-leading-tone-quiz-function",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Secondary leading-tone chords serve the same tonicizing "
+                            "function as:"
+                        ),
+                        "choices": [
+                            "Secondary dominants",
+                            "Plagal cadences",
+                            "Neapolitan chords",
+                            "Augmented sixth chords",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A secondary leading-tone chord tonicizes exactly the same "
+                            "target a matching secondary dominant would - it's built "
+                            "from the leading tone instead of the root, but points at "
+                            "the same chord."
+                        ),
+                    },
+                    topics=["secondary-leading-tone-chords"],
+                ),
+            ],
+        ),
     ],
 )
