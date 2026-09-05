@@ -83,5 +83,66 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="triad-inversions-and-figured-bass-symbols",
+            title="Triad Inversions and Figured Bass Symbols",
+            summary="Root position, first and second inversion, and the figures that name them.",
+            estimated_minutes=10,
+            steps=[
+                StepDef(
+                    slug="triad-inversions-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Triad inversions and figured bass symbols\n\n"
+                            "A triad's **inversion** depends on which of its three notes "
+                            "sits in the bass, not on which notes it contains - C-E-G, "
+                            "E-G-C and G-C-E are all a C major triad, just rearranged.\n\n"
+                            "- **Root position**: the root is in the bass. Figured bass "
+                            "symbol **5/3**, almost always left blank since it's the "
+                            "default.\n"
+                            "- **First inversion**: the third is in the bass. Symbol "
+                            "**6/3**, nearly always abbreviated to just **6**.\n"
+                            "- **Second inversion**: the fifth is in the bass. Symbol "
+                            "**6/4** - and this one is never abbreviated, since \"4\" "
+                            "alone would be ambiguous.\n\n"
+                            "The numbers in a figure count the interval each upper voice "
+                            "makes **above the bass note**, not above the root - which is "
+                            "exactly why first inversion reads 6/3 (a sixth and a third "
+                            "above the bass) rather than reusing 5/3."
+                        )
+                    },
+                    topics=["triad-inversions-and-figures"],
+                ),
+                StepDef(
+                    slug="triad-inversions-quiz-first-inversion",
+                    kind="quiz",
+                    payload={
+                        "question": "What figure represents a triad in first inversion?",
+                        "choices": ["6/4", "6", "5/3", "7"],
+                        "answer_index": 1,
+                        "explanation": (
+                            "First inversion's full figure is 6/3, but the 3 is "
+                            "conventionally dropped, leaving just 6."
+                        ),
+                    },
+                    topics=["triad-inversions-and-figures"],
+                ),
+                StepDef(
+                    slug="triad-inversions-quiz-second-inversion",
+                    kind="quiz",
+                    payload={
+                        "question": "In second inversion, which chord member sits in the bass?",
+                        "choices": ["The root", "The third", "The fifth", "The seventh"],
+                        "answer_index": 2,
+                        "explanation": (
+                            "Second inversion puts the fifth in the bass, giving the "
+                            "6/4 figure - a sixth and a fourth above that fifth."
+                        ),
+                    },
+                    topics=["triad-inversions-and-figures"],
+                ),
+            ],
+        ),
     ],
 )
