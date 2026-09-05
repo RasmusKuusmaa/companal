@@ -389,3 +389,131 @@ def check_first_species(lines: CounterpointLines) -> list[CounterpointFindingRea
         *_check_contrary_motion_preference(aligned),
         *_check_cadence_formula(aligned),
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Second and third species
+# --------------------------------------------------------------------------- #
+
+
+def _step_between(a: NotationNote, b: NotationNote) -> bool:
+    return abs(_midi(a) - _midi(b)) in (1, 2)
+
+
+def _check_downbeat_consonance(aligned: list[AlignedInterval]) -> list[CounterpointFindingRead]:
+    """Every downbeat must be consonant, exactly as in first species - it's
+    only the weak beats that second and third species let a dissonance
+    pass through on."""
+    return [
+        CounterpointFindingRead(
+            kind="dissonance",
+            measure=interval.measure,
+            passed=False,
+            message=(
+                f"Measure {interval.measure}, beat 1: {interval.interval_name} is dissonant - "
+                "the downbeat of every measure must be consonant."
+            ),
+        )
+        for interval in aligned
+        if interval.is_downbeat and not interval.is_consonant
+    ]
+
+
+def _check_weak_beat_dissonance(aligned: list[AlignedInterval]) -> list[CounterpointFindingRead]:
+    """A dissonance off the downbeat is allowed only as a passing or
+    neighbor tone - approached by step and left by step, whichever
+    direction. Anything reached or left by leap is unprepared.
+    """
+    findings: list[CounterpointFindingRead] = []
+    for i, interval in enumerate(aligned):
+        if interval.is_downbeat or interval.is_consonant:
+            continue
+
+        current = interval.counterpoint_note
+        before = aligned[i - 1].counterpoint_note if i > 0 else None
+        after = aligned[i + 1].counterpoint_note if i + 1 < len(aligned) else None
+
+        stepwise = (
+            before is not None
+            and after is not None
+            and _step_between(before, current)
+            and _step_between(current, after)
+        )
+        if not stepwise:
+            findings.append(
+                CounterpointFindingRead(
+                    kind="unprepared_dissonance",
+                    measure=interval.measure,
+                    passed=False,
+                    message=(
+                        f"Measure {interval.measure}: {interval.interval_name} is dissonant and "
+                        "not approached and left by step - only a passing or neighbor tone may "
+                        "be dissonant off the downbeat."
+                    ),
+                )
+            )
+    return findings
+
+
+def _leap_generic_size(a: NotationNote, b: NotationNote) -> int:
+    return abs(m21interval.Interval(noteStart=_pitch(a), noteEnd=_pitch(b)).generic.undirected)
+
+
+def _check_leap_treatment(lines: CounterpointLines) -> list[CounterpointFindingRead]:
+    """A melodic leap of a fourth or more in the counterpoint should be
+    answered by a step in the opposite direction, filling in the gap the
+    leap left - the same recovery convention free melodic writing follows."""
+    notes = [
+        (measure_index + 1, note)
+        for measure_index, measure in enumerate(lines.counterpoint_by_measure)
+        for note in measure
+        if not note.is_rest
+    ]
+    findings: list[CounterpointFindingRead] = []
+    for i in range(len(notes) - 2):
+        _, a = notes[i]
+        measure_b, b = notes[i + 1]
+        _, c = notes[i + 2]
+        if _leap_generic_size(a, b) < 4:
+            continue
+
+        leap_direction = _midi(b) - _midi(a)
+        next_direction = _midi(c) - _midi(b)
+        opposite_direction = (leap_direction > 0 and next_direction < 0) or (
+            leap_direction < 0 and next_direction > 0
+        )
+        recovered = _step_between(b, c) and opposite_direction
+        if not recovered:
+            findings.append(
+                CounterpointFindingRead(
+                    kind="unrecovered_leap",
+                    measure=measure_b,
+                    passed=False,
+                    message=(
+                        f"Measure {measure_b}: a leap of a fourth or more should be answered by "
+                        "a step in the opposite direction."
+                    ),
+                )
+            )
+    return findings
+
+
+def check_second_and_third_species(lines: CounterpointLines) -> list[CounterpointFindingRead]:
+    """The rules second (2:1) and third (3:1 or 4:1) species add on top of
+    first species: a consonant downbeat, a weak-beat dissonance only as a
+    passing or neighbor tone, and leaps answered by a step back.
+
+    Parallel perfects are checked strong beat to strong beat - that's
+    where the real harmonic motion between the two lines is; a weak beat
+    is passing motion, not a second harmony to compare against the next
+    measure's.
+    """
+    aligned = align_intervals(lines)
+    downbeats = [interval for interval in aligned if interval.is_downbeat]
+    return [
+        *_check_downbeat_consonance(aligned),
+        *_check_weak_beat_dissonance(aligned),
+        *_check_no_parallel_perfects(downbeats),
+        *_check_leap_treatment(lines),
+        *_check_cadence_formula(aligned),
+    ]
