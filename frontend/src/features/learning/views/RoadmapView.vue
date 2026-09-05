@@ -73,9 +73,9 @@ onMounted(load);
 </script>
 
 <template>
-  <main class="min-h-screen bg-slate-50 px-4 py-10">
+  <main class="min-h-screen bg-slate-50 px-4 py-6 sm:py-10">
     <div class="mx-auto max-w-3xl">
-      <header class="mb-8 flex items-start justify-between gap-4">
+      <header class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div>
           <h1 class="text-xl font-semibold text-slate-900">Roadmap</h1>
           <p class="mt-1 text-sm text-slate-500">
