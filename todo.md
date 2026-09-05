@@ -152,18 +152,18 @@ deterministic stays free forever.
 
 Everything four-part writing and counterpoint need.
 
-- [ ] `add grand staff support to the notation document` — multiple staves with independent clefs
-- [ ] `add second staff rendering` — braced grand staff, aligned barlines
-- [ ] `add staff selection in the editor` — entry targets the active staff
-- [ ] `add multiple voices per staff` — up to four, stem direction by voice
-- [ ] `add voice selection and colouring` — the active voice is unambiguous
-- [ ] `add satb template` — two staves, four voices, correct clefs and stems
-- [ ] `add starter notation loading` — an exercise can supply a given soprano, bass or cantus firmus
-- [ ] `add locked staves for given material` — the given line can't be edited away
-- [ ] `add musicxml upload for composition steps` — reuses the existing upload validation
-- [ ] `add uploaded score conversion and grading` — same pipeline as editor submissions
-- [ ] `add open uploaded score in the editor` — import, then keep editing
-- [ ] `add grand staff and voice tests`
+- [x] `add grand staff support to the notation document` — multiple staves with independent clefs
+- [x] `add second staff rendering` — braced grand staff, aligned barlines
+- [x] `add staff selection in the editor` — entry targets the active staff
+- [x] `add multiple voices per staff` — up to four, stem direction by voice
+- [x] `add voice selection and colouring` — the active voice is unambiguous
+- [x] `add satb template` — two staves, four voices, correct clefs and stems
+- [x] `add starter notation loading` — an exercise can supply a given soprano, bass or cantus firmus
+- [x] `add locked staves for given material` — the given line can't be edited away
+- [x] `add musicxml upload for composition steps` — reuses the existing upload validation
+- [x] `add uploaded score conversion and grading` — same pipeline as editor submissions
+- [x] `add open uploaded score in the editor` — import, then keep editing
+- [x] `add grand staff and voice tests`
 
 ## Phase G — classical validators
 
