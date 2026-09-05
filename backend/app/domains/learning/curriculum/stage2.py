@@ -519,5 +519,86 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="the-three-uses-of-the-six-four-chord",
+            title="The Three Uses of the Six-Four Chord",
+            summary="Cadential, passing and pedal six-four chords, and how each is used.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="six-four-chords-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# The three uses of the six-four chord\n\n"
+                            "A second-inversion triad (6/4) is treated as unstable on its "
+                            "own - its bass note isn't really acting as a chord root, but "
+                            "as a **dissonance against the true harmony**, resolved in "
+                            "one of three conventional ways.\n\n"
+                            "## Cadential six-four\n\n"
+                            "A I6/4 arrives on a strong beat right before V, then "
+                            "resolves down by step into an actual V chord - the 6/4's "
+                            "upper voices (a 6th and a 4th above the bass) fall to a 5th "
+                            "and a 3rd as the same bass note becomes the root of V. "
+                            "It's really a decorated dominant, not a tonic at all.\n\n"
+                            "## Passing six-four\n\n"
+                            "A 6/4 chord fills the gap between two chords a step apart in "
+                            "the bass - I, then a passing I6/4 (or V6/4) as the bass "
+                            "steps through, then I6 (or another chord) on the other side. "
+                            "It appears on a weak beat, decorating a smooth bass line.\n\n"
+                            "## Pedal (or pedal-point) six-four\n\n"
+                            "The bass holds a single note while the upper voices move "
+                            "around it, briefly passing through a 6/4 spelling before "
+                            "settling back onto the chord the bass note actually belongs "
+                            "to - I, then IV6/4 over that same bass note, then back to I."
+                        )
+                    },
+                    topics=["six-four-chords"],
+                ),
+                StepDef(
+                    slug="six-four-chords-quiz-cadential",
+                    kind="quiz",
+                    payload={
+                        "question": "The cadential six-four chord typically resolves to:",
+                        "choices": [
+                            "V, over the same bass note",
+                            "IV",
+                            "vi",
+                            "ii",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The cadential 6/4's bass note becomes the root of the V "
+                            "chord it resolves to - it's a decorated dominant, not a "
+                            "stable tonic."
+                        ),
+                    },
+                    topics=["six-four-chords"],
+                ),
+                StepDef(
+                    slug="six-four-chords-quiz-pedal",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Which six-four type has the bass hold one note while the "
+                            "upper voices move around it?"
+                        ),
+                        "choices": [
+                            "Pedal (or pedal-point) six-four",
+                            "Cadential six-four",
+                            "Passing six-four",
+                            "There is no such type",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A pedal six-four holds the bass steady while the harmony "
+                            "shifts above it, briefly spelling a 6/4 before settling "
+                            "back onto the chord that bass note belongs to."
+                        ),
+                    },
+                    topics=["six-four-chords"],
+                ),
+            ],
+        ),
     ],
 )
