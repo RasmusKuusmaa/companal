@@ -14,7 +14,15 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.learning.models import MasteryStatus, TopicMastery
+from app.domains.analysis.schemas import HarmonyAnalysis
+from app.domains.learning.models import MasteryStatus, Topic, TopicMastery
+
+# Topic slug for evidence read off a composition's own analysis, independent
+# of whatever the exercise's requirements checked - see `models.Topic`'s own
+# docstring: a parallel-fifths violation is evidence about voice leading
+# whether or not the exercise was about parallel fifths. The topic itself is
+# seeded separately (Phase J) - see `get_topic_by_slug`.
+_VOICE_LEADING_TOPIC_SLUG = "parallel-fifths-and-octaves"
 
 # How many recent outcomes distinguish "struggled a year ago" from
 # "getting it wrong now" - see the model's own docstring.
@@ -98,3 +106,28 @@ def record_result(mastery: TopicMastery, is_correct: bool) -> None:
         mastery.attempt_count, mastery.accuracy, mastery.recent_results
     )
     mastery.last_seen_at = datetime.now(UTC)
+
+
+def evidence_from_harmony_analysis(harmony: HarmonyAnalysis | None) -> list[tuple[str, bool]]:
+    """Topic evidence implicit in a composition's harmony analysis, as
+    (topic_slug, was_correct) pairs - on top of whatever the exercise's own
+    requirements graded. A submission with no parallel fifths or octaves is
+    positive evidence for voice leading even in an exercise that never asked
+    about it; one with either is negative evidence.
+    """
+    if harmony is None:
+        return []
+    voice_leading = harmony.technical_data.voice_leading
+    no_parallels = not voice_leading.parallel_fifths and not voice_leading.parallel_octaves
+    return [(_VOICE_LEADING_TOPIC_SLUG, no_parallels)]
+
+
+async def get_topic_by_slug(db: AsyncSession, slug: str) -> Topic | None:
+    """Looks up a topic by its slug, for callers that have a slug in hand
+    rather than an id - such as rule-based evidence keyed to a fixed slug
+    (see `evidence_from_harmony_analysis`). Returns `None` for a slug that
+    hasn't been seeded yet rather than raising: curriculum content (Phase J)
+    is seeded separately from the checks that reference its topics.
+    """
+    topic: Topic | None = await db.scalar(select(Topic).where(Topic.slug == slug))
+    return topic

@@ -25,7 +25,12 @@ from app.domains.billing import service as billing_service
 from app.domains.billing.models import AiUsageKind
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.schemas import CompositionFeedback
-from app.domains.learning.mastery import get_or_create_topic_mastery, record_result
+from app.domains.learning.mastery import (
+    evidence_from_harmony_analysis,
+    get_or_create_topic_mastery,
+    get_topic_by_slug,
+    record_result,
+)
 from app.domains.learning.models import (
     Course,
     Lesson,
@@ -58,7 +63,7 @@ from app.domains.learning.schemas import (
     StepSeenRead,
 )
 from app.domains.notation.ai_grading import AIGradingError, generate_exercise_feedback
-from app.domains.notation.grading import analysis_bundle, grade_submission
+from app.domains.notation.grading import DeterministicGrade, analysis_bundle, grade_submission
 from app.domains.notation.schemas import NotationDocument
 
 
@@ -210,6 +215,24 @@ async def _update_mastery_for_step(
     )
     for topic_id in topic_ids:
         mastery = await get_or_create_topic_mastery(db, user_id, topic_id)
+        record_result(mastery, is_correct)
+
+
+async def _update_mastery_from_rule_evidence(
+    db: AsyncSession, user_id: uuid.UUID, grade: DeterministicGrade
+) -> None:
+    """Folds rule-level evidence from a submission's own analysis into
+    mastery, on top of the step-level pass/fail `_update_mastery_for_step`
+    already recorded. A parallel-fifths violation is evidence about voice
+    leading whether or not the exercise's requirements checked for one -
+    see `mastery.evidence_from_harmony_analysis`. A topic this evidence
+    names that hasn't been seeded yet (Phase J) is silently skipped.
+    """
+    for slug, is_correct in evidence_from_harmony_analysis(grade.harmony_analysis):
+        topic = await get_topic_by_slug(db, slug)
+        if topic is None:
+            continue
+        mastery = await get_or_create_topic_mastery(db, user_id, topic.id)
         record_result(mastery, is_correct)
 
 
@@ -529,6 +552,7 @@ async def submit_composition(
     )
     db.add(attempt)
     await _update_mastery_for_step(db, user_id, step.id, grade.passed)
+    await _update_mastery_from_rule_evidence(db, user_id, grade)
 
     progress = await _ensure_progress(db, user_id, lesson.id)
     progress.current_step_id = step.id

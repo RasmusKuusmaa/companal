@@ -16,8 +16,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import storage
-from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef
-from app.domains.learning.models import StepAttempt
+from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef, TopicDef
+from app.domains.learning.models import StepAttempt, Topic, TopicMastery
 from app.domains.learning.seeding import seed_curriculum
 from app.domains.learning.service import (
     LessonNotFoundError,
@@ -103,8 +103,54 @@ def _curriculum() -> list[CourseDef]:
     ]
 
 
+def _two_voice_document(parallel_fifths: bool) -> NotationDocument:
+    """A two-staff document that either steps in parallel fifths throughout
+    (D4/G3 -> E4/A3) or moves in contrary motion instead (D4/G3 -> C4/A3,
+    which breaks both the fifth and the parallel direction)."""
+    top_second = "E" if parallel_fifths else "C"
+    bottom_second = "A"
+    return NotationDocument.model_validate(
+        {
+            "fifths": 0,
+            "mode": "major",
+            "time": {"beats": 4, "beat_type": 4},
+            "tempo": 90,
+            "staves": [
+                {
+                    "id": "s1",
+                    "clef": "treble",
+                    "measures": [
+                        {"id": "m0", "voices": [{"id": "1", "notes": [_note("D", 4)]}]},
+                        {"id": "m1", "voices": [{"id": "1", "notes": [_note(top_second, 4)]}]},
+                    ],
+                },
+                {
+                    "id": "s2",
+                    "clef": "bass",
+                    "measures": [
+                        {"id": "m0", "voices": [{"id": "2", "notes": [_note("G", 3)]}]},
+                        {"id": "m1", "voices": [{"id": "2", "notes": [_note(bottom_second, 3)]}]},
+                    ],
+                },
+            ],
+        }
+    )
+
+
 async def _seed(db_session: AsyncSession) -> None:
     await seed_curriculum(db_session, topics=[], courses=_curriculum())
+
+
+async def _seed_with_voice_leading_topic(db_session: AsyncSession) -> None:
+    topics = [
+        TopicDef(
+            slug="parallel-fifths-and-octaves",
+            name="Parallel fifths and octaves",
+            area="harmony",
+            description="d",
+        )
+    ]
+    await seed_curriculum(db_session, topics=topics, courses=_curriculum())
 
 
 async def _make_user(db_session: AsyncSession, email: str = "composer@example.com") -> User:
@@ -255,6 +301,81 @@ class TestSubmitCompositionService:
         attempt = await db_session.get(StepAttempt, result.attempt_id)
         assert attempt is not None
         assert attempt.passed is False
+
+
+class TestMasteryFromRuleEvidence:
+    """A submission's own analysis is evidence about topics the exercise's
+    requirements never asked about - see `learning.mastery.
+    evidence_from_harmony_analysis`."""
+
+    async def _mastery(self, db_session: AsyncSession, user_id: uuid.UUID) -> TopicMastery | None:
+        topic = await db_session.scalar(
+            select(Topic).where(Topic.slug == "parallel-fifths-and-octaves")
+        )
+        assert topic is not None
+        mastery: TopicMastery | None = await db_session.scalar(
+            select(TopicMastery).where(
+                TopicMastery.user_id == user_id, TopicMastery.topic_id == topic.id
+            )
+        )
+        return mastery
+
+    async def test_parallel_fifths_count_as_negative_evidence(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _seed_with_voice_leading_topic(db_session)
+        user = await _make_user(db_session)
+
+        await submit_composition(
+            db_session,
+            user.id,
+            "single-note",
+            "single-note-task",
+            _two_voice_document(parallel_fifths=True),
+        )
+
+        mastery = await self._mastery(db_session, user.id)
+        assert mastery is not None
+        assert mastery.attempt_count == 1
+        assert mastery.correct_count == 0
+
+    async def test_clean_voice_leading_counts_as_positive_evidence(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _seed_with_voice_leading_topic(db_session)
+        user = await _make_user(db_session)
+
+        await submit_composition(
+            db_session,
+            user.id,
+            "single-note",
+            "single-note-task",
+            _two_voice_document(parallel_fifths=False),
+        )
+
+        mastery = await self._mastery(db_session, user.id)
+        assert mastery is not None
+        assert mastery.attempt_count == 1
+        assert mastery.correct_count == 1
+
+    async def test_an_unseeded_topic_is_skipped_rather_than_raising(
+        self, db_session: AsyncSession
+    ) -> None:
+        await _seed(db_session)
+        user = await _make_user(db_session)
+
+        await submit_composition(
+            db_session,
+            user.id,
+            "single-note",
+            "single-note-task",
+            _two_voice_document(parallel_fifths=True),
+        )
+
+        topic = await db_session.scalar(
+            select(Topic).where(Topic.slug == "parallel-fifths-and-octaves")
+        )
+        assert topic is None
 
 
 class TestSubmitCompositionRouter:
