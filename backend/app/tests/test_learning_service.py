@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef, TopicDef
-from app.domains.learning.models import Lesson, LessonStep, StepAttempt
+from app.domains.learning.models import Lesson, LessonStep, MasteryStatus, StepAttempt
 from app.domains.learning.schemas import LessonProgressStatus, QuizStepRead
 from app.domains.learning.seeding import UnknownTopicError, seed_curriculum
 from app.domains.learning.service import (
@@ -18,6 +18,7 @@ from app.domains.learning.service import (
     get_lesson,
     get_progress_summary,
     get_roadmap,
+    get_skill_map,
     mark_step_seen,
 )
 from app.domains.users.models import User
@@ -488,3 +489,57 @@ class TestProgress:
 
         with pytest.raises(LessonNotFoundError):
             await complete_lesson(db_session, user.id, uuid.uuid4().hex)
+
+
+class TestSkillMap:
+    async def test_every_topic_starts_untouched(self, db_session: AsyncSession) -> None:
+        await _seed(db_session)
+        user = await _make_user(db_session)
+
+        skill_map = await get_skill_map(db_session, user.id)
+
+        assert skill_map.topic_count == 2
+        assert skill_map.touched_topic_count == 0
+        assert {topic.slug for topic in skill_map.topics} == {"intervals", "cadences"}
+        assert all(topic.status is MasteryStatus.UNTOUCHED for topic in skill_map.topics)
+        assert all(topic.attempt_count == 0 for topic in skill_map.topics)
+        assert all(topic.last_seen_at is None for topic in skill_map.topics)
+
+    async def test_lists_the_lessons_that_teach_each_topic(self, db_session: AsyncSession) -> None:
+        await _seed(db_session)
+        user = await _make_user(db_session)
+
+        skill_map = await get_skill_map(db_session, user.id)
+        by_slug = {topic.slug: topic for topic in skill_map.topics}
+
+        assert [lesson.slug for lesson in by_slug["intervals"].lessons] == ["intervals"]
+        assert [lesson.slug for lesson in by_slug["cadences"].lessons] == ["cadences"]
+
+    async def test_an_attempt_updates_only_its_own_topic(self, db_session: AsyncSession) -> None:
+        await _seed(db_session)
+        user = await _make_user(db_session)
+
+        await answer_quiz(db_session, user.id, "intervals", "intervals-quiz", 1)
+
+        skill_map = await get_skill_map(db_session, user.id)
+        by_slug = {topic.slug: topic for topic in skill_map.topics}
+
+        assert skill_map.touched_topic_count == 1
+        assert by_slug["intervals"].status is MasteryStatus.LEARNING
+        assert by_slug["intervals"].attempt_count == 1
+        assert by_slug["intervals"].correct_count == 1
+        assert by_slug["intervals"].last_seen_at is not None
+        assert by_slug["cadences"].status is MasteryStatus.UNTOUCHED
+
+    async def test_mastery_is_per_student(self, db_session: AsyncSession) -> None:
+        await _seed(db_session)
+        alice = await _make_user(db_session, "alice@example.com")
+        bob = await _make_user(db_session, "bob@example.com")
+
+        await answer_quiz(db_session, alice.id, "intervals", "intervals-quiz", 1)
+
+        alice_map = await get_skill_map(db_session, alice.id)
+        bob_map = await get_skill_map(db_session, bob.id)
+
+        assert alice_map.touched_topic_count == 1
+        assert bob_map.touched_topic_count == 0

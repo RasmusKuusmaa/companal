@@ -22,6 +22,7 @@ from app.domains.learning.schemas import (
     QuizAnswerRequest,
     QuizAnswerResult,
     RoadmapRead,
+    SkillMapRead,
     StepSeenRead,
 )
 from app.domains.learning.service import (
@@ -33,6 +34,7 @@ from app.domains.learning.service import (
     get_lesson,
     get_progress_summary,
     get_roadmap,
+    get_skill_map,
     mark_step_seen,
     submit_composition,
 )
@@ -188,3 +190,17 @@ async def read_progress(
 ) -> ProgressSummary:
     """Totals per stage, plus the lesson to pick back up."""
     return await get_progress_summary(db, current_user.id)
+
+
+@router.get("/skill-map", response_model=SkillMapRead)
+async def read_skill_map(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> SkillMapRead:
+    """Every topic in the curriculum, this student's mastery of each, and
+    the lessons that teach it.
+
+    Every topic comes back, touched or not - the heatmap and the coverage
+    summary both need the full curriculum, not just what's been attempted.
+    """
+    return await get_skill_map(db, current_user.id)

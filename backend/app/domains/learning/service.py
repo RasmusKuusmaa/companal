@@ -37,8 +37,11 @@ from app.domains.learning.models import (
     LessonStatus,
     LessonStep,
     LessonStepTopic,
+    MasteryStatus,
     StepAttempt,
     StepKind,
+    Topic,
+    TopicMastery,
     UserProgress,
 )
 from app.domains.learning.schemas import (
@@ -60,7 +63,10 @@ from app.domains.learning.schemas import (
     ReadingPayload,
     ReadingStepRead,
     RoadmapRead,
+    SkillMapRead,
     StepSeenRead,
+    TopicLessonRef,
+    TopicMasteryRead,
 )
 from app.domains.notation.ai_grading import AIGradingError, generate_exercise_feedback
 from app.domains.notation.grading import DeterministicGrade, analysis_bundle, grade_submission
@@ -640,3 +646,71 @@ async def get_progress_summary(db: AsyncSession, user_id: uuid.UUID) -> Progress
         continue_lesson_slug=resume.slug if resume else None,
         continue_lesson_title=resume.title if resume else None,
     )
+
+
+async def _mastery_by_topic(
+    db: AsyncSession, user_id: uuid.UUID
+) -> dict[uuid.UUID, TopicMastery]:
+    rows = await db.scalars(select(TopicMastery).where(TopicMastery.user_id == user_id))
+    return {row.topic_id: row for row in rows.all()}
+
+
+async def _lessons_by_topic(db: AsyncSession) -> dict[uuid.UUID, list[TopicLessonRef]]:
+    """Every lesson that exercises each topic, in roadmap order.
+
+    Joined through `LessonStepTopic` rather than read off a topic's own
+    relationship - a topic has no ORM relationship to lessons, only to the
+    steps that tag it, and a lesson can tag the same topic from more than
+    one step, hence the `distinct()`.
+    """
+    rows = await db.execute(
+        select(LessonStepTopic.topic_id, Lesson.slug, Lesson.title, Lesson.position)
+        .join(LessonStep, LessonStep.id == LessonStepTopic.step_id)
+        .join(Lesson, Lesson.id == LessonStep.lesson_id)
+        .distinct()
+        .order_by(Lesson.position, Lesson.slug)
+    )
+    lessons_by_topic: dict[uuid.UUID, list[TopicLessonRef]] = {}
+    for topic_id, slug, title, _position in rows:
+        lessons_by_topic.setdefault(topic_id, []).append(TopicLessonRef(slug=slug, title=title))
+    return lessons_by_topic
+
+
+async def get_skill_map(db: AsyncSession, user_id: uuid.UUID) -> SkillMapRead:
+    """Every topic in the curriculum, folded together with this student's
+    mastery of it and the lessons that teach it.
+
+    A topic with no `TopicMastery` row is synthesised as `untouched` rather
+    than omitted - see `models.MasteryStatus`'s own docstring - so the
+    heatmap always shows the whole curriculum, not just what's been
+    attempted.
+    """
+    topics = (
+        await db.scalars(select(Topic).order_by(Topic.area, Topic.position, Topic.slug))
+    ).all()
+    mastery_by_topic = await _mastery_by_topic(db, user_id)
+    lessons_by_topic = await _lessons_by_topic(db)
+
+    reads: list[TopicMasteryRead] = []
+    touched = 0
+    for topic in topics:
+        mastery = mastery_by_topic.get(topic.id)
+        if mastery is not None:
+            touched += 1
+        reads.append(
+            TopicMasteryRead(
+                id=topic.id,
+                slug=topic.slug,
+                name=topic.name,
+                area=topic.area,
+                description=topic.description,
+                status=mastery.status if mastery is not None else MasteryStatus.UNTOUCHED,
+                attempt_count=mastery.attempt_count if mastery is not None else 0,
+                correct_count=mastery.correct_count if mastery is not None else 0,
+                accuracy=mastery.accuracy if mastery is not None else 0.0,
+                last_seen_at=mastery.last_seen_at if mastery is not None else None,
+                lessons=lessons_by_topic.get(topic.id, []),
+            )
+        )
+
+    return SkillMapRead(topics=reads, topic_count=len(topics), touched_topic_count=touched)

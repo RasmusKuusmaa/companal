@@ -34,6 +34,7 @@ class TestAuthentication:
             ("get", ROADMAP),
             ("get", LESSON),
             ("get", "/api/v1/learning/progress"),
+            ("get", "/api/v1/learning/skill-map"),
             ("post", QUIZ_ANSWER),
             ("post", "/api/v1/learning/lessons/intervals/steps/intervals-quiz/seen"),
             ("post", "/api/v1/learning/lessons/intervals/complete"),
@@ -221,3 +222,30 @@ class TestProgress:
         )
 
         assert response.status_code == 404
+
+
+class TestSkillMap:
+    async def test_returns_every_topic_untouched(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.get("/api/v1/learning/skill-map", headers=headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["topic_count"] == 2
+        assert body["touched_topic_count"] == 0
+        assert {topic["slug"] for topic in body["topics"]} == {"intervals", "cadences"}
+        assert all(topic["status"] == "untouched" for topic in body["topics"])
+
+    async def test_reflects_an_answered_quiz(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        await client.post(QUIZ_ANSWER, json={"choice_index": 1}, headers=headers)
+
+        response = await client.get("/api/v1/learning/skill-map", headers=headers)
+
+        body = response.json()
+        by_slug = {topic["slug"]: topic for topic in body["topics"]}
+        assert body["touched_topic_count"] == 1
+        assert by_slug["intervals"]["status"] == "learning"
+        assert by_slug["intervals"]["attempt_count"] == 1
+        assert by_slug["cadences"]["status"] == "untouched"

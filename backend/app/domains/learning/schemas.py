@@ -26,7 +26,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.schemas import CompositionFeedback
-from app.domains.learning.models import CourseLevel, StepKind
+from app.domains.learning.models import CourseLevel, MasteryStatus, StepKind
 from app.domains.notation.grading import DeterministicGrade
 from app.domains.notation.requirements import Requirement
 from app.domains.notation.schemas import NotationDocument
@@ -34,6 +34,7 @@ from app.domains.notation.schemas import NotationDocument
 __all__ = [
     "CourseLevel",
     "StepKind",
+    "MasteryStatus",
     "LessonProgressStatus",
     "Requirement",
     "NotationDocument",
@@ -60,6 +61,9 @@ __all__ = [
     "CompositionSubmissionRead",
     "CourseProgress",
     "ProgressSummary",
+    "TopicLessonRef",
+    "TopicMasteryRead",
+    "SkillMapRead",
 ]
 
 
@@ -353,3 +357,47 @@ class ProgressSummary(BaseModel):
     by_course: list[CourseProgress]
     continue_lesson_slug: str | None = None
     continue_lesson_title: str | None = None
+
+
+# --------------------------------------------------------------------------- #
+# Skill map
+# --------------------------------------------------------------------------- #
+
+
+class TopicLessonRef(BaseModel):
+    """One lesson that exercises a topic - what "coverage" means at the
+    topic level, and what a topic detail panel links out to."""
+
+    slug: str
+    title: str
+
+
+class TopicMasteryRead(BaseModel):
+    """One topic's mastery, as the skill map renders it.
+
+    Present for every topic in the curriculum, whether or not the student
+    has touched it - an untouched topic comes back with `status=untouched`
+    and zeroed counts rather than being omitted, so the heatmap can show
+    the whole curriculum rather than only what's been attempted.
+    """
+
+    id: uuid.UUID
+    slug: str
+    name: str
+    area: str
+    description: str
+    status: MasteryStatus
+    attempt_count: int
+    correct_count: int
+    accuracy: float
+    last_seen_at: datetime | None
+    lessons: list[TopicLessonRef]
+
+
+class SkillMapRead(BaseModel):
+    """Every topic in the curriculum, this student's mastery of each, and
+    the totals a coverage summary is built from."""
+
+    topics: list[TopicMasteryRead]
+    topic_count: int
+    touched_topic_count: int
