@@ -236,86 +236,86 @@ composition task where the topic calls for one, and its topic tags.
 
 ### Topics and stage shells
 
-- [ ] `seed topic catalog` — every topic the skill map tracks, grouped by area
-- [ ] `seed stage 0 fundamentals` — course shell
-- [ ] `seed stage 1 chords and figures` — course shell
-- [ ] `seed stage 2 voice leading` — course shell
-- [ ] `seed stage 3 line and counterpoint` — course shell
-- [ ] `seed stage 4 chromaticism` — course shell
-- [ ] `seed stage 5 form and composition` — course shell
+- [x] `seed topic catalog` — every topic the skill map tracks, grouped by area
+- [x] `seed stage 0 fundamentals` — course shell
+- [x] `seed stage 1 chords and figures` — course shell
+- [x] `seed stage 2 voice leading` — course shell
+- [x] `seed stage 3 line and counterpoint` — course shell
+- [x] `seed stage 4 chromaticism` — course shell
+- [x] `seed stage 5 form and composition` — course shell
 
 ### Stage 0 — Fundamentals
 
-- [ ] `seed lesson the staff clefs and ledger lines` — treble, bass and the C-clefs
-- [ ] `seed lesson note values dots ties and rests`
-- [ ] `seed lesson simple and compound meter`
-- [ ] `seed lesson irregular meter and anacrusis`
-- [ ] `seed lesson major scales and key signatures`
-- [ ] `seed lesson minor scales natural harmonic and melodic`
-- [ ] `seed lesson intervals number quality and inversion`
-- [ ] `seed lesson the church modes`
+- [x] `seed lesson the staff clefs and ledger lines` — treble, bass and the C-clefs
+- [x] `seed lesson note values dots ties and rests`
+- [x] `seed lesson simple and compound meter`
+- [x] `seed lesson irregular meter and anacrusis`
+- [x] `seed lesson major scales and key signatures`
+- [x] `seed lesson minor scales natural harmonic and melodic`
+- [x] `seed lesson intervals number quality and inversion`
+- [x] `seed lesson the church modes`
 
 ### Stage 1 — Chords and figures
 
-- [ ] `seed lesson triads and their qualities`
-- [ ] `seed lesson triad inversions and figured bass symbols`
-- [ ] `seed lesson seventh chords and their figures`
-- [ ] `seed lesson roman numeral analysis in major`
-- [ ] `seed lesson roman numeral analysis in minor`
-- [ ] `seed lesson harmonic function and chord families`
-- [ ] `seed lesson realizing a figured bass`
+- [x] `seed lesson triads and their qualities`
+- [x] `seed lesson triad inversions and figured bass symbols`
+- [x] `seed lesson seventh chords and their figures`
+- [x] `seed lesson roman numeral analysis in major`
+- [x] `seed lesson roman numeral analysis in minor`
+- [x] `seed lesson harmonic function and chord families`
+- [x] `seed lesson realizing a figured bass`
 
 ### Stage 2 — Voice leading
 
-- [ ] `seed lesson four part texture ranges spacing and doubling`
-- [ ] `seed lesson types of motion and the parallel prohibitions`
-- [ ] `seed lesson connecting root position triads`
-- [ ] `seed lesson first inversion triads and doubling choices`
-- [ ] `seed lesson the three uses of the six four chord`
-- [ ] `seed lesson the dominant seventh and its resolution`
-- [ ] `seed lesson non chord tones`
-- [ ] `seed lesson harmonizing a soprano line` — capstone
-- [ ] `seed lesson realizing a figured bass in four parts` — capstone
+- [x] `seed lesson four part texture ranges spacing and doubling`
+- [x] `seed lesson types of motion and the parallel prohibitions`
+- [x] `seed lesson connecting root position triads`
+- [x] `seed lesson first inversion triads and doubling choices`
+- [x] `seed lesson the three uses of the six four chord`
+- [x] `seed lesson the dominant seventh and its resolution`
+- [x] `seed lesson non chord tones`
+- [x] `seed lesson harmonizing a soprano line` — capstone
+- [x] `seed lesson realizing a figured bass in four parts` — capstone
 
 ### Stage 3 — Line and counterpoint
 
-- [ ] `seed lesson melodic construction and tendency tones`
-- [ ] `seed lesson phrase structure period and sentence`
-- [ ] `seed lesson cadence types and their strength`
-- [ ] `seed lesson first species counterpoint`
-- [ ] `seed lesson second species counterpoint`
-- [ ] `seed lesson third species counterpoint`
-- [ ] `seed lesson fourth species and the suspension`
-- [ ] `seed lesson florid counterpoint` — capstone
+- [x] `seed lesson melodic construction and tendency tones`
+- [x] `seed lesson phrase structure period and sentence`
+- [x] `seed lesson cadence types and their strength`
+- [x] `seed lesson first species counterpoint`
+- [x] `seed lesson second species counterpoint`
+- [x] `seed lesson third species counterpoint`
+- [x] `seed lesson fourth species and the suspension`
+- [x] `seed lesson florid counterpoint` — capstone
 
 ### Stage 4 — Chromaticism
 
-- [ ] `seed lesson secondary dominants`
-- [ ] `seed lesson secondary leading tone chords`
-- [ ] `seed lesson tonicization versus modulation`
-- [ ] `seed lesson pivot chord modulation`
-- [ ] `seed lesson modal mixture`
-- [ ] `seed lesson the neapolitan sixth`
-- [ ] `seed lesson augmented sixth chords`
+- [x] `seed lesson secondary dominants`
+- [x] `seed lesson secondary leading tone chords`
+- [x] `seed lesson tonicization versus modulation`
+- [x] `seed lesson pivot chord modulation`
+- [x] `seed lesson modal mixture`
+- [x] `seed lesson the neapolitan sixth`
+- [x] `seed lesson augmented sixth chords`
 
 ### Stage 5 — Form and composition
 
-- [ ] `seed lesson binary and ternary form`
-- [ ] `seed lesson minuet and trio and rondo`
-- [ ] `seed lesson sonata form`
-- [ ] `seed lesson theme and variations`
-- [ ] `seed lesson motivic development techniques`
-- [ ] `seed lesson writing a complete short piece` — final capstone
+- [x] `seed lesson binary and ternary form`
+- [x] `seed lesson minuet and trio and rondo`
+- [x] `seed lesson sonata form`
+- [x] `seed lesson theme and variations`
+- [x] `seed lesson motivic development techniques`
+- [x] `seed lesson writing a complete short piece` — final capstone
 
 ### Exams
 
-- [ ] `seed stage 0 exam`
-- [ ] `seed stage 1 exam`
-- [ ] `seed stage 2 exam`
-- [ ] `seed stage 3 exam`
-- [ ] `seed stage 4 exam`
-- [ ] `seed stage 5 exam`
-- [ ] `seed comprehensive final exam`
+- [x] `seed stage 0 exam`
+- [x] `seed stage 1 exam`
+- [x] `seed stage 2 exam`
+- [x] `seed stage 3 exam`
+- [x] `seed stage 4 exam`
+- [x] `seed stage 5 exam`
+- [x] `seed comprehensive final exam`
 
 ## Phase K — polish, tests and docs
 
