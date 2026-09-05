@@ -177,5 +177,84 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="simple-and-compound-meter",
+            title="Simple and Compound Meter",
+            summary="How a beat divides in two or in three, and what a signature says about it.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="simple-compound-meter-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Simple and compound meter\n\n"
+                            "A meter describes two things: how many beats are in a measure, "
+                            "and how each beat divides into smaller notes.\n\n"
+                            "## Simple meter\n\n"
+                            "In **simple** meter, each beat divides naturally into **two** "
+                            "equal parts. 2/4, 3/4 and 4/4 are simple duple, simple triple "
+                            "and simple quadruple - the top number is literally the number "
+                            "of beats, and the bottom number names the note value that gets "
+                            "one beat (4 = quarter note).\n\n"
+                            "## Compound meter\n\n"
+                            "In **compound** meter, each beat instead divides into **three** "
+                            "equal parts, and that beat is written as a dotted note. 6/8, "
+                            "9/8 and 12/8 are compound duple, compound triple and compound "
+                            "quadruple - here the top number counts eighth notes, not beats, "
+                            "so the actual beat count is the top number divided by 3. 6/8 "
+                            "has 2 beats (two groups of three eighths), each a dotted "
+                            "quarter note long.\n\n"
+                            "## Telling them apart\n\n"
+                            "The fastest test: if the top number is 6, 9 or 12, the meter is "
+                            "compound and divides into three. Otherwise it's simple and "
+                            "divides into two."
+                        )
+                    },
+                    topics=["simple-and-compound-meter"],
+                ),
+                StepDef(
+                    slug="simple-compound-meter-quiz-beats",
+                    kind="quiz",
+                    payload={
+                        "question": "In 6/8 time, how many beats are in each measure?",
+                        "choices": ["6", "3", "2", "8"],
+                        "answer_index": 2,
+                        "explanation": (
+                            "6/8 groups its six eighth notes into two sets of three, so "
+                            "there are 2 beats per measure, each a dotted quarter note long."
+                        ),
+                    },
+                    topics=["simple-and-compound-meter"],
+                ),
+                StepDef(
+                    slug="simple-compound-meter-quiz-classify",
+                    kind="quiz",
+                    payload={
+                        "question": "Which of these time signatures is compound triple?",
+                        "choices": ["3/4", "9/8", "4/4", "2/4"],
+                        "answer_index": 1,
+                        "explanation": (
+                            "9/8 groups nine eighth notes into three sets of three - three "
+                            "beats, each dividing into three - which makes it compound "
+                            "triple."
+                        ),
+                    },
+                    topics=["simple-and-compound-meter"],
+                ),
+                StepDef(
+                    slug="simple-compound-meter-task",
+                    kind="composition",
+                    payload={
+                        "brief": "Write a four-measure melody in 6/8 time.",
+                        "requirements": [
+                            {"type": "time_signature", "value": "6/8"},
+                            {"type": "measure_count", "count": 4},
+                        ],
+                    },
+                    topics=["simple-and-compound-meter"],
+                ),
+            ],
+        ),
     ],
 )
