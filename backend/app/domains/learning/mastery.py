@@ -8,7 +8,11 @@ finding or creating the row and committing the transaction, in the same
 one that recorded the attempt itself.
 """
 
+import uuid
 from datetime import UTC, datetime
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.learning.models import MasteryStatus, TopicMastery
 
@@ -46,6 +50,35 @@ def _mastery_status(
     if attempt_count >= _SOLID_MIN_ATTEMPTS and accuracy >= _SOLID_MIN_ACCURACY:
         return MasteryStatus.SOLID
     return MasteryStatus.LEARNING
+
+
+async def get_or_create_topic_mastery(
+    db: AsyncSession, user_id: uuid.UUID, topic_id: uuid.UUID
+) -> TopicMastery:
+    """Fetches the student's mastery row for this topic, creating one on
+    first contact. `record_result` does the rest - this only ever hands
+    back a row for it to update, never a fully-formed status on its own.
+    """
+    mastery = await db.scalar(
+        select(TopicMastery).where(
+            TopicMastery.user_id == user_id, TopicMastery.topic_id == topic_id
+        )
+    )
+    if mastery is None:
+        # Fields set explicitly rather than left to the column defaults -
+        # those only apply at flush time, and `record_result` reads them
+        # back immediately on this same, not-yet-flushed instance.
+        mastery = TopicMastery(
+            user_id=user_id,
+            topic_id=topic_id,
+            attempt_count=0,
+            correct_count=0,
+            accuracy=0.0,
+            recent_results=[],
+            status=MasteryStatus.LEARNING,
+        )
+        db.add(mastery)
+    return mastery
 
 
 def record_result(mastery: TopicMastery, is_correct: bool) -> None:

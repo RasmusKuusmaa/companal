@@ -25,11 +25,13 @@ from app.domains.billing import service as billing_service
 from app.domains.billing.models import AiUsageKind
 from app.domains.feedback.models import SkillLevel
 from app.domains.feedback.schemas import CompositionFeedback
+from app.domains.learning.mastery import get_or_create_topic_mastery, record_result
 from app.domains.learning.models import (
     Course,
     Lesson,
     LessonStatus,
     LessonStep,
+    LessonStepTopic,
     StepAttempt,
     StepKind,
     UserProgress,
@@ -192,6 +194,25 @@ async def _ensure_progress(
     return progress
 
 
+async def _update_mastery_for_step(
+    db: AsyncSession, user_id: uuid.UUID, step_id: uuid.UUID, is_correct: bool
+) -> None:
+    """Folds one attempt's result into every topic the step is tagged with.
+
+    Called from the same transaction that records the `StepAttempt` -
+    see `models.TopicMastery`'s docstring for why this can't drift from
+    the attempt history it's derived from. A step with no tagged topics
+    (not yet authored, or a step type that doesn't carry one) simply
+    updates nothing.
+    """
+    topic_ids = await db.scalars(
+        select(LessonStepTopic.topic_id).where(LessonStepTopic.step_id == step_id)
+    )
+    for topic_id in topic_ids:
+        mastery = await get_or_create_topic_mastery(db, user_id, topic_id)
+        record_result(mastery, is_correct)
+
+
 async def get_roadmap(db: AsyncSession, user_id: uuid.UUID) -> RoadmapRead:
     """The whole path, with this student's status on every lesson.
 
@@ -349,6 +370,7 @@ async def answer_quiz(
         result={"correct_index": quiz.answer_index},
     )
     db.add(attempt)
+    await _update_mastery_for_step(db, user_id, step.id, is_correct)
 
     progress = await _ensure_progress(db, user_id, lesson.id)
     progress.current_step_id = step.id
@@ -506,6 +528,7 @@ async def submit_composition(
         result=result,
     )
     db.add(attempt)
+    await _update_mastery_for_step(db, user_id, step.id, grade.passed)
 
     progress = await _ensure_progress(db, user_id, lesson.id)
     progress.current_step_id = step.id
