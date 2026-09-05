@@ -191,19 +191,19 @@ The rules a conservatory would actually mark you on. All deterministic, all free
 
 What you've covered, what you're good at, what needs work — in one glance.
 
-- [ ] `add topic mastery service` — accuracy, recency and volume into a status
-- [ ] `add mastery status thresholds` — untouched / learning / solid / needs practice
-- [ ] `update mastery on step attempts` — same transaction as the attempt
-- [ ] `update mastery on composition rule results` — a parallel-fifths violation is evidence about voice leading
-- [ ] `add skill map endpoint` — every topic, mastery, coverage, last seen
-- [ ] `add skill map api client`
-- [ ] `add skill map view with a topic heatmap` — grouped by stage
-- [ ] `add strengths and needs practice lists` — the explicit answer to "what should I work on"
-- [ ] `add topic detail panel` — the lessons that teach it, your attempt history, drill links
-- [ ] `add coverage summary to the dashboard` — topics touched, mastery split
-- [ ] `add skill map link to the roadmap header`
-- [ ] `add mastery service tests`
-- [ ] `add skill map view tests`
+- [x] `add topic mastery service` — accuracy, recency and volume into a status
+- [x] `add mastery status thresholds` — untouched / learning / solid / needs practice
+- [x] `update mastery on step attempts` — same transaction as the attempt
+- [x] `update mastery on composition rule results` — a parallel-fifths violation is evidence about voice leading
+- [x] `add skill map endpoint` — every topic, mastery, coverage, last seen
+- [x] `add skill map api client`
+- [x] `add skill map view with a topic heatmap` — grouped by stage
+- [x] `add strengths and needs practice lists` — the explicit answer to "what should I work on"
+- [x] `add topic detail panel` — the lessons that teach it, your attempt history, drill links
+- [x] `add coverage summary to the dashboard` — topics touched, mastery split
+- [x] `add skill map link to the roadmap header`
+- [x] `add mastery service tests`
+- [x] `add skill map view tests`
 
 ## Phase I — exams
 
