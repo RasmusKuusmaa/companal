@@ -364,5 +364,72 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="harmonic-function-and-chord-families",
+            title="Harmonic Function and Chord Families",
+            summary="Tonic, predominant and dominant function, and which chords belong to each.",
+            estimated_minutes=10,
+            steps=[
+                StepDef(
+                    slug="harmonic-function-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Harmonic function and chord families\n\n"
+                            "Every diatonic triad plays one of three roles in a "
+                            "progression, regardless of exactly which key it's in:\n\n"
+                            "- **Tonic function** - home, stable, at rest: **I**, and "
+                            "the chords that share two of its three notes and can stand "
+                            "in for it, **vi** and **iii**.\n"
+                            "- **Predominant function** - moving away from home, "
+                            "building toward the dominant: **IV** and **ii**.\n"
+                            "- **Dominant function** - maximum tension, pulling back "
+                            "toward tonic: **V** and **vii°**, which share the "
+                            "leading tone that does most of that pulling.\n\n"
+                            "A typical phrase moves through these functions in order - "
+                            "tonic, then predominant, then dominant, then back to tonic - "
+                            "and that order, not any specific chord, is what actually "
+                            "makes a progression feel like it's going somewhere and then "
+                            "arriving."
+                        )
+                    },
+                    topics=["harmonic-function"],
+                ),
+                StepDef(
+                    slug="harmonic-function-quiz-dominant-family",
+                    kind="quiz",
+                    payload={
+                        "question": "Which pair of chords belongs to the dominant function family?",
+                        "choices": ["V and vii°", "IV and ii", "I and vi", "iii and vi"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "V and vii° share the leading tone, which is what gives both "
+                            "of them their strong pull back toward the tonic."
+                        ),
+                    },
+                    topics=["harmonic-function"],
+                ),
+                StepDef(
+                    slug="harmonic-function-quiz-order",
+                    kind="quiz",
+                    payload={
+                        "question": "What is the typical order of harmonic function in a phrase?",
+                        "choices": [
+                            "Tonic, predominant, dominant, tonic",
+                            "Dominant, tonic, predominant, tonic",
+                            "Predominant, dominant, tonic, predominant",
+                            "Tonic, dominant, predominant, tonic",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A phrase typically leaves tonic, passes through "
+                            "predominant, builds tension on the dominant, and resolves "
+                            "back to tonic."
+                        ),
+                    },
+                    topics=["harmonic-function"],
+                ),
+            ],
+        ),
     ],
 )
