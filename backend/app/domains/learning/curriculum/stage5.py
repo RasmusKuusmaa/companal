@@ -96,5 +96,87 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="minuet-and-trio-and-rondo",
+            title="Minuet and Trio, and Rondo",
+            summary="A large-scale ternary dance movement, and a form built on returns.",
+            estimated_minutes=15,
+            steps=[
+                StepDef(
+                    slug="minuet-trio-rondo-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Minuet and trio, and rondo\n\n"
+                            "**Minuet and trio** is ternary form at a larger scale: "
+                            "a Minuet (itself often in rounded binary form), a "
+                            "contrasting **Trio** (also usually in rounded binary, "
+                            "typically in a related key and a lighter texture), and "
+                            "then the Minuet again - written as **Minuet - Trio - "
+                            "Minuet da capo** rather than notated out twice. The whole "
+                            "movement is therefore a ternary form built out of two "
+                            "smaller binary forms.\n\n"
+                            "**Rondo form** takes the idea of contrast-and-return "
+                            "further, alternating a recurring main theme, the "
+                            "**refrain (A)**, with contrasting **episodes (B, C, "
+                            "...)**: common patterns are **A B A C A** (five-part "
+                            "rondo) or the simpler **A B A** (which is really just "
+                            "ternary form under a different name at small scale). "
+                            "The refrain always returns in the tonic key, giving a "
+                            "rondo's episodes room to wander harmonically without "
+                            "ever losing the sense of a home base to come back to.\n\n"
+                            "Both forms share the same underlying principle as "
+                            "binary and ternary form - contrast followed by return "
+                            "- just deployed across a longer, sectional span."
+                        )
+                    },
+                    topics=["minuet-trio-rondo"],
+                ),
+                StepDef(
+                    slug="minuet-trio-rondo-quiz-structure",
+                    kind="quiz",
+                    payload={
+                        "question": "A minuet and trio movement is structured as:",
+                        "choices": [
+                            "Minuet, Trio, then the Minuet again (da capo)",
+                            "Minuet, Trio, and a third unrelated section",
+                            "Trio only, repeated three times",
+                            "Minuet and Trio played simultaneously",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The Minuet returns after the Trio, conventionally "
+                            "indicated 'da capo' rather than written out a second "
+                            "time - a large-scale ternary form built from two "
+                            "smaller binary forms."
+                        ),
+                    },
+                    topics=["minuet-trio-rondo"],
+                ),
+                StepDef(
+                    slug="minuet-trio-rondo-quiz-refrain",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In rondo form, what is true of the refrain (A) each "
+                            "time it returns?"
+                        ),
+                        "choices": [
+                            "It returns in the tonic key",
+                            "It returns in a new key each time",
+                            "It is always shortened on repetition",
+                            "It never repeats more than once",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The refrain's return in the tonic is what anchors a "
+                            "rondo, letting its episodes explore other keys and "
+                            "material without losing the sense of home."
+                        ),
+                    },
+                    topics=["minuet-trio-rondo"],
+                ),
+            ],
+        ),
     ],
 )
