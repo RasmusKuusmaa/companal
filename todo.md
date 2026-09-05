@@ -169,23 +169,23 @@ Everything four-part writing and counterpoint need.
 
 The rules a conservatory would actually mark you on. All deterministic, all free tier.
 
-- [ ] `add voicing module for four part checks` — builds on the harmony engine's existing voice grid
-- [ ] `add satb voice range checks` — per-voice tessitura with bar numbers
-- [ ] `add satb spacing checks` — more than an octave between adjacent upper voices
-- [ ] `add satb doubling checks` — doubled leading tone, doubled sevenths, missing thirds
-- [ ] `add voice overlap detection` — distinct from the existing crossing detection
-- [ ] `add voicing report schema` — one shape the UI and the AI prompt both read
-- [ ] `add voicing report to the harmony analysis output`
-- [ ] `add species counterpoint module` — cantus firmus alignment, interval classification
-- [ ] `add first species rules` — consonance only, no parallel perfects, contrary motion preference, cadence formula
-- [ ] `add second and third species rules` — passing dissonance on weak beats, leap treatment
-- [ ] `add fourth species rules` — suspension preparation, dissonance, resolution; no unprepared entries
-- [ ] `add counterpoint validator report` — per-bar findings tied to the species
-- [ ] `add figured bass realization checker` — does the realization match the figures
-- [ ] `add non chord tone classification` — passing, neighbour, suspension, anticipation, appoggiatura, escape
-- [ ] `add voicing checks tests`
-- [ ] `add species counterpoint tests` — a clean exercise and a deliberately faulty one per species
-- [ ] `add figured bass checker tests`
+- [x] `add voicing module for four part checks` — builds on the harmony engine's existing voice grid
+- [x] `add satb voice range checks` — per-voice tessitura with bar numbers
+- [x] `add satb spacing checks` — more than an octave between adjacent upper voices
+- [x] `add satb doubling checks` — doubled leading tone, doubled sevenths, missing thirds
+- [x] `add voice overlap detection` — distinct from the existing crossing detection
+- [x] `add voicing report schema` — one shape the UI and the AI prompt both read
+- [x] `add voicing report to the harmony analysis output`
+- [x] `add species counterpoint module` — cantus firmus alignment, interval classification
+- [x] `add first species rules` — consonance only, no parallel perfects, contrary motion preference, cadence formula
+- [x] `add second and third species rules` — passing dissonance on weak beats, leap treatment
+- [x] `add fourth species rules` — suspension preparation, dissonance, resolution; no unprepared entries
+- [x] `add counterpoint validator report` — per-bar findings tied to the species
+- [x] `add figured bass realization checker` — does the realization match the figures
+- [x] `add non chord tone classification` — passing, neighbour, suspension, anticipation, appoggiatura, escape
+- [x] `add voicing checks tests`
+- [x] `add species counterpoint tests` — a clean exercise and a deliberately faulty one per species
+- [x] `add figured bass checker tests`
 
 ## Phase H — skill map and mastery
 
