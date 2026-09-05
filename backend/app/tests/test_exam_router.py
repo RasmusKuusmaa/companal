@@ -4,6 +4,8 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.billing import service as billing_service
+from app.domains.billing.models import Tier
 from app.domains.exams.definitions import ExamDef, ExamQuestionDef
 from app.domains.exams.seeding import seed_exams
 from app.domains.exams.service import start_attempt
@@ -322,3 +324,65 @@ class TestSubmitEndpoint:
 
         assert response.status_code == 402
         assert response.json()["detail"]["feature"] == "ai_exam_rubric_grading"
+
+    async def test_premium_may_request_ai_feedback(
+        self, client: AsyncClient, db_session: AsyncSession, seeded: None
+    ) -> None:
+        headers = await _auth_headers(client, "premium@example.com")
+        user_id = await _user_id(client, headers)
+        subscription = await billing_service.get_or_create_subscription(db_session, user_id)
+        subscription.tier = Tier.PREMIUM
+        await db_session.commit()
+
+        start = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        attempt_id = start.json()["attempt_id"]
+        composition_question_id = start.json()["exam"]["questions"][1]["id"]
+        await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{composition_question_id}/answer",
+            json={"answer": {"kind": "composition", "document": _document()}},
+            headers=headers,
+        )
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/submit",
+            json={"with_ai_feedback": True},
+            headers=headers,
+        )
+
+        assert response.status_code == 200
+        # No API key is configured in this environment, so the commentary
+        # itself comes back null - see `_composition_ai_feedback` - but the
+        # request must not be rejected for a premium user the way it is
+        # for free tier.
+        composition_result = next(
+            r for r in response.json()["question_results"] if r["kind"] == "composition"
+        )
+        assert composition_result["detail"]["ai_feedback"] is None
+
+
+class TestRetakeIsolation:
+    async def test_a_second_attempt_is_independent_of_the_first(
+        self, client: AsyncClient, seeded: None
+    ) -> None:
+        headers = await _auth_headers(client)
+        first = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        first_id = first.json()["attempt_id"]
+        question_id = first.json()["exam"]["questions"][0]["id"]
+        await client.post(
+            f"/api/v1/exams/attempts/{first_id}/questions/{question_id}/answer",
+            json={"answer": {"kind": "quiz", "choice_index": 1}},
+            headers=headers,
+        )
+        await client.post(f"/api/v1/exams/attempts/{first_id}/submit", json={}, headers=headers)
+
+        second = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        assert second.json()["attempt_number"] == 2
+
+        # The second attempt starts unanswered, whatever the first did.
+        result = await client.post(
+            f"/api/v1/exams/attempts/{second.json()['attempt_id']}/submit",
+            json={},
+            headers=headers,
+        )
+        assert result.status_code == 200
+        assert result.json()["score"] == 0.0
