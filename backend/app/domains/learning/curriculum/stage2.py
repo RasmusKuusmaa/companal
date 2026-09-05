@@ -1007,5 +1007,104 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="realizing-a-figured-bass-in-four-parts",
+            title="Realizing a Figured Bass in Four Parts",
+            summary="Figured bass realization under the full weight of SATB voice-leading rules.",
+            estimated_minutes=20,
+            steps=[
+                StepDef(
+                    slug="figured-bass-four-parts-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Realizing a figured bass in four parts\n\n"
+                            "Realizing a figured bass in full SATB texture asks for "
+                            "everything from this stage at once: the figures fix which "
+                            "pitch classes belong above each bass note, but you still "
+                            "have to choose octaves that keep every voice in range, "
+                            "spacing that keeps soprano-alto and alto-tenor within an "
+                            "octave, sensible doubling, and smooth voice leading between "
+                            "each chord and the next - all while avoiding parallel "
+                            "fifths and octaves.\n\n"
+                            "Work bass note by bass note. For each one: read the figure, "
+                            "identify the chord tones it implies, then place them in the "
+                            "upper three voices however keeps the connection to the "
+                            "*previous* chord smoothest - common tones held, everything "
+                            "else moving by the shortest available step."
+                        )
+                    },
+                    topics=["figured-bass-four-parts"],
+                ),
+                StepDef(
+                    slug="figured-bass-four-parts-quiz",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Realizing a figured bass in four parts, what does the "
+                            "figure itself decide?"
+                        ),
+                        "choices": [
+                            "The pitch classes above the bass - octave and voice "
+                            "leading are still yours to choose",
+                            "The exact octave every upper voice must use",
+                            "Which voice gets which note, in a fixed order",
+                            "Nothing beyond the bass note itself",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A figure only names the intervals above the bass - which "
+                            "octave to place them in, and how to connect them to the "
+                            "previous chord, is exactly the voice-leading judgment this "
+                            "stage has been building toward."
+                        ),
+                    },
+                    topics=["figured-bass-four-parts"],
+                ),
+                StepDef(
+                    slug="figured-bass-four-parts-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The bass line below is given and locked: I - IV6 - V - I. "
+                            "Add soprano, alto and tenor voices that realize each "
+                            "figure and connect smoothly from chord to chord."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "figured_bass",
+                                "bass_staff_index": 0,
+                                "figures": ["", "6", "", ""],
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                _whole_note_staff(
+                                    "bass",
+                                    "bass",
+                                    "bass-voice",
+                                    [("C", 3), ("A", 2), ("G", 2), ("C", 3)],
+                                ),
+                                _whole_note_staff(
+                                    "soprano", "treble", "soprano-voice", [None, None, None, None]
+                                ),
+                                _whole_note_staff(
+                                    "alto", "treble", "alto-voice", [None, None, None, None]
+                                ),
+                                _whole_note_staff(
+                                    "tenor", "treble", "tenor-voice", [None, None, None, None]
+                                ),
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["figured-bass-four-parts", "parallel-fifths-and-octaves"],
+                ),
+            ],
+        ),
     ],
 )
