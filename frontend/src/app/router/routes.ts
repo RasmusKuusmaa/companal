@@ -47,6 +47,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/exams/:examSlug/history",
+    name: "exam-history",
+    component: () => import("@/features/exams/views/ExamAttemptHistoryView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/projects/new",
     name: "project-create",
     component: () => import("@/features/projects/views/ProjectCreateView.vue"),
