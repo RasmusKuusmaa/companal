@@ -603,4 +603,186 @@ EXAMS: list[ExamDef] = [
             ),
         ],
     ),
+    ExamDef(
+        slug="line-and-counterpoint-exam",
+        title="Line and Counterpoint Exam",
+        description=(
+            "Melodic construction, phrase structure, cadence types, and "
+            "first species counterpoint."
+        ),
+        course_slug="line-and-counterpoint",
+        questions=[
+            ExamQuestionDef(
+                slug="counterpoint-exam-tendency-tones",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A tendency tone, such as the leading tone, is best "
+                        "described as a note that:"
+                    ),
+                    "choices": [
+                        "Wants to resolve in a particular direction, most often "
+                        "by step",
+                        "Can be approached or left in any direction with equal "
+                        "ease",
+                        "Must always be doubled",
+                        "Only occurs in minor keys",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A tendency tone - the leading tone chief among them - "
+                        "has a strong pull toward a specific resolution, "
+                        "usually a stepwise one."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="counterpoint-exam-phrase-structure",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "A period is best described as a pair of phrases where:"
+                    ),
+                    "choices": [
+                        "The antecedent poses a question (often a half "
+                        "cadence) and the consequent answers it with a more "
+                        "conclusive cadence",
+                        "Both phrases are harmonically and melodically "
+                        "identical",
+                        "The two phrases are unrelated in melodic material",
+                        "Only the first phrase contains a cadence",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "A period pairs an open antecedent with a more "
+                        "conclusive consequent, forming a small "
+                        "question-and-answer structure."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="counterpoint-exam-cadence-strength",
+                kind="quiz",
+                payload={
+                    "question": "Which cadence is the most conclusive close?",
+                    "choices": [
+                        "Perfect authentic cadence",
+                        "Half cadence",
+                        "Deceptive cadence",
+                        "Plagal cadence",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "Root-position V to root-position I, with the soprano "
+                        "landing on the tonic, is the strongest, most final "
+                        "cadence in the common-practice vocabulary."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="counterpoint-exam-first-species-rule",
+                kind="quiz",
+                payload={
+                    "question": (
+                        "In first species counterpoint, what governs every "
+                        "interval against the cantus firmus?"
+                    ),
+                    "choices": [
+                        "It must be consonant",
+                        "It must alternate consonant and dissonant",
+                        "It must always be a perfect interval",
+                        "It has no restriction at all",
+                    ],
+                    "answer_index": 0,
+                    "explanation": (
+                        "With one note against one note, first species has no "
+                        "room to prepare or resolve a dissonance - every "
+                        "interval must simply be consonant."
+                    ),
+                },
+            ),
+            ExamQuestionDef(
+                slug="counterpoint-exam-species-task",
+                kind="composition",
+                payload={
+                    "brief": (
+                        "The cantus firmus below is given and locked. Write a "
+                        "first species (note-against-note) counterpoint above it."
+                    ),
+                    "requirements": [
+                        {
+                            "type": "species_counterpoint",
+                            "species": 1,
+                            "cantus_firmus_staff_index": 0,
+                        }
+                    ],
+                    "starter_notation": {
+                        "fifths": 0,
+                        "mode": "major",
+                        "time": {"beats": 4, "beat_type": 4},
+                        "tempo": 90,
+                        "staves": [
+                            {
+                                "id": "cantus-firmus",
+                                "clef": "bass",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "cf-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"cf{i}",
+                                                        "step": step,
+                                                        "octave": 3,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": False,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i, step in enumerate(
+                                        ["C", "D", "E", "F", "E", "D", "C"]
+                                    )
+                                ],
+                            },
+                            {
+                                "id": "counterpoint",
+                                "clef": "treble",
+                                "measures": [
+                                    {
+                                        "id": f"m{i}",
+                                        "voices": [
+                                            {
+                                                "id": "cp-voice",
+                                                "notes": [
+                                                    {
+                                                        "id": f"cp-voice-{i}",
+                                                        "step": "C",
+                                                        "octave": 4,
+                                                        "alter": 0,
+                                                        "duration": "whole",
+                                                        "dots": 0,
+                                                        "is_rest": True,
+                                                        "tied_to_next": False,
+                                                    }
+                                                ],
+                                            }
+                                        ],
+                                    }
+                                    for i in range(7)
+                                ],
+                            },
+                        ],
+                    },
+                    "locked_staff_indices": [0],
+                },
+            ),
+        ],
+    ),
 ]
