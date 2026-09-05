@@ -144,5 +144,81 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="seventh-chords-and-their-figures",
+            title="Seventh Chords and Their Figures",
+            summary="The five seventh-chord qualities and their inversion figures.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="seventh-chords-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Seventh chords and their figures\n\n"
+                            "Stack one more third on top of a triad and it becomes a "
+                            "**seventh chord**: root, third, fifth and seventh. The "
+                            "triad's own quality plus the size of that top seventh gives "
+                            "five common types:\n\n"
+                            "- **Major seventh**: major triad + major seventh "
+                            "(C-E-G-B).\n"
+                            "- **Dominant seventh**: major triad + minor seventh "
+                            "(C-E-G-Bb) - the chord built on the fifth degree of a key.\n"
+                            "- **Minor seventh**: minor triad + minor seventh "
+                            "(C-Eb-G-Bb).\n"
+                            "- **Half-diminished seventh**: diminished triad + minor "
+                            "seventh (C-Eb-Gb-Bb).\n"
+                            "- **Fully diminished seventh**: diminished triad + "
+                            "diminished seventh (C-Eb-Gb-Bbb) - every interval a minor "
+                            "third.\n\n"
+                            "## Figures\n\n"
+                            "A seventh chord has four inversions instead of a triad's "
+                            "three, since there's one more note to put in the bass:\n\n"
+                            "- Root position: **7**\n"
+                            "- First inversion (third in bass): **6/5**\n"
+                            "- Second inversion (fifth in bass): **4/3**\n"
+                            "- Third inversion (seventh in bass): **4/2**, often just "
+                            "**2**"
+                        )
+                    },
+                    topics=["seventh-chords"],
+                ),
+                StepDef(
+                    slug="seventh-chords-quiz-dominant",
+                    kind="quiz",
+                    payload={
+                        "question": "A dominant seventh chord is built from which combination?",
+                        "choices": [
+                            "Major triad + minor seventh",
+                            "Major triad + major seventh",
+                            "Minor triad + minor seventh",
+                            "Diminished triad + diminished seventh",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The dominant seventh is a major triad topped with a minor "
+                            "seventh - C-E-G-Bb, not C-E-G-B."
+                        ),
+                    },
+                    topics=["seventh-chords"],
+                ),
+                StepDef(
+                    slug="seventh-chords-quiz-third-inversion",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "What figure represents a seventh chord in third inversion?"
+                        ),
+                        "choices": ["6/5", "4/3", "4/2", "7"],
+                        "answer_index": 2,
+                        "explanation": (
+                            "Third inversion puts the seventh itself in the bass, giving "
+                            "the figure 4/2."
+                        ),
+                    },
+                    topics=["seventh-chords"],
+                ),
+            ],
+        ),
     ],
 )
