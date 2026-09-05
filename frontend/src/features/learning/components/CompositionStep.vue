@@ -16,8 +16,9 @@
 import { computed, ref, watch } from "vue";
 
 import type { SkillLevel } from "@/features/feedback/types";
-import { createDocument } from "@/features/notation/document";
+import { notationApi } from "@/features/notation/api";
 import NotationEditor from "@/features/notation/components/NotationEditor.vue";
+import { createDocument } from "@/features/notation/document";
 import type { NotationDocument } from "@/features/notation/types";
 import { BaseButton } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
@@ -36,6 +37,8 @@ const isSubmitting = ref(false);
 const submitError = ref("");
 
 const document = ref<NotationDocument>(props.step.starterNotation ?? createDocument());
+const isImporting = ref(false);
+const importError = ref("");
 
 // A different task means a different score - without this, moving between
 // two composition steps would carry the previous one's notation across.
@@ -44,8 +47,33 @@ watch(
   () => {
     document.value = props.step.starterNotation ?? createDocument();
     submitError.value = "";
+    importError.value = "";
   },
 );
+
+/**
+ * Opens an uploaded score in the editor in place of whatever's there -
+ * exactly like loading a starter document, so submitting it afterwards
+ * goes through the same grading pipeline as anything typed or clicked in.
+ * The student can keep editing it before submitting; nothing here submits
+ * on its own.
+ */
+async function handleFileUpload(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = ""; // lets the same file be picked again after an error
+  if (!file) return;
+
+  isImporting.value = true;
+  importError.value = "";
+  try {
+    document.value = await notationApi.importMusicXml(file);
+  } catch (error) {
+    importError.value = toApiProblem(error).detail ?? "Could not open that file.";
+  } finally {
+    isImporting.value = false;
+  }
+}
 
 const result = computed(() => store.compositionResults[props.step.slug] ?? null);
 
@@ -127,7 +155,22 @@ async function submit(): Promise<void> {
       </ul>
     </div>
 
-    <div class="mt-6">
+    <div class="mt-6 flex items-center gap-2">
+      <label class="text-sm text-slate-600">
+        Or open a MusicXML file instead:
+        <input
+          type="file"
+          accept=".xml,.musicxml,.mxl"
+          class="ml-2 text-sm text-slate-600"
+          :disabled="isImporting"
+          @change="handleFileUpload"
+        />
+      </label>
+      <span v-if="isImporting" class="text-sm text-slate-500">Opening…</span>
+    </div>
+    <p v-if="importError" class="mt-2 text-sm text-red-600" role="alert">{{ importError }}</p>
+
+    <div class="mt-4">
       <NotationEditor v-model="document" :locked-staff-indices="step.lockedStaffIndices" />
     </div>
 

@@ -9,6 +9,8 @@
  * import) needs exactly this mapping and none of it is feature-specific.
  */
 
+import { httpClient } from "@/services/http";
+
 import type {
   ClefName,
   DurationName,
@@ -135,3 +137,19 @@ export function notationDocumentToDto(document: NotationDocument): NotationDocum
     staves: document.staves.map(mapStaffToDto),
   };
 }
+
+export const notationApi = {
+  /**
+   * Opens an uploaded score as a notation document the editor can load,
+   * same as pasting it into `NotationEditor`'s `v-model`. Validated on the
+   * backend by the same check a composition version upload goes through
+   * (`validate_musicxml_upload`) - a 400 here means the file itself is the
+   * problem, not this request.
+   */
+  async importMusicXml(file: File): Promise<NotationDocument> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await httpClient.post<NotationDocumentDto>("/notation/import", formData);
+    return notationDocumentFromDto(data);
+  },
+};
