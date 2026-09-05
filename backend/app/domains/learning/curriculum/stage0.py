@@ -592,5 +592,74 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="the-church-modes",
+            title="The Church Modes",
+            summary="The seven modes as reorderings of the same diatonic collection.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="church-modes-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# The church modes\n\n"
+                            "Play only the white keys, but start and end on a different "
+                            "note each time, and the same seven pitches produce seven "
+                            "different scales - the **modes**. Starting from C gives "
+                            "**Ionian**, which is just the major scale by another name. "
+                            "Starting from A gives **Aeolian**, the natural minor scale. "
+                            "The other five sit in between:\n\n"
+                            "- **Dorian** (from D): minor-like, but with a raised 6th "
+                            "compared to natural minor.\n"
+                            "- **Phrygian** (from E): minor-like, with a lowered 2nd - a "
+                            "dark, half-step drop right above the tonic.\n"
+                            "- **Lydian** (from F): major-like, with a raised 4th.\n"
+                            "- **Mixolydian** (from G): major-like, with a lowered 7th.\n"
+                            "- **Locrian** (from B): minor-like, with both a lowered 2nd "
+                            "and a lowered 5th - rarely used because that unstable 5th "
+                            "undermines the tonic itself.\n\n"
+                            "Each mode's character comes from exactly one or two notes "
+                            "that differ from the major or minor scale it most resembles - "
+                            "learning modes is mostly learning which note moved."
+                        )
+                    },
+                    topics=["church-modes"],
+                ),
+                StepDef(
+                    slug="church-modes-quiz-d-to-d",
+                    kind="quiz",
+                    payload={
+                        "question": "Playing only the white keys from D to D produces which mode?",
+                        "choices": ["Dorian", "Phrygian", "Lydian", "Mixolydian"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The white-key scale starting and ending on D is Dorian - "
+                            "minor-like, but with a raised 6th degree (a natural B)."
+                        ),
+                    },
+                    topics=["church-modes"],
+                ),
+                StepDef(
+                    slug="church-modes-quiz-mixolydian",
+                    kind="quiz",
+                    payload={
+                        "question": "Mixolydian differs from the major scale by which one degree?",
+                        "choices": [
+                            "A lowered 7th",
+                            "A raised 4th",
+                            "A lowered 2nd",
+                            "A lowered 6th",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Mixolydian is a major scale with a lowered 7th degree - the "
+                            "white-key scale from G to G, compared to G major's F#."
+                        ),
+                    },
+                    topics=["church-modes"],
+                ),
+            ],
+        ),
     ],
 )
