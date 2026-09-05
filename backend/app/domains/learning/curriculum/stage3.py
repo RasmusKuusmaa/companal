@@ -766,5 +766,147 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="fourth-species-and-the-suspension",
+            title="Fourth Species and the Suspension",
+            summary="Syncopated counterpoint built from prepared and resolved dissonance.",
+            estimated_minutes=18,
+            steps=[
+                StepDef(
+                    slug="fourth-species-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Fourth species and the suspension\n\n"
+                            "Fourth species ties each counterpoint note across the "
+                            "barline, offsetting it from the cantus firmus's own "
+                            "rhythm. That offset is what creates the **suspension**: a "
+                            "note that was perfectly consonant a moment ago becomes "
+                            "dissonant the instant the cantus firmus changes underneath "
+                            "it, simply because it's still holding over from before.\n\n"
+                            "A suspension has three parts, always in this order:\n\n"
+                            "1. **Preparation** - the note sounds, consonant, before the "
+                            "tie.\n"
+                            "2. **Suspension** - the same note, tied across the "
+                            "barline, now dissonant against the new cantus firmus note.\n"
+                            "3. **Resolution** - the note steps **down** to a "
+                            "consonance, which is usually then tied into the next "
+                            "suspension, continuing the chain.\n\n"
+                            "That downward step is non-negotiable - it's what makes a "
+                            "suspension a suspension rather than some other dissonance. "
+                            "When the tied-over note happens to already be consonant "
+                            "against the new bass, there's simply no suspension to "
+                            "resolve that measure, and the line continues without one."
+                        )
+                    },
+                    topics=["fourth-species-and-suspension"],
+                ),
+                StepDef(
+                    slug="fourth-species-quiz-resolution",
+                    kind="quiz",
+                    payload={
+                        "question": "In fourth species, a suspended dissonance must resolve by:",
+                        "choices": [
+                            "Stepping down to a consonance",
+                            "Leaping down to a consonance",
+                            "Stepping up to a consonance",
+                            "Staying on the same pitch",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A suspension always resolves downward by step - that's "
+                            "the one fixed part of the pattern."
+                        ),
+                    },
+                    topics=["fourth-species-and-suspension"],
+                ),
+                StepDef(
+                    slug="fourth-species-quiz-syncopation",
+                    kind="quiz",
+                    payload={
+                        "question": "What creates the syncopation in fourth species?",
+                        "choices": [
+                            "Notes tied across the barline",
+                            "Notes played twice as fast as the cantus firmus",
+                            "A rest on every downbeat",
+                            "Notes borrowed from a different key",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Tying notes across the barline offsets the counterpoint's "
+                            "rhythm from the cantus firmus's, which is exactly what "
+                            "sets up each suspension."
+                        ),
+                    },
+                    topics=["fourth-species-and-suspension"],
+                ),
+                StepDef(
+                    slug="fourth-species-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The cantus firmus below is given and locked. Write a "
+                            "fourth species (syncopated) counterpoint above it: an "
+                            "opening rest, then tied notes creating a prepared, "
+                            "suspended, and resolved dissonance in each measure."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "species_counterpoint",
+                                "species": 4,
+                                "cantus_firmus_staff_index": 0,
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "cantus-firmus",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "cf-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"cf{i}",
+                                                            "step": step,
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, step in enumerate(["C", "D", "C"])
+                                    ],
+                                },
+                                {
+                                    "id": "counterpoint",
+                                    "clef": "treble",
+                                    "measures": (
+                                        _blank_measures(2, "cp-voice", "half", 2)
+                                        + _blank_measures(
+                                            1, "cp-voice", "whole", 1, id_offset=2
+                                        )
+                                    ),
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["fourth-species-and-suspension"],
+                ),
+            ],
+        ),
     ],
 )
