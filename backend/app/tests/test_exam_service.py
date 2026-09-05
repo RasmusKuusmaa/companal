@@ -719,3 +719,113 @@ class TestGradeAttemptWithAiFeedback:
 
         assert result.score == 0.0
         assert result.question_results[0].detail["passed"] is False
+
+
+class TestRetakeIsolation:
+    """A retake is a wholly new attempt - see `start_attempt`'s own
+    docstring. These pin down what that promises in practice: a new
+    attempt never inherits another attempt's held answers, scores, or
+    grading verdict, even for the same student on the same exam.
+    """
+
+    async def test_a_new_attempt_starts_with_no_held_answers(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(
+                    slug="final-exam", title="Final", description="d", questions=[_quiz("q1")]
+                )
+            ],
+        )
+        user = await _make_user(db_session)
+
+        first = await start_attempt(db_session, user.id, "final-exam")
+        await answer_question(
+            db_session,
+            user.id,
+            first.attempt_id,
+            first.exam.questions[0].id,
+            ExamQuizAnswerPayload(choice_index=1),
+        )
+
+        second = await start_attempt(db_session, user.id, "final-exam")
+
+        answers = (
+            await db_session.scalars(
+                select(ExamAnswer).where(ExamAnswer.attempt_id == second.attempt_id)
+            )
+        ).all()
+        assert answers == []
+
+    async def test_grading_one_attempt_does_not_touch_another(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(
+                    slug="final-exam", title="Final", description="d", questions=[_quiz("q1")]
+                )
+            ],
+        )
+        user = await _make_user(db_session)
+
+        first = await start_attempt(db_session, user.id, "final-exam")
+        second = await start_attempt(db_session, user.id, "final-exam")
+        question_id = first.exam.questions[0].id
+
+        await answer_question(
+            db_session,
+            user.id,
+            first.attempt_id,
+            question_id,
+            ExamQuizAnswerPayload(choice_index=1),
+        )
+        await grade_attempt(db_session, user.id, first.attempt_id)
+
+        second_attempt = await db_session.get(ExamAttempt, second.attempt_id)
+        assert second_attempt is not None
+        assert second_attempt.submitted_at is None
+        assert second_attempt.score is None
+
+        # The second attempt can still be answered and graded independently.
+        await answer_question(
+            db_session,
+            user.id,
+            second.attempt_id,
+            question_id,
+            ExamQuizAnswerPayload(choice_index=0),
+        )
+        second_result = await grade_attempt(db_session, user.id, second.attempt_id)
+        assert second_result.score == 0.0
+
+    async def test_attempts_at_different_exams_never_cross_wires(
+        self, db_session: AsyncSession
+    ) -> None:
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(slug="exam-a", title="A", description="d", questions=[_quiz("a-q1")]),
+                ExamDef(slug="exam-b", title="B", description="d", questions=[_quiz("b-q1")]),
+            ],
+        )
+        user = await _make_user(db_session)
+
+        attempt_a = await start_attempt(db_session, user.id, "exam-a")
+        attempt_b = await start_attempt(db_session, user.id, "exam-b")
+
+        # Both attempts are numbered independently - each exam has its own
+        # attempt sequence for this student.
+        assert attempt_a.attempt_number == 1
+        assert attempt_b.attempt_number == 1
+
+        with pytest.raises(ExamQuestionNotFoundError):
+            await answer_question(
+                db_session,
+                user.id,
+                attempt_a.attempt_id,
+                attempt_b.exam.questions[0].id,
+                ExamQuizAnswerPayload(choice_index=0),
+            )
