@@ -31,6 +31,7 @@ import {
   moveCursor,
   nearestOctaveForStep,
   noteAt,
+  notesById,
   notesInRange,
   removeLastMeasure,
   setTempo as setDocumentTempo,
@@ -40,6 +41,7 @@ import type {
   DurationName,
   NotationCursor,
   NotationDocument,
+  NotationNote,
   NotationVoice,
   NotePosition,
   PitchStep,
@@ -193,6 +195,17 @@ export function useNotationEditor(
 
   const hasSelection = computed(() => selectedNoteIds.value.size > 0);
 
+  /**
+   * What the last copy put on the clipboard - full notes, not ids, since
+   * pasting has to work even after the originals have since been edited or
+   * deleted. Scoped to this editor instance, the same as everything else
+   * here: copying between two different exercises isn't something this
+   * needs to support.
+   */
+  const copiedNotes = ref<NotationNote[]>([]);
+  const canCopy = computed(() => hasSelection.value);
+  const canPaste = computed(() => copiedNotes.value.length > 0);
+
   function setDocument(next: NotationDocument): void {
     document.value = toRaw(next);
   }
@@ -290,6 +303,67 @@ export function useNotationEditor(
       noteIndex: start.noteIndex,
     };
     clearSelection();
+  }
+
+  /** Copies every selected note onto this editor's clipboard, in order. */
+  function copySelection(): void {
+    const anchor = selectionAnchor.value;
+    const focus = focusPosition.value;
+    if (!anchor || !focus) return;
+
+    const ids = notesInRange(document.value, anchor, focus);
+    copiedNotes.value = notesById(document.value, anchor.staffIndex, anchor.voiceId, ids).map(
+      (note) => structuredClone(note),
+    );
+  }
+
+  /**
+   * Inserts a fresh copy of every clipboard note at the cursor, one after
+   * another - fresh copies, not the originals, so the same ids don't end up
+   * twice in one document. Stops (rather than spilling into the next
+   * measure) at the first one that doesn't fit, the same refusal every
+   * other insertion gives; whatever did fit is still kept.
+   */
+  function pasteAtCursor(): void {
+    if (copiedNotes.value.length === 0) return;
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
+
+    let workingDocument = document.value;
+    let workingCursor = cursor.value;
+    let insertedCount = 0;
+
+    for (const sourceNote of copiedNotes.value) {
+      const note = createNote({
+        step: sourceNote.step,
+        octave: sourceNote.octave,
+        alter: sourceNote.alter,
+        duration: sourceNote.duration,
+        dots: sourceNote.dots,
+        isRest: sourceNote.isRest,
+        tiedToNext: sourceNote.tiedToNext,
+      });
+      const result = insertNote(workingDocument, workingCursor, note);
+      if (!result.inserted) break;
+      workingDocument = result.document;
+      workingCursor = result.cursor;
+      insertedCount += 1;
+    }
+
+    if (insertedCount === 0) {
+      lastRefusal.value = "That bar is full.";
+      return;
+    }
+
+    document.value = workingDocument;
+    cursor.value = workingCursor;
+    clearSelection();
+    lastRefusal.value =
+      insertedCount === copiedNotes.value.length
+        ? ""
+        : "Only part of what was copied fit; the rest was left out.";
   }
 
   /**
@@ -495,6 +569,8 @@ export function useNotationEditor(
     activeStaffVoices,
     selectedNoteIds,
     hasSelection,
+    canCopy,
+    canPaste,
     isStaffLocked,
     setDocument,
     setDuration,
@@ -511,6 +587,8 @@ export function useNotationEditor(
     extendSelectionRight,
     extendSelectionToNote,
     deleteSelection,
+    copySelection,
+    pasteAtCursor,
     setActiveStaff,
     setActiveVoice,
     moveLeft,

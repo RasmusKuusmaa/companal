@@ -14,6 +14,7 @@ import { useNotationPlayback } from "../composables/useNotationPlayback";
 import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
 import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
+import CopyPasteControls from "./CopyPasteControls.vue";
 import DurationPalette from "./DurationPalette.vue";
 import MeasureControls from "./MeasureControls.vue";
 import PlaybackTransport from "./PlaybackTransport.vue";
@@ -108,6 +109,23 @@ function handleKeydown(event: KeyboardEvent): void {
       return;
   }
 
+  // Copy/paste are the one pair of shortcuts that keep their usual
+  // Ctrl/Cmd modifier - overriding the browser's own copy/paste on a page
+  // with a notation editor on it would be more surprising than reusing it.
+  if ((event.ctrlKey || event.metaKey) && !event.altKey) {
+    const letter = event.key.toLowerCase();
+    if (letter === "c") {
+      event.preventDefault();
+      editor.copySelection();
+      return;
+    }
+    if (letter === "v") {
+      event.preventDefault();
+      editor.pasteAtCursor();
+      return;
+    }
+  }
+
   // Everything past this point is a bare letter or digit; a modifier held
   // down means the browser or OS owns this keystroke instead (Cmd+A
   // select-all shares a key with the pitch A, for one).
@@ -164,6 +182,12 @@ function handleKeydown(event: KeyboardEvent): void {
         :active="editor.isTiedAtCursor.value"
         :disabled="!editor.canTieAtCursor.value"
         @toggle="editor.toggleTie"
+      />
+      <CopyPasteControls
+        :can-copy="editor.canCopy.value"
+        :can-paste="editor.canPaste.value"
+        @copy="editor.copySelection"
+        @paste="editor.pasteAtCursor"
       />
       <MeasureControls
         :count="editor.measureCount.value"

@@ -420,3 +420,100 @@ describe("NotationEditor: selection", () => {
     expect(remaining.map((note) => note.step)).toEqual(["C"]);
   });
 });
+
+describe("NotationEditor: copy and paste", () => {
+  it("copies the selection and pastes fresh copies elsewhere", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 2 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+    const staff = wrapper.findComponent(StaffRenderer);
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+
+    const dId = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes[1]!.id;
+
+    // Select just D: click it, then shift-click it again - a one-note range.
+    const click = {
+      staffIndex: 0,
+      measureIndex: 0,
+      voiceId: "1",
+      insertionIndex: 0,
+      step: "D" as const,
+      octave: 4,
+      noteId: dId,
+    };
+    staff.vm.$emit("staff-click", { ...click, shiftKey: false } satisfies StaffClick);
+    staff.vm.$emit("staff-click", { ...click, shiftKey: true } satisfies StaffClick);
+    await wrapper.vm.$nextTick();
+
+    await root.trigger("keydown", { key: "c", ctrlKey: true });
+    await root.trigger("keydown", { key: "ArrowRight" }); // into the empty second measure
+    await root.trigger("keydown", { key: "v", ctrlKey: true });
+
+    const doc = latestDoc(wrapper);
+    const secondMeasureNotes = doc.staves[0]!.measures[1]!.voices[0]!.notes;
+    expect(secondMeasureNotes.map((note) => note.step)).toEqual(["D"]);
+    expect(secondMeasureNotes[0]!.id).not.toBe(dId);
+
+    // The original is untouched.
+    const firstMeasureNotes = doc.staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(firstMeasureNotes.map((note) => note.step)).toEqual(["C", "D"]);
+  });
+
+  it("pastes as much as fits and leaves the rest out", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 2 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+    const staff = wrapper.findComponent(StaffRenderer);
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "e" }); // measure 0: 3 of 4 quarters used
+    await root.trigger("keydown", { key: "ArrowRight" }); // into measure 1
+    await root.trigger("keydown", { key: "f" });
+    await root.trigger("keydown", { key: "g" }); // measure 1: F, G
+
+    const measure1Notes = latestDoc(wrapper).staves[0]!.measures[1]!.voices[0]!.notes;
+    const fId = measure1Notes[0]!.id;
+    const gId = measure1Notes[1]!.id;
+
+    const clickBase = { staffIndex: 0, measureIndex: 1, voiceId: "1", insertionIndex: 0, octave: 4 };
+    staff.vm.$emit("staff-click", {
+      ...clickBase,
+      step: "G",
+      noteId: gId,
+      shiftKey: false,
+    } satisfies StaffClick);
+    staff.vm.$emit("staff-click", {
+      ...clickBase,
+      step: "F",
+      noteId: fId,
+      shiftKey: true,
+    } satisfies StaffClick);
+    await wrapper.vm.$nextTick();
+
+    await root.trigger("keydown", { key: "c", ctrlKey: true }); // copies F, G
+
+    // Back to the end of measure 0, which has room for exactly one more quarter note.
+    await root.trigger("keydown", { key: "ArrowLeft" });
+    await root.trigger("keydown", { key: "ArrowLeft" });
+    await root.trigger("keydown", { key: "v", ctrlKey: true });
+
+    const measure0Notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(measure0Notes.map((note) => note.step)).toEqual(["C", "D", "E", "F"]);
+  });
+
+  it("ctrl+v with nothing copied is a no-op", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "v", ctrlKey: true });
+
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+  });
+});

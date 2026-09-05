@@ -20,6 +20,7 @@ import {
   nearestOctaveForStep,
   noteAt,
   noteQuarters,
+  notesById,
   notesInRange,
   remainingQuarters,
   removeLastMeasure,
@@ -388,6 +389,28 @@ describe("selecting a range of notes", () => {
 
     expect(notesInRange(doc, a, wrongStaff)).toEqual([]);
     expect(notesInRange(doc, a, wrongVoice)).toEqual([]);
+  });
+});
+
+describe("looking up notes by id", () => {
+  it("returns the notes in the order the ids were given, not document order", () => {
+    let doc = createDocument({ measureCount: 2 });
+    const first: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = place(doc, first, { step: "C" });
+    doc = r.document;
+    const second: NotationCursor = { staffIndex: 0, measureIndex: 1, voiceId: "1", noteIndex: 0 };
+    r = place(doc, second, { step: "D" });
+    doc = r.document;
+
+    const cId = getVoice(doc, first)!.notes[0]!.id;
+    const dId = getVoice(doc, second)!.notes[0]!.id;
+
+    expect(notesById(doc, 0, "1", [dId!, cId!]).map((note) => note.step)).toEqual(["D", "C"]);
+  });
+
+  it("silently skips an id that isn't in this staff+voice", () => {
+    const doc = createDocument({ measureCount: 1 });
+    expect(notesById(doc, 0, "1", ["not-a-real-id"])).toEqual([]);
   });
 });
 

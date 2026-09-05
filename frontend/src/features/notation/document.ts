@@ -335,6 +335,31 @@ export function notesInRange(document: NotationDocument, a: NotePosition, b: Not
   return ids;
 }
 
+/**
+ * Looks up notes by id within one staff+voice, in the order `ids` names
+ * them rather than document order - `notesInRange`'s ids are already in
+ * document order, so this is what turns a selection into an ordered list
+ * of the actual notes to copy.
+ */
+export function notesById(
+  document: NotationDocument,
+  staffIndex: number,
+  voiceId: string,
+  ids: readonly string[],
+): NotationNote[] {
+  const staff = getStaff(document, staffIndex);
+  if (!staff) return [];
+
+  const byId = new Map<string, NotationNote>();
+  for (const measure of staff.measures) {
+    const voice = measure.voices.find((candidate) => candidate.id === voiceId);
+    if (!voice) continue;
+    for (const note of voice.notes) byId.set(note.id, note);
+  }
+
+  return ids.map((id) => byId.get(id)).filter((note): note is NotationNote => note !== undefined);
+}
+
 /** Removes every note named by id from one staff+voice, across as many measures as it spans. */
 export function deleteNotes(
   document: NotationDocument,
