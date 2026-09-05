@@ -262,5 +262,185 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="connecting-root-position-triads",
+            title="Connecting Root Position Triads",
+            summary="Common-tone and stepwise connection between root position chords.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="connecting-root-position-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Connecting root position triads\n\n"
+                            "How you move the upper voices from one root-position triad "
+                            "to the next depends on how far apart their roots are.\n\n"
+                            "## Roots a fourth or fifth apart\n\n"
+                            "These chords share exactly one common tone (I and V share a "
+                            "G in C major, for instance). Keep that common tone in "
+                            "whichever voice already has it, and move the other two "
+                            "upper voices to the nearest note of the new chord.\n\n"
+                            "## Roots a second or third apart\n\n"
+                            "These chords share no comfortable common tone to hold onto. "
+                            "Instead, move **all** the upper voices in the same direction "
+                            "as each other, each to the nearest available note of the new "
+                            "chord - contrary to the bass if the bass leaps, to avoid "
+                            "everything piling up in the same direction at once.\n\n"
+                            "Either way, the goal is the same: the smoothest possible "
+                            "path from one chord to the next, checked afterward for "
+                            "parallel fifths and octaves between every pair of voices."
+                        )
+                    },
+                    topics=["connecting-root-position-triads"],
+                ),
+                StepDef(
+                    slug="connecting-root-position-quiz-common-tone",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Connecting two root-position triads a fifth apart, what "
+                            "should happen to their common tone?"
+                        ),
+                        "choices": [
+                            "Keep it in the same voice",
+                            "Move it to a different voice",
+                            "Double it across two voices",
+                            "Omit it from the second chord",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Holding the common tone in the same voice is what makes the "
+                            "connection smooth - it's one less voice that has to move at "
+                            "all."
+                        ),
+                    },
+                    topics=["connecting-root-position-triads"],
+                ),
+                StepDef(
+                    slug="connecting-root-position-quiz-second-apart",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Connecting two root-position triads whose roots are a "
+                            "second apart, how should the upper voices generally move?"
+                        ),
+                        "choices": [
+                            "All in the same direction, to the nearest chord tone",
+                            "Randomly, in whatever direction is convenient",
+                            "All by leap, in contrary motion to each other",
+                            "Not at all - every voice holds its note",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "With no common tone to anchor on, moving every upper voice "
+                            "the same direction to the nearest chord tone keeps the "
+                            "motion smooth and avoids voices crossing each other."
+                        ),
+                    },
+                    topics=["connecting-root-position-triads"],
+                ),
+                StepDef(
+                    slug="connecting-root-position-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The bass line below is given and locked (I - V - I, all "
+                            "root position). Connect the chords smoothly, keeping the "
+                            "common tone where you can and avoiding parallel fifths or "
+                            "octaves."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "figured_bass",
+                                "bass_staff_index": 0,
+                                "figures": ["", "", ""],
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "bass",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "bass-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"b{i}",
+                                                            "step": step,
+                                                            "octave": octave,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                        for i, (step, octave) in enumerate(
+                                            [("C", 3), ("G", 2), ("C", 3)]
+                                        )
+                                    ],
+                                },
+                                {
+                                    "id": "upper",
+                                    "clef": "treble",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "v1",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u1-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                                {
+                                                    "id": "v2",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u2-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                            ],
+                                        }
+                                        for i in range(3)
+                                    ],
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["connecting-root-position-triads", "parallel-fifths-and-octaves"],
+                ),
+            ],
+        ),
     ],
 )
