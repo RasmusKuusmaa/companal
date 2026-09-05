@@ -517,3 +517,75 @@ def check_second_and_third_species(lines: CounterpointLines) -> list[Counterpoin
         *_check_leap_treatment(lines),
         *_check_cadence_formula(aligned),
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Fourth species
+# --------------------------------------------------------------------------- #
+
+
+def _check_suspensions(aligned: list[AlignedInterval]) -> list[CounterpointFindingRead]:
+    """Fourth species reads dissonance as suspension figures, not passing
+    motion: every dissonant note must be tied over from a consonant
+    preparation and resolve down by step to a consonance. A dissonance
+    that wasn't tied in is an unprepared entry - not allowed here even off
+    the downbeat, unlike second and third species' passing tones.
+    """
+    findings: list[CounterpointFindingRead] = []
+    for i, interval in enumerate(aligned):
+        if interval.is_consonant:
+            continue
+
+        current = interval.counterpoint_note
+        before = aligned[i - 1] if i > 0 else None
+        prepared = (
+            before is not None
+            and before.counterpoint_note.tied_to_next
+            and before.is_consonant
+            and _midi(before.counterpoint_note) == _midi(current)
+        )
+        if not prepared:
+            findings.append(
+                CounterpointFindingRead(
+                    kind="unprepared_dissonance",
+                    measure=interval.measure,
+                    passed=False,
+                    message=(
+                        f"Measure {interval.measure}: {interval.interval_name} is dissonant but "
+                        "not tied over from a consonant preparation - a fourth-species "
+                        "dissonance must be a prepared suspension."
+                    ),
+                )
+            )
+            continue
+
+        after = aligned[i + 1] if i + 1 < len(aligned) else None
+        resolved = (
+            after is not None
+            and after.is_consonant
+            and 0 < _midi(current) - _midi(after.counterpoint_note) <= 2
+        )
+        if not resolved:
+            findings.append(
+                CounterpointFindingRead(
+                    kind="unresolved_suspension",
+                    measure=interval.measure,
+                    passed=False,
+                    message=(
+                        f"Measure {interval.measure}: the suspended {interval.interval_name} "
+                        "should resolve down by step to a consonance."
+                    ),
+                )
+            )
+    return findings
+
+
+def check_fourth_species(lines: CounterpointLines) -> list[CounterpointFindingRead]:
+    """The rule fourth (syncopated) species is marked on: every dissonance
+    prepared by a tie, resolved down by step, and nothing dissonant left
+    unprepared."""
+    aligned = align_intervals(lines)
+    return [
+        *_check_suspensions(aligned),
+        *_check_cadence_formula(aligned),
+    ]
