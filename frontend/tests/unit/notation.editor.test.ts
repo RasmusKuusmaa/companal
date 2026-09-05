@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import NotationEditor from "@/features/notation/components/NotationEditor.vue";
 import StaffRenderer, { type StaffClick } from "@/features/notation/components/StaffRenderer.vue";
 import { insertionIndexAtX, noteAtX, pitchAtY, staveAtPoint } from "@/features/notation/hit-test";
-import { createDocument, createNote, insertNote } from "@/features/notation/document";
+import { createDocument, createNote, getVoice, insertNote } from "@/features/notation/document";
 import type { NotationCursor, NotationDocument } from "@/features/notation/types";
 
 // ---------------------------------------------------------------------------
@@ -201,6 +201,7 @@ describe("NotationEditor: click routing", () => {
       step: "G",
       octave: 4,
       noteId: null,
+      shiftKey: false,
     };
     staff.vm.$emit("staff-click", click);
     await wrapper.vm.$nextTick();
@@ -224,6 +225,7 @@ describe("NotationEditor: click routing", () => {
       step: "C",
       octave: 4,
       noteId: existingId,
+      shiftKey: false,
     };
     staff.vm.$emit("staff-click", click);
     await wrapper.vm.$nextTick();
@@ -331,5 +333,90 @@ describe("NotationEditor: deletion", () => {
     const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
     expect(notes).toHaveLength(1);
     expect(notes[0]!.step).toBe("D");
+  });
+});
+
+describe("NotationEditor: selection", () => {
+  it("shift+arrow extends a selection, and backspace deletes the whole range at once", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "e" });
+    // Anchors on E (the note before the cursor), then extends the
+    // selection back onto D.
+    await root.trigger("keydown", { key: "ArrowLeft", shiftKey: true });
+    await root.trigger("keydown", { key: "Backspace" });
+
+    const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(notes).toHaveLength(1);
+    expect(notes[0]!.step).toBe("C");
+  });
+
+  it("moving the cursor without shift collapses the selection", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "c" });
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "e" });
+    await root.trigger("keydown", { key: "ArrowLeft", shiftKey: true }); // selects D, E
+    await root.trigger("keydown", { key: "ArrowLeft" }); // plain: collapses it
+    await root.trigger("keydown", { key: "Backspace" }); // removes just C, not the old D/E selection
+
+    const notes = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(notes.map((note) => note.step)).toEqual(["D", "E"]);
+  });
+
+  it("shift+click extends the selection to an existing note", async () => {
+    let doc = createDocument({ measureCount: 1 });
+    const start: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = insertNote(doc, start, createNote({ step: "C" }));
+    doc = r.document;
+    r = insertNote(doc, r.cursor, createNote({ step: "D" }));
+    doc = r.document;
+    r = insertNote(doc, r.cursor, createNote({ step: "E" }));
+    doc = r.document;
+    r = insertNote(doc, r.cursor, createNote({ step: "F" }));
+    doc = r.document;
+    const notes = getVoice(doc, start)!.notes;
+    const dId = notes[1]!.id;
+    const fId = notes[3]!.id;
+
+    const wrapper = mount(NotationEditor, { props: { modelValue: doc } });
+    const staff = wrapper.findComponent(StaffRenderer);
+
+    staff.vm.$emit("staff-click", {
+      staffIndex: 0,
+      measureIndex: 0,
+      voiceId: "1",
+      insertionIndex: 0,
+      step: "F",
+      octave: 4,
+      noteId: fId,
+      shiftKey: false,
+    } satisfies StaffClick);
+    staff.vm.$emit("staff-click", {
+      staffIndex: 0,
+      measureIndex: 0,
+      voiceId: "1",
+      insertionIndex: 0,
+      step: "D",
+      octave: 4,
+      noteId: dId,
+      shiftKey: true,
+    } satisfies StaffClick);
+    await wrapper.vm.$nextTick();
+
+    const root = wrapper.find("[tabindex]");
+    await root.trigger("keydown", { key: "Backspace" });
+
+    const remaining = latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes;
+    expect(remaining.map((note) => note.step)).toEqual(["C"]);
   });
 });

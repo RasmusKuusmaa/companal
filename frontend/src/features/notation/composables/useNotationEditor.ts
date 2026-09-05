@@ -21,6 +21,7 @@ import {
   createNote,
   deleteNoteAt,
   deleteNoteBefore,
+  deleteNotes,
   diatonicIndex,
   fits,
   insertNote,
@@ -30,6 +31,7 @@ import {
   moveCursor,
   nearestOctaveForStep,
   noteAt,
+  notesInRange,
   removeLastMeasure,
   setTempo as setDocumentTempo,
   toggleTieBefore,
@@ -39,6 +41,7 @@ import type {
   NotationCursor,
   NotationDocument,
   NotationVoice,
+  NotePosition,
   PitchStep,
 } from "../types";
 
@@ -159,6 +162,37 @@ export function useNotationEditor(
         ?.voices ?? [],
   );
 
+  /**
+   * The other end of a selection in progress - the anchor stays fixed while
+   * the cursor (the selection's "focus") moves under a shift-click or a
+   * shift-arrow. `null` means nothing is selected.
+   */
+  const selectionAnchor = ref<NotePosition | null>(null);
+
+  /**
+   * The note position the cursor sits just after - the same note
+   * `noteBeforeCursor` names, addressed the way a selection's ends are
+   * rather than the way rendering wants it. `undefined` right at the start
+   * of a voice, where there's no note to anchor a selection to yet.
+   */
+  const focusPosition = computed<NotePosition | undefined>(() => {
+    if (cursor.value.noteIndex <= 0) return undefined;
+    return {
+      staffIndex: cursor.value.staffIndex,
+      measureIndex: cursor.value.measureIndex,
+      voiceId: cursor.value.voiceId,
+      noteIndex: cursor.value.noteIndex - 1,
+    };
+  });
+
+  /** Every note currently selected - empty when nothing is. */
+  const selectedNoteIds = computed<ReadonlySet<string>>(() => {
+    if (!selectionAnchor.value || !focusPosition.value) return new Set();
+    return new Set(notesInRange(document.value, selectionAnchor.value, focusPosition.value));
+  });
+
+  const hasSelection = computed(() => selectedNoteIds.value.size > 0);
+
   function setDocument(next: NotationDocument): void {
     document.value = toRaw(next);
   }
@@ -195,8 +229,67 @@ export function useNotationEditor(
 
   /** Selects an existing note by clicking it - the cursor lands just after it. */
   function selectNote(noteId: string): void {
+    clearSelection();
     const located = locateNote(document.value, noteId);
     if (located) cursor.value = located;
+  }
+
+  /** Drops the current selection, if there is one, without moving the cursor. */
+  function clearSelection(): void {
+    selectionAnchor.value = null;
+  }
+
+  /**
+   * Starts (if nothing is selected yet) or continues a selection, then
+   * moves the cursor left/right the way a plain arrow key would - shift's
+   * usual role in a text editor.
+   */
+  function extendSelectionLeft(): void {
+    if (!selectionAnchor.value) selectionAnchor.value = focusPosition.value ?? null;
+    cursor.value = moveCursor(document.value, cursor.value, -1);
+  }
+
+  function extendSelectionRight(): void {
+    if (!selectionAnchor.value) selectionAnchor.value = focusPosition.value ?? null;
+    cursor.value = moveCursor(document.value, cursor.value, 1);
+  }
+
+  /** Shift-click's equivalent of `selectNote` - extends rather than replaces the selection. */
+  function extendSelectionToNote(noteId: string): void {
+    const located = locateNote(document.value, noteId);
+    if (!located) return;
+    if (!selectionAnchor.value) selectionAnchor.value = focusPosition.value ?? null;
+    cursor.value = located;
+  }
+
+  /**
+   * Removes every selected note at once, then collapses the selection and
+   * leaves the cursor where the range used to start - the same place
+   * deleting a run of selected text in a text editor leaves the caret.
+   */
+  function deleteSelection(): void {
+    const anchor = selectionAnchor.value;
+    const focus = focusPosition.value;
+    if (!anchor || !focus) return;
+
+    if (isStaffLocked(anchor.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
+
+    const anchorIsEarlier =
+      anchor.measureIndex < focus.measureIndex ||
+      (anchor.measureIndex === focus.measureIndex && anchor.noteIndex <= focus.noteIndex);
+    const start = anchorIsEarlier ? anchor : focus;
+
+    document.value = deleteNotes(document.value, anchor.staffIndex, anchor.voiceId, selectedNoteIds.value);
+    cursor.value = {
+      staffIndex: anchor.staffIndex,
+      measureIndex: start.measureIndex,
+      voiceId: anchor.voiceId,
+      noteIndex: start.noteIndex,
+    };
+    clearSelection();
   }
 
   /**
@@ -211,6 +304,7 @@ export function useNotationEditor(
     const measure = document.value.staves[staffIndex]?.measures[cursor.value.measureIndex];
     const voice = measure?.voices[0];
     if (!voice) return;
+    clearSelection();
     cursor.value = {
       staffIndex,
       measureIndex: cursor.value.measureIndex,
@@ -228,19 +322,26 @@ export function useNotationEditor(
   function setActiveVoice(voiceId: string): void {
     const voice = activeStaffVoices.value.find((candidate) => candidate.id === voiceId);
     if (!voice) return;
+    clearSelection();
     cursor.value = { ...cursor.value, voiceId, noteIndex: voice.notes.length };
   }
 
   function moveLeft(): void {
+    clearSelection();
     cursor.value = moveCursor(document.value, cursor.value, -1);
   }
 
   function moveRight(): void {
+    clearSelection();
     cursor.value = moveCursor(document.value, cursor.value, 1);
   }
 
-  /** Backspace: removes the note the cursor sits after. */
+  /** Backspace: removes the note the cursor sits after, or the whole selection if there is one. */
   function deleteBefore(): void {
+    if (hasSelection.value) {
+      deleteSelection();
+      return;
+    }
     if (isStaffLocked(cursor.value.staffIndex)) {
       lastRefusal.value = LOCKED_STAFF_MESSAGE;
       return;
@@ -250,8 +351,12 @@ export function useNotationEditor(
     cursor.value = result.cursor;
   }
 
-  /** Delete: removes the note the cursor sits before. */
+  /** Delete: removes the note the cursor sits before, or the whole selection if there is one. */
   function deleteAtCursor(): void {
+    if (hasSelection.value) {
+      deleteSelection();
+      return;
+    }
     if (isStaffLocked(cursor.value.staffIndex)) {
       lastRefusal.value = LOCKED_STAFF_MESSAGE;
       return;
@@ -364,7 +469,10 @@ export function useNotationEditor(
     lastRefusal.value = result.inserted ? "" : "That bar is full.";
     // One-shot: the next note goes back to "whatever the bar/key implies"
     // unless the student picks another accidental for it specifically.
-    if (result.inserted) activeAlter.value = 0;
+    if (result.inserted) {
+      activeAlter.value = 0;
+      clearSelection();
+    }
     return result.inserted;
   }
 
@@ -385,6 +493,8 @@ export function useNotationEditor(
     isTiedAtCursor,
     cursorNoteId,
     activeStaffVoices,
+    selectedNoteIds,
+    hasSelection,
     isStaffLocked,
     setDocument,
     setDuration,
@@ -396,6 +506,11 @@ export function useNotationEditor(
     placeStep,
     toggleTie,
     selectNote,
+    clearSelection,
+    extendSelectionLeft,
+    extendSelectionRight,
+    extendSelectionToNote,
+    deleteSelection,
     setActiveStaff,
     setActiveVoice,
     moveLeft,

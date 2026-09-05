@@ -92,3 +92,16 @@ export interface NotationCursor {
   /** Index into the voice's notes; equal to `notes.length` when at the end. */
   noteIndex: number;
 }
+
+/**
+ * One actual note's position inside one voice - `noteIndex` addresses a note
+ * directly (0..notes.length - 1), unlike `NotationCursor`'s "gap before this
+ * index" indexing. Used for a selection's two ends, which each name a note
+ * that exists rather than a place to insert one.
+ */
+export interface NotePosition {
+  staffIndex: number;
+  measureIndex: number;
+  voiceId: string;
+  noteIndex: number;
+}

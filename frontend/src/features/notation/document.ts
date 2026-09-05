@@ -24,6 +24,7 @@ import type {
   NotationNote,
   NotationStaff,
   NotationVoice,
+  NotePosition,
   PitchStep,
   TimeSignature,
 } from "./types";
@@ -299,6 +300,60 @@ export function locateNote(document: NotationDocument, noteId: string): Notation
     }
   }
   return undefined;
+}
+
+/**
+ * Every note id from `a` to `b`, inclusive, in document order.
+ *
+ * A selection can only span one staff and one voice - a soprano line and a
+ * bass line are different instruments, not two ends of the same range - so
+ * this returns nothing for a pair naming different ones. `a` and `b` may
+ * come in either order; the earlier one in the score is found by comparing
+ * measure index first, then position within it.
+ */
+export function notesInRange(document: NotationDocument, a: NotePosition, b: NotePosition): string[] {
+  if (a.staffIndex !== b.staffIndex || a.voiceId !== b.voiceId) return [];
+
+  const aIsEarlier =
+    a.measureIndex < b.measureIndex ||
+    (a.measureIndex === b.measureIndex && a.noteIndex <= b.noteIndex);
+  const start = aIsEarlier ? a : b;
+  const end = aIsEarlier ? b : a;
+
+  const ids: string[] = [];
+  for (let measureIndex = start.measureIndex; measureIndex <= end.measureIndex; measureIndex += 1) {
+    const voice = getVoice(document, { staffIndex: a.staffIndex, measureIndex, voiceId: a.voiceId });
+    if (!voice) continue;
+
+    const from = measureIndex === start.measureIndex ? start.noteIndex : 0;
+    const to = measureIndex === end.measureIndex ? end.noteIndex : voice.notes.length - 1;
+    for (let noteIndex = from; noteIndex <= to; noteIndex += 1) {
+      const note = voice.notes[noteIndex];
+      if (note) ids.push(note.id);
+    }
+  }
+  return ids;
+}
+
+/** Removes every note named by id from one staff+voice, across as many measures as it spans. */
+export function deleteNotes(
+  document: NotationDocument,
+  staffIndex: number,
+  voiceId: string,
+  noteIds: ReadonlySet<string>,
+): NotationDocument {
+  const staff = document.staves[staffIndex];
+  if (!staff) return document;
+
+  const next = clone(document);
+  const nextStaff = next.staves[staffIndex];
+  if (!nextStaff) return document;
+
+  for (const measure of nextStaff.measures) {
+    const voice = measure.voices.find((candidate) => candidate.id === voiceId);
+    if (voice) voice.notes = voice.notes.filter((note) => !noteIds.has(note.id));
+  }
+  return next;
 }
 
 /** Deletes the note before the cursor, the way backspace behaves in text. */

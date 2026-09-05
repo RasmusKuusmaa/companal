@@ -39,12 +39,15 @@ const props = withDefaults(
     cursorNoteId?: string | null;
     /** Notes currently sounding during playback, highlighted independently of the cursor. */
     playingNoteIds?: ReadonlySet<string>;
+    /** Notes in the current selection - a shift-click or shift-arrow range. */
+    selectedNoteIds?: ReadonlySet<string>;
   }>(),
   {
     measuresPerSystem: 4,
     activeVoiceId: undefined,
     cursorNoteId: null,
     playingNoteIds: () => new Set(),
+    selectedNoteIds: () => new Set(),
   },
 );
 
@@ -64,6 +67,8 @@ export interface StaffClick {
   octave: number;
   /** The note actually clicked on, when the click landed on a head. */
   noteId: string | null;
+  /** Whether shift was held - the same "extend, don't replace" role it plays everywhere else. */
+  shiftKey: boolean;
 }
 
 const host = ref<HTMLDivElement | null>(null);
@@ -174,6 +179,8 @@ function drawMeasureNotes(
       // playback the sounding note is the more useful thing to see.
       if (props.playingNoteIds.has(drawn.note.id)) {
         drawn.staveNote.setStyle({ fillStyle: "#d97706", strokeStyle: "#d97706" });
+      } else if (props.selectedNoteIds.has(drawn.note.id)) {
+        drawn.staveNote.setStyle({ fillStyle: "#7c3aed", strokeStyle: "#7c3aed" });
       } else if (drawn.note.id === props.cursorNoteId) {
         drawn.staveNote.setStyle({ fillStyle: "#2563eb", strokeStyle: "#2563eb" });
       } else if (
@@ -401,6 +408,7 @@ function handleClick(event: MouseEvent): void {
     step: pitch.step,
     octave: pitch.octave,
     noteId: noteAtX(inVoice, x)?.note.id ?? null,
+    shiftKey: event.shiftKey,
   });
 }
 
@@ -423,6 +431,7 @@ watch(() => props.document, draw);
 watch(() => props.measuresPerSystem, draw);
 watch(() => props.cursorNoteId, draw);
 watch(() => props.playingNoteIds, draw);
+watch(() => props.selectedNoteIds, draw);
 
 defineExpose({ redraw: draw, drawnStaves: () => drawnStaves, drawnNotes: () => drawnNotes });
 </script>

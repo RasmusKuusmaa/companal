@@ -7,6 +7,7 @@ import {
   createNote,
   deleteNoteAt,
   deleteNoteBefore,
+  deleteNotes,
   diatonicIndex,
   fits,
   fromDiatonicIndex,
@@ -19,6 +20,7 @@ import {
   nearestOctaveForStep,
   noteAt,
   noteQuarters,
+  notesInRange,
   remainingQuarters,
   removeLastMeasure,
   replaceNote,
@@ -26,7 +28,7 @@ import {
   toggleTieBefore,
   voiceQuarters,
 } from "@/features/notation/document";
-import type { NotationCursor, NotationDocument } from "@/features/notation/types";
+import type { NotationCursor, NotationDocument, NotePosition } from "@/features/notation/types";
 
 function place(
   doc: NotationDocument,
@@ -326,6 +328,103 @@ describe("locating a note by id", () => {
   it("returns undefined for an id that isn't in the score", () => {
     const doc = createDocument({ measureCount: 1 });
     expect(locateNote(doc, "not-a-real-id")).toBeUndefined();
+  });
+});
+
+describe("selecting a range of notes", () => {
+  function fourNoteVoice(): { document: NotationDocument; ids: string[] } {
+    let doc = createDocument({ measureCount: 1 });
+    const start: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = place(doc, start, { step: "C" });
+    doc = r.document;
+    r = place(doc, r.cursor, { step: "D" });
+    doc = r.document;
+    r = place(doc, r.cursor, { step: "E" });
+    doc = r.document;
+    r = place(doc, r.cursor, { step: "F" });
+    doc = r.document;
+    return { document: doc, ids: getVoice(doc, start)!.notes.map((note) => note.id) };
+  }
+
+  it("collects every note between two positions, in document order", () => {
+    const { document: doc, ids } = fourNoteVoice();
+    const from: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 1 };
+    const to: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 3 };
+
+    expect(notesInRange(doc, from, to)).toEqual([ids[1], ids[2], ids[3]]);
+  });
+
+  it("doesn't care which end is passed first", () => {
+    const { document: doc, ids } = fourNoteVoice();
+    const from: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 1 };
+    const to: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 3 };
+
+    expect(notesInRange(doc, to, from)).toEqual(notesInRange(doc, from, to));
+    expect(notesInRange(doc, to, from)).toEqual([ids[1], ids[2], ids[3]]);
+  });
+
+  it("spans a barline within the same voice", () => {
+    let doc = createDocument({ measureCount: 2 });
+    const first: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = place(doc, first, { step: "C" });
+    doc = r.document;
+    const second: NotationCursor = { staffIndex: 0, measureIndex: 1, voiceId: "1", noteIndex: 0 };
+    r = place(doc, second, { step: "D" });
+    doc = r.document;
+
+    const from: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const to: NotePosition = { staffIndex: 0, measureIndex: 1, voiceId: "1", noteIndex: 0 };
+
+    const cId = getVoice(doc, first)!.notes[0]!.id;
+    const dId = getVoice(doc, second)!.notes[0]!.id;
+    expect(notesInRange(doc, from, to)).toEqual([cId, dId]);
+  });
+
+  it("returns nothing for two ends naming different staves or voices", () => {
+    const { document: doc } = fourNoteVoice();
+    const a: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const wrongStaff: NotePosition = { staffIndex: 1, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const wrongVoice: NotePosition = { staffIndex: 0, measureIndex: 0, voiceId: "2", noteIndex: 0 };
+
+    expect(notesInRange(doc, a, wrongStaff)).toEqual([]);
+    expect(notesInRange(doc, a, wrongVoice)).toEqual([]);
+  });
+});
+
+describe("deleting a range of notes", () => {
+  it("removes every named note and leaves the rest untouched", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const start: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = place(doc, start, { step: "C" });
+    doc = r.document;
+    r = place(doc, r.cursor, { step: "D" });
+    doc = r.document;
+    r = place(doc, r.cursor, { step: "E" });
+    doc = r.document;
+
+    const notes = getVoice(doc, start)!.notes;
+    const [cId, dId] = notes.map((note) => note.id);
+
+    const next = deleteNotes(doc, 0, "1", new Set([cId!, dId!]));
+    const remaining = getVoice(next, start)!.notes;
+    expect(remaining.map((note) => note.step)).toEqual(["E"]);
+  });
+
+  it("removes notes across every measure a voice spans", () => {
+    let doc = createDocument({ measureCount: 2 });
+    const first: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = place(doc, first, { step: "C" });
+    doc = r.document;
+    const second: NotationCursor = { staffIndex: 0, measureIndex: 1, voiceId: "1", noteIndex: 0 };
+    r = place(doc, second, { step: "D" });
+    doc = r.document;
+
+    const cId = getVoice(doc, first)!.notes[0]!.id;
+    const dId = getVoice(doc, second)!.notes[0]!.id;
+
+    const next = deleteNotes(doc, 0, "1", new Set([cId!, dId!]));
+    expect(getVoice(next, first)!.notes).toHaveLength(0);
+    expect(getVoice(next, second)!.notes).toHaveLength(0);
   });
 });
 

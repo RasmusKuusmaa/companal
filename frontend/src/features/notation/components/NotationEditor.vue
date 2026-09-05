@@ -62,7 +62,8 @@ watch(editor.document, (next) => emit("update:modelValue", next));
  */
 function handleStaffClick(click: StaffClick): void {
   if (click.noteId) {
-    editor.selectNote(click.noteId);
+    if (click.shiftKey) editor.extendSelectionToNote(click.noteId);
+    else editor.selectNote(click.noteId);
   } else {
     editor.placeAt(click);
   }
@@ -85,11 +86,13 @@ function handleKeydown(event: KeyboardEvent): void {
   switch (event.key) {
     case "ArrowLeft":
       event.preventDefault();
-      editor.moveLeft();
+      if (event.shiftKey) editor.extendSelectionLeft();
+      else editor.moveLeft();
       return;
     case "ArrowRight":
       event.preventDefault();
-      editor.moveRight();
+      if (event.shiftKey) editor.extendSelectionRight();
+      else editor.moveRight();
       return;
     case "Backspace":
       event.preventDefault();
@@ -183,6 +186,7 @@ function handleKeydown(event: KeyboardEvent): void {
       :active-voice-id="editor.cursor.value.voiceId"
       :cursor-note-id="editor.cursorNoteId.value"
       :playing-note-ids="playback.activeNoteIds.value"
+      :selected-note-ids="editor.selectedNoteIds.value"
       @staff-click="handleStaffClick"
     />
 
