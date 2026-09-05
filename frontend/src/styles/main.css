@@ -86,3 +86,30 @@
     @apply my-8 border-slate-200;
   }
 }
+
+/**
+ * Print-friendly score view.
+ *
+ * `ScoreViewer.vue` shows one OSMD page at a time - every other page is
+ * hidden with an inline `display: none` set by hand, and the container is
+ * height-clamped with its own scrollbar - neither of which a printed copy
+ * should inherit. `!important` is required here because it's overriding an
+ * *inline* style the component sets, not a class; everything else that
+ * shouldn't print (toolbars, navigation) is hidden with Tailwind's plain
+ * `print:hidden`, which doesn't need it.
+ */
+@media print {
+  .osmd-score {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .osmd-score [id^="osmdCanvasPage"] {
+    display: block !important;
+    break-after: page;
+  }
+
+  .osmd-score [id^="osmdCanvasPage"]:last-of-type {
+    break-after: auto;
+  }
+}

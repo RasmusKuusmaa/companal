@@ -14,13 +14,16 @@ const versionId = typeof route.query.version === "string" ? route.query.version 
 <template>
   <main class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="mx-auto max-w-4xl space-y-6">
-      <RouterLink :to="`/projects/${compositionId}`" class="text-sm text-slate-600 hover:underline">
+      <RouterLink
+        :to="`/projects/${compositionId}`"
+        class="text-sm text-slate-600 hover:underline print:hidden"
+      >
         &larr; Back to composition
       </RouterLink>
 
       <CompositionWorkspace :composition-id="compositionId" :version-id="versionId" />
 
-      <AnalysisDashboard :composition-id="compositionId" />
+      <AnalysisDashboard :composition-id="compositionId" class="print:hidden" />
     </div>
   </main>
 </template>

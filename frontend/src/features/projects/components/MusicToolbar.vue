@@ -20,11 +20,20 @@ const emit = defineEmits<{
   "prev-page": [];
   "next-page": [];
 }>();
+
+/**
+ * The browser's own print dialog - `main.css`'s print rules are what make
+ * the result readable (every page shown at once, not just the one
+ * currently on screen), this just opens it.
+ */
+function handlePrint(): void {
+  window.print();
+}
 </script>
 
 <template>
   <div
-    class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2"
+    class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-4 py-2 print:hidden"
   >
     <div class="flex items-center gap-1">
       <BaseButton
@@ -74,5 +83,7 @@ const emit = defineEmits<{
         Next &rsaquo;
       </BaseButton>
     </div>
+
+    <BaseButton variant="ghost" :disabled="disabled" @click="handlePrint"> Print </BaseButton>
   </div>
 </template>

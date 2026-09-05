@@ -124,7 +124,7 @@ function nextPage(): void {
     <template v-else>
       <div
         v-if="versions.length > 1"
-        class="flex flex-wrap items-center gap-2 text-sm text-slate-600"
+        class="flex flex-wrap items-center gap-2 text-sm text-slate-600 print:hidden"
       >
         <label for="score-version-select" class="font-medium">Version</label>
         <select
