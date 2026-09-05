@@ -1,6 +1,47 @@
 """Stage 2 - Voice leading: four-part writing, motion, and non-chord tones."""
 
+from typing import Any
+
 from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef
+
+
+def _whole_note(note_id: str, step: str, octave: int, is_rest: bool = False) -> dict[str, Any]:
+    return {
+        "id": note_id,
+        "step": step,
+        "octave": octave,
+        "alter": 0,
+        "duration": "whole",
+        "dots": 0,
+        "is_rest": is_rest,
+        "tied_to_next": False,
+    }
+
+
+def _whole_note_staff(
+    staff_id: str, clef: str, voice_id: str, pitches: list[tuple[str, int] | None]
+) -> dict[str, Any]:
+    """One staff of whole notes, one per measure - `None` for a rest."""
+    return {
+        "id": staff_id,
+        "clef": clef,
+        "measures": [
+            {
+                "id": f"m{i}",
+                "voices": [
+                    {
+                        "id": voice_id,
+                        "notes": [
+                            _whole_note(f"{voice_id}-{i}", *pitch, is_rest=False)
+                            if pitch is not None
+                            else _whole_note(f"{voice_id}-{i}", "C", 4, is_rest=True)
+                        ],
+                    }
+                ],
+            }
+            for i, pitch in enumerate(pitches)
+        ],
+    }
 
 COURSE = CourseDef(
     slug="voice-leading",
@@ -860,6 +901,109 @@ COURSE = CourseDef(
                         ),
                     },
                     topics=["non-chord-tones"],
+                ),
+            ],
+        ),
+        LessonDef(
+            slug="harmonizing-a-soprano-line",
+            title="Harmonizing a Soprano Line",
+            summary="Choosing a bass and inner voices to support a given melody.",
+            estimated_minutes=20,
+            steps=[
+                StepDef(
+                    slug="harmonizing-soprano-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Harmonizing a soprano line\n\n"
+                            "This is where everything in this stage comes together. "
+                            "Given only a melody, the job is to choose a chord for each "
+                            "note, a bass line that supports those chords, and inner "
+                            "voices that connect smoothly - all at once.\n\n"
+                            "A practical order of operations:\n\n"
+                            "1. **Choose chords.** Most melody notes can be harmonized "
+                            "more than one way - decide which scale degree each note "
+                            "plays in its chord, favoring the strongest, most familiar "
+                            "progressions (I, IV, V and their close relatives).\n"
+                            "2. **Write the bass.** The bass carries the chord roots (or "
+                            "an inversion, if you want one) and should form its own "
+                            "sensible line - not just a string of leaps.\n"
+                            "3. **Fill in the inner voices.** Alto and tenor complete "
+                            "each chord, doubling sensibly and moving by the smallest "
+                            "steps available.\n"
+                            "4. **Check the whole texture.** Ranges, spacing, doubling, "
+                            "and - always - parallel fifths and octaves between every "
+                            "pair of voices.\n\n"
+                            "End on a strong cadence: a dominant chord moving to a root "
+                            "position tonic, with the soprano landing on the tonic note "
+                            "itself, is the clearest way to make a phrase feel finished."
+                        )
+                    },
+                    topics=["harmonizing-a-soprano-line"],
+                ),
+                StepDef(
+                    slug="harmonizing-soprano-quiz-order",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "When harmonizing a given melody, which is the most "
+                            "practical first step?"
+                        ),
+                        "choices": [
+                            "Choose a chord for each melody note",
+                            "Write the inner voices first",
+                            "Add a cadence, then work backward one note at a time",
+                            "Pick the key signature last, after everything else",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Everything else - the bass line, the inner voices - "
+                            "follows from which chord each melody note belongs to, so "
+                            "that decision comes first."
+                        ),
+                    },
+                    topics=["harmonizing-a-soprano-line"],
+                ),
+                StepDef(
+                    slug="harmonizing-soprano-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The soprano line below is given and locked. Add alto, "
+                            "tenor and bass voices that harmonize it in C major, ending "
+                            "with a perfect authentic cadence."
+                        ),
+                        "requirements": [
+                            {"type": "key", "key": "C major"},
+                            {"type": "measure_count", "count": 4},
+                            {"type": "cadence", "cadence": "perfect_authentic"},
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                _whole_note_staff(
+                                    "soprano",
+                                    "treble",
+                                    "soprano-voice",
+                                    [("E", 4), ("F", 4), ("D", 4), ("C", 4)],
+                                ),
+                                _whole_note_staff(
+                                    "alto", "treble", "alto-voice", [None, None, None, None]
+                                ),
+                                _whole_note_staff(
+                                    "tenor", "treble", "tenor-voice", [None, None, None, None]
+                                ),
+                                _whole_note_staff(
+                                    "bass", "bass", "bass-voice", [None, None, None, None]
+                                ),
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["harmonizing-a-soprano-line", "parallel-fifths-and-octaves"],
                 ),
             ],
         ),
