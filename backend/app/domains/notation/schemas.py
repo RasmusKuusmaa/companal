@@ -24,6 +24,7 @@ PitchStep = Literal["C", "D", "E", "F", "G", "A", "B"]
 ClefName = Literal["treble", "bass", "alto", "tenor"]
 DurationName = Literal["whole", "half", "quarter", "eighth", "16th", "32nd"]
 Mode = Literal["major", "minor"]
+ArticulationKind = Literal["staccato", "accent", "tenuto", "marcato"]
 
 
 class NotationNote(BaseModel):
@@ -40,6 +41,11 @@ class NotationNote(BaseModel):
     # beat-based grouping. Defaulted rather than required so a document
     # saved before this field existed still validates.
     beam_break_after: bool = False
+    # Legato phrasing mark into the following note - unlike a tie, a slur
+    # connects different pitches. The far end is implied, same as a tie.
+    slur_to_next: bool = False
+    # At most one articulation mark; None for none.
+    articulation: ArticulationKind | None = None
 
 
 class NotationVoice(BaseModel):

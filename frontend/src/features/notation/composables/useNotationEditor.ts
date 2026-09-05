@@ -35,11 +35,14 @@ import {
   notesById,
   notesInRange,
   removeLastMeasure,
+  setArticulationBefore,
   setTempo as setDocumentTempo,
   toggleBeamBreakBefore,
+  toggleSlurBefore,
   toggleTieBefore,
 } from "../document";
 import type {
+  ArticulationKind,
   DurationName,
   NotationCursor,
   NotationDocument,
@@ -165,6 +168,19 @@ export function useNotationEditor(
     return note !== undefined && isBeamable(note);
   });
   const isBeamBrokenAtCursor = computed(() => noteBeforeCursor.value?.beamBreakAfter ?? false);
+
+  /** The note the "slur" and "articulation" controls act on - same target as tie and beam-break. */
+  const canSlurAtCursor = computed(() => {
+    const note = noteBeforeCursor.value;
+    return note !== undefined && !note.isRest;
+  });
+  const isSlurredAtCursor = computed(() => noteBeforeCursor.value?.slurToNext ?? false);
+
+  const canArticulateAtCursor = computed(() => {
+    const note = noteBeforeCursor.value;
+    return note !== undefined && !note.isRest;
+  });
+  const articulationAtCursor = computed(() => noteBeforeCursor.value?.articulation ?? null);
 
   /** The voices sharing the cursor's staff, for a voice selector to list. */
   const activeStaffVoices = computed<NotationVoice[]>(
@@ -324,6 +340,26 @@ export function useNotationEditor(
       return;
     }
     commit(toggleBeamBreakBefore(document.value, cursor.value));
+  }
+
+  /** Slurs (or unslurs) the note before the cursor into whatever follows it. */
+  function toggleSlur(): void {
+    if (!canSlurAtCursor.value) return;
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
+    commit(toggleSlurBefore(document.value, cursor.value));
+  }
+
+  /** Sets (or, picking the one it already carries, clears) an articulation on the note before the cursor. */
+  function setArticulation(kind: ArticulationKind): void {
+    if (!canArticulateAtCursor.value) return;
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
+    commit(setArticulationBefore(document.value, cursor.value, kind));
   }
 
   /** Selects an existing note by clicking it - the cursor lands just after it. */
@@ -649,6 +685,10 @@ export function useNotationEditor(
     isTiedAtCursor,
     canToggleBeamAtCursor,
     isBeamBrokenAtCursor,
+    canSlurAtCursor,
+    isSlurredAtCursor,
+    canArticulateAtCursor,
+    articulationAtCursor,
     cursorNoteId,
     activeStaffVoices,
     selectedNoteIds,
@@ -668,6 +708,8 @@ export function useNotationEditor(
     placeStep,
     toggleTie,
     toggleBeamBreak,
+    toggleSlur,
+    setArticulation,
     selectNote,
     clearSelection,
     extendSelectionLeft,

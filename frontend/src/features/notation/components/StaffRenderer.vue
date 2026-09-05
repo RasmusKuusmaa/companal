@@ -14,7 +14,7 @@
  * what's currently on screen.
  */
 import { onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { Barline, Formatter, Renderer, Stave, StaveConnector, StaveTie, type StaveNote } from "vexflow";
+import { Barline, Curve, Formatter, Renderer, Stave, StaveConnector, StaveTie, type StaveNote } from "vexflow";
 
 import { keySignatureName } from "../constants";
 import { measureCount } from "../document";
@@ -23,6 +23,7 @@ import type { NotationDocument, NotationNote, PitchStep } from "../types";
 import {
   applyAccidentals,
   buildBeams,
+  buildSlurs,
   buildTies,
   buildVoice,
   stemDirectionForVoice,
@@ -116,13 +117,13 @@ let drawnNotes: DrawnNote[] = [];
 
 /**
  * The last note of each voice from the previous measure, kept only long
- * enough to draw a tie into the first note of the next one.
+ * enough to draw a tie or a slur into the first note of the next one.
  *
- * A tie within one measure is drawn from that measure's own note list (see
- * `buildTies`), but a tie held *over* a barline needs glyphs from two
- * measures that are built independently - this is what bridges them. Keyed
- * by `staffIndex:voiceId` since a voice's identity continues across
- * measures but its VexFlow objects don't.
+ * A tie or slur within one measure is drawn from that measure's own note
+ * list (see `buildTies`/`buildSlurs`), but one held *over* a barline needs
+ * glyphs from two measures that are built independently - this is what
+ * bridges them. Keyed by `staffIndex:voiceId` since a voice's identity
+ * continues across measures but its VexFlow objects don't.
  */
 let tieTails = new Map<string, { note: NotationNote; staveNote: StaveNote }>();
 
@@ -203,6 +204,9 @@ function drawMeasureNotes(
     for (const tie of buildTies(entry)) {
       tie.setContext(context).draw();
     }
+    for (const slur of buildSlurs(entry)) {
+      slur.setContext(context).draw();
+    }
 
     const tailKey = `${staffIndex}:${entry.voiceId}`;
     const incomingTail = tieTails.get(tailKey);
@@ -216,6 +220,9 @@ function drawMeasureNotes(
       })
         .setContext(context)
         .draw();
+    }
+    if (incomingTail?.note.slurToNext && firstNote) {
+      new Curve(incomingTail.staveNote, firstNote.staveNote, {}).setContext(context).draw();
     }
 
     entry.notes.forEach((drawn, noteIndex) => {

@@ -26,8 +26,10 @@ import {
   remainingQuarters,
   removeLastMeasure,
   replaceNote,
+  setArticulationBefore,
   setTempo,
   toggleBeamBreakBefore,
+  toggleSlurBefore,
   toggleTieBefore,
   voiceQuarters,
 } from "@/features/notation/document";
@@ -346,6 +348,70 @@ describe("beaming", () => {
     const doc = createDocument({ measureCount: 1 });
     const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
     expect(toggleBeamBreakBefore(doc, cursor)).toBe(doc);
+  });
+});
+
+describe("slurs", () => {
+  it("toggles a slur from the note before the cursor into the next one", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, {});
+    doc = r.document;
+
+    doc = toggleSlurBefore(doc, r.cursor);
+    expect(getVoice(doc, cursor)!.notes[0]!.slurToNext).toBe(true);
+    doc = toggleSlurBefore(doc, r.cursor);
+    expect(getVoice(doc, cursor)!.notes[0]!.slurToNext).toBe(false);
+  });
+
+  it("refuses to slur a rest", () => {
+    const doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, { isRest: true });
+    const after = toggleSlurBefore(r.document, r.cursor);
+    expect(after).toBe(r.document);
+  });
+});
+
+describe("articulations", () => {
+  it("sets an articulation on the note before the cursor", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, {});
+    doc = r.document;
+
+    doc = setArticulationBefore(doc, r.cursor, "staccato");
+    expect(getVoice(doc, cursor)!.notes[0]!.articulation).toBe("staccato");
+  });
+
+  it("clears the articulation when the same mark is set again", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, {});
+    doc = r.document;
+
+    doc = setArticulationBefore(doc, r.cursor, "accent");
+    doc = setArticulationBefore(doc, r.cursor, "accent");
+    expect(getVoice(doc, cursor)!.notes[0]!.articulation).toBeNull();
+  });
+
+  it("replaces one articulation with a different one", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, {});
+    doc = r.document;
+
+    doc = setArticulationBefore(doc, r.cursor, "tenuto");
+    doc = setArticulationBefore(doc, r.cursor, "marcato");
+    expect(getVoice(doc, cursor)!.notes[0]!.articulation).toBe("marcato");
+  });
+
+  it("refuses to articulate a rest", () => {
+    const doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, { isRest: true });
+    const after = setArticulationBefore(r.document, r.cursor, "staccato");
+    expect(after).toBe(r.document);
   });
 });
 

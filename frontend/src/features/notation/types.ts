@@ -20,6 +20,9 @@
 
 export type PitchStep = "C" | "D" | "E" | "F" | "G" | "A" | "B";
 
+/** A single-note performance mark. At most one per note. */
+export type ArticulationKind = "staccato" | "accent" | "tenuto" | "marcato";
+
 export type ClefName = "treble" | "bass" | "alto" | "tenor";
 
 /** Note values, longest to shortest. Tuplets are deliberately not here yet. */
@@ -45,6 +48,14 @@ export interface NotationNote {
    * sixteenths into 2+2 instead of one beamed group, say.
    */
   beamBreakAfter: boolean;
+  /**
+   * Legato phrasing into the following note - unlike a tie, a slur
+   * connects different pitches. The slur's other end is implied, the same
+   * as `tiedToNext`'s.
+   */
+  slurToNext: boolean;
+  /** At most one performance mark; `null` for none. */
+  articulation: ArticulationKind | null;
 }
 
 export interface NotationVoice {

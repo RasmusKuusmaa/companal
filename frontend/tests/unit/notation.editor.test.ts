@@ -317,6 +317,37 @@ describe("NotationEditor: keyboard entry", () => {
     expect(wrapper.emitted("update:modelValue")).toHaveLength(1); // just the note entry
   });
 
+  it("S slurs the note before the cursor into the next one", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "s" });
+
+    expect(latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes[0]!.slurToNext).toBe(true);
+  });
+
+  it.each([
+    ["u", "staccato"],
+    ["v", "accent"],
+    ["n", "tenuto"],
+    ["m", "marcato"],
+  ] as const)("%s sets the %s articulation on the note before the cursor", async (key, kind) => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key });
+
+    expect(latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes[0]!.articulation).toBe(
+      kind,
+    );
+  });
+
   it("leaves modified keystrokes to the browser", async () => {
     const wrapper = mount(NotationEditor, {
       props: { modelValue: createDocument({ measureCount: 1 }) },

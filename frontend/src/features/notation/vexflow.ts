@@ -15,10 +15,18 @@
  * most implementations get subtly wrong.
  */
 
-import { Accidental, Beam, Dot, Stem, StaveNote, StaveTie, Voice } from "vexflow";
+import { Accidental, Articulation, Beam, Curve, Dot, Stem, StaveNote, StaveTie, Voice } from "vexflow";
 
 import { CLEF_MIDDLE_LINE, durationSpec, keySignatureName } from "./constants";
-import type { ClefName, NotationDocument, NotationNote, NotationVoice } from "./types";
+import type { ArticulationKind, ClefName, NotationDocument, NotationNote, NotationVoice } from "./types";
+
+/** VexFlow's articulation glyph code for each mark this editor supports. */
+const ARTICULATION_CODE: Readonly<Record<ArticulationKind, string>> = {
+  staccato: "a.",
+  accent: "a>",
+  tenuto: "a-",
+  marcato: "a^",
+};
 
 /** VexFlow's pitch spelling: `f#/4`, `bb/3`, `c/4`. */
 const ALTER_SUFFIX: Readonly<Record<number, string>> = {
@@ -66,6 +74,10 @@ export function buildStaveNote(
     for (let i = 1; i < note.dots; i += 1) {
       Dot.buildAndAttach([staveNote], { all: true });
     }
+  }
+
+  if (note.articulation) {
+    staveNote.addModifier(new Articulation(ARTICULATION_CODE[note.articulation]));
   }
 
   return staveNote;
@@ -173,4 +185,19 @@ export function buildTies(built: BuiltVoice): StaveTie[] {
     );
   });
   return ties;
+}
+
+/**
+ * Slurs within one measure - a tie into the next bar's own note is drawn by
+ * the renderer the same way a cross-barline tie is (see `buildTies`'s own
+ * comment), since both need glyphs from two independently-built measures.
+ */
+export function buildSlurs(built: BuiltVoice): Curve[] {
+  const slurs: Curve[] = [];
+  built.notes.forEach((entry, index) => {
+    const next = built.notes[index + 1];
+    if (!entry.note.slurToNext || !next) return;
+    slurs.push(new Curve(entry.staveNote, next.staveNote, {}));
+  });
+  return slurs;
 }

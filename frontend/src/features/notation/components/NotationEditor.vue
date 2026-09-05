@@ -12,19 +12,28 @@ import { watch } from "vue";
 import { useNotationEditor } from "../composables/useNotationEditor";
 import { useNotationPlayback } from "../composables/useNotationPlayback";
 import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
-import type { NotationDocument, PitchStep } from "../types";
+import type { ArticulationKind, NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
+import ArticulationPalette from "./ArticulationPalette.vue";
 import BeamToggle from "./BeamToggle.vue";
 import CopyPasteControls from "./CopyPasteControls.vue";
 import DurationPalette from "./DurationPalette.vue";
 import MeasureControls from "./MeasureControls.vue";
 import PlaybackTransport from "./PlaybackTransport.vue";
 import RestToggle from "./RestToggle.vue";
+import SlurToggle from "./SlurToggle.vue";
 import StaffRenderer, { type StaffClick } from "./StaffRenderer.vue";
 import StaffSelector from "./StaffSelector.vue";
 import TieToggle from "./TieToggle.vue";
 import UndoRedoControls from "./UndoRedoControls.vue";
 import VoiceSelector from "./VoiceSelector.vue";
+
+const ARTICULATION_SHORTCUT: Record<string, ArticulationKind> = {
+  U: "staccato",
+  V: "accent",
+  N: "tenuto",
+  M: "marcato",
+};
 
 const props = defineProps<{
   modelValue: NotationDocument;
@@ -162,6 +171,17 @@ function handleKeydown(event: KeyboardEvent): void {
     editor.toggleBeamBreak();
     return;
   }
+  if (letter === "S") {
+    event.preventDefault();
+    editor.toggleSlur();
+    return;
+  }
+  const articulation = ARTICULATION_SHORTCUT[letter];
+  if (articulation) {
+    event.preventDefault();
+    editor.setArticulation(articulation);
+    return;
+  }
   if ((PITCH_STEPS as readonly string[]).includes(letter)) {
     event.preventDefault();
     editor.placeStep(letter as PitchStep);
@@ -200,6 +220,16 @@ function handleKeydown(event: KeyboardEvent): void {
         :active="editor.isBeamBrokenAtCursor.value"
         :disabled="!editor.canToggleBeamAtCursor.value"
         @toggle="editor.toggleBeamBreak"
+      />
+      <SlurToggle
+        :active="editor.isSlurredAtCursor.value"
+        :disabled="!editor.canSlurAtCursor.value"
+        @toggle="editor.toggleSlur"
+      />
+      <ArticulationPalette
+        :active="editor.articulationAtCursor.value"
+        :disabled="!editor.canArticulateAtCursor.value"
+        @select="editor.setArticulation"
       />
       <CopyPasteControls
         :can-copy="editor.canCopy.value"

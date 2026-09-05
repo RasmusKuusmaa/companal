@@ -16,6 +16,7 @@
 
 import { STEP_INDEX, quarterLength } from "./constants";
 import type {
+  ArticulationKind,
   ClefName,
   DurationName,
   NotationCursor,
@@ -55,6 +56,8 @@ export function createNote(overrides: Partial<NotationNote> = {}): NotationNote 
     isRest: false,
     tiedToNext: false,
     beamBreakAfter: false,
+    slurToNext: false,
+    articulation: null,
     ...overrides,
   };
 }
@@ -298,6 +301,37 @@ export function toggleBeamBreakBefore(
   const note = noteAt(document, target);
   if (!note || !isBeamable(note)) return document;
   return replaceNote(document, target, { beamBreakAfter: !note.beamBreakAfter });
+}
+
+/**
+ * Toggles a slur from the note before the cursor into whatever follows it -
+ * the same target and the same "rests can't take one" rule as
+ * `toggleTieBefore`, since a slur is a tie's phrasing cousin, not a
+ * same-pitch requirement.
+ */
+export function toggleSlurBefore(
+  document: NotationDocument,
+  cursor: NotationCursor,
+): NotationDocument {
+  const target = { ...cursor, noteIndex: cursor.noteIndex - 1 };
+  const note = noteAt(document, target);
+  if (!note || note.isRest) return document;
+  return replaceNote(document, target, { slurToNext: !note.slurToNext });
+}
+
+/**
+ * Sets (or, choosing the one it already carries, clears) the articulation
+ * on the note before the cursor. Rests have nothing to articulate.
+ */
+export function setArticulationBefore(
+  document: NotationDocument,
+  cursor: NotationCursor,
+  kind: ArticulationKind,
+): NotationDocument {
+  const target = { ...cursor, noteIndex: cursor.noteIndex - 1 };
+  const note = noteAt(document, target);
+  if (!note || note.isRest) return document;
+  return replaceNote(document, target, { articulation: note.articulation === kind ? null : kind });
 }
 
 /**

@@ -5,7 +5,7 @@ import StaffRenderer from "@/features/notation/components/StaffRenderer.vue";
 import { useNotationEditor } from "@/features/notation/composables/useNotationEditor";
 import { createDocument, createNote, createSatbDocument, insertNote } from "@/features/notation/document";
 import type { NotationCursor } from "@/features/notation/types";
-import { buildBeams, buildVoice, stemDirectionForVoice } from "@/features/notation/vexflow";
+import { buildBeams, buildSlurs, buildStaveNote, buildVoice, stemDirectionForVoice } from "@/features/notation/vexflow";
 
 describe("createSatbDocument", () => {
   it("builds a treble+bass grand staff with two voices per staff", () => {
@@ -153,5 +153,49 @@ describe("StaffRenderer", () => {
     expect(() =>
       mount(StaffRenderer, { props: { document: doc, measuresPerSystem: 2 } }),
     ).not.toThrow();
+  });
+});
+
+describe("buildStaveNote: articulations", () => {
+  it("attaches an articulation modifier when the note carries one", () => {
+    const note = createNote({ articulation: "staccato" });
+    const staveNote = buildStaveNote(note, "treble");
+    expect(staveNote.getModifiersByType("Articulation")).toHaveLength(1);
+  });
+
+  it("attaches nothing when the note carries none", () => {
+    const note = createNote({});
+    const staveNote = buildStaveNote(note, "treble");
+    expect(staveNote.getModifiersByType("Articulation")).toHaveLength(0);
+  });
+});
+
+describe("buildSlurs", () => {
+  it("builds a curve between a slurred note and the one after it", () => {
+    let doc = createDocument({ measureCount: 1 });
+    let cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    let r = insertNote(doc, cursor, createNote({ step: "C" }));
+    doc = r.document;
+    cursor = r.cursor;
+    r = insertNote(doc, cursor, createNote({ step: "D" }));
+    doc = r.document;
+
+    const voice = doc.staves[0]!.measures[0]!.voices[0]!;
+    voice.notes[0]!.slurToNext = true;
+    const built = buildVoice(doc, voice, "treble");
+
+    expect(buildSlurs(built)).toHaveLength(1);
+  });
+
+  it("builds nothing when nothing is slurred", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = insertNote(doc, cursor, createNote({ step: "C" }));
+    doc = r.document;
+
+    const voice = doc.staves[0]!.measures[0]!.voices[0]!;
+    const built = buildVoice(doc, voice, "treble");
+
+    expect(buildSlurs(built)).toHaveLength(0);
   });
 });
