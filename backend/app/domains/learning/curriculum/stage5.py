@@ -359,5 +359,93 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="motivic-development-techniques",
+            title="Motivic Development Techniques",
+            summary="Growing a whole passage out of one small musical idea.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="motivic-development-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Motivic development techniques\n\n"
+                            "A **motive** is a short, distinctive musical idea - "
+                            "sometimes just a few notes - that a composer can grow "
+                            "an entire passage out of by transforming it in "
+                            "systematic ways. Recognizing a motive as it's "
+                            "developed, rather than as literal repetition, is a key "
+                            "skill in following how a piece unfolds.\n\n"
+                            "Common development techniques include:\n\n"
+                            "- **Repetition** - restating the motive exactly, often "
+                            "to establish it before it changes.\n"
+                            "- **Sequence** - repeating the motive at a new pitch "
+                            "level, preserving its contour and rhythm.\n"
+                            "- **Fragmentation** - using only a piece of the motive, "
+                            "rather than the whole thing, often to build momentum.\n"
+                            "- **Augmentation** - stretching the motive into longer "
+                            "note values.\n"
+                            "- **Diminution** - compressing the motive into shorter "
+                            "note values.\n"
+                            "- **Inversion** - flipping the motive's melodic "
+                            "contour upside down (each interval's direction "
+                            "reversed).\n"
+                            "- **Retrograde** - playing the motive's notes in "
+                            "reverse order.\n\n"
+                            "A skilled composer often layers several of these at "
+                            "once - a fragment of a motive, augmented and inverted, "
+                            "is still recognizably connected to its source even "
+                            "though very little of the original surface remains."
+                        )
+                    },
+                    topics=["motivic-development"],
+                ),
+                StepDef(
+                    slug="motivic-development-quiz-sequence",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Repeating a motive at a new pitch level, keeping its "
+                            "contour and rhythm intact, is called:"
+                        ),
+                        "choices": ["Sequence", "Retrograde", "Augmentation", "Inversion"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A sequence restates the motive's shape at a different "
+                            "pitch level - the classic building block of "
+                            "developmental passages."
+                        ),
+                    },
+                    topics=["motivic-development"],
+                ),
+                StepDef(
+                    slug="motivic-development-quiz-inversion-retrograde",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "What is the difference between melodic inversion and "
+                            "retrograde as motivic development techniques?"
+                        ),
+                        "choices": [
+                            "Inversion flips each interval's direction upside "
+                            "down; retrograde plays the notes in reverse order",
+                            "They are two names for the same technique",
+                            "Inversion changes only rhythm; retrograde changes "
+                            "only pitch",
+                            "Retrograde only applies to harmony, never melody",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Inversion mirrors the motive's contour (up becomes "
+                            "down and vice versa); retrograde reverses the order "
+                            "the notes are played in - genuinely different "
+                            "transformations."
+                        ),
+                    },
+                    topics=["motivic-development"],
+                ),
+            ],
+        ),
     ],
 )
