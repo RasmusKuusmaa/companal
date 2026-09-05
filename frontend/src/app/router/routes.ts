@@ -29,6 +29,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/exams",
+    name: "exams",
+    component: () => import("@/features/exams/views/ExamOverviewView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/projects/new",
     name: "project-create",
     component: () => import("@/features/projects/views/ProjectCreateView.vue"),
