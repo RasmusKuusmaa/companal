@@ -20,6 +20,7 @@ from app.db.base import Base
 # autogenerate compares it against the live database.
 from app.domains.auth.models import RefreshToken  # noqa: F401
 from app.domains.billing.models import AiUsage, Subscription  # noqa: F401
+from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion  # noqa: F401
 from app.domains.feedback.models import Feedback  # noqa: F401
 from app.domains.learning.models import (  # noqa: F401
     Course,
