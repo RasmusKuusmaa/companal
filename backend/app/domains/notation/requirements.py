@@ -124,6 +124,22 @@ class SpeciesCounterpointRequirement(BaseModel):
     cantus_firmus_staff_index: int = Field(ge=0)
 
 
+class FiguredBassRequirement(BaseModel):
+    """The submission must realize a given figured bass correctly.
+
+    `bass_staff_index` names the given, locked staff directly, the same
+    way `SpeciesCounterpointRequirement` names its cantus firmus staff.
+    `figures` is one entry per measure of that bass, in Kostka & Payne's
+    plain-digit notation (`""` for root position, `"6"`, `"6/4"`, `"7"`,
+    `"6/5"`, `"4/3"`, `"4/2"` or `"2"`) - see `notation.figured_bass` for
+    exactly what each implies.
+    """
+
+    type: Literal["figured_bass"] = "figured_bass"
+    bass_staff_index: int = Field(ge=0)
+    figures: list[str] = Field(min_length=1)
+
+
 Requirement = Annotated[
     KeyRequirement
     | TimeSignatureRequirement
@@ -135,7 +151,8 @@ Requirement = Annotated[
     | DiatonicOnlyRequirement
     | RequiredScaleDegreesRequirement
     | ForbiddenPitchesRequirement
-    | SpeciesCounterpointRequirement,
+    | SpeciesCounterpointRequirement
+    | FiguredBassRequirement,
     Field(discriminator="type"),
 ]
 

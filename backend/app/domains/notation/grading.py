@@ -23,7 +23,9 @@ from app.domains.analysis.schemas import (
 from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.notation.builder import to_musicxml_bytes
 from app.domains.notation.counterpoint import CounterpointReport, build_counterpoint_report
+from app.domains.notation.figured_bass import FiguredBassFindingRead, check_figured_bass
 from app.domains.notation.requirements import (
+    FiguredBassRequirement,
     Requirement,
     RequirementResult,
     SpeciesCounterpointRequirement,
@@ -55,6 +57,9 @@ class DeterministicGrade(BaseModel):
     # is all `requirement_results` itself carries (see `validation.
     # check_species_counterpoint`).
     counterpoint_report: CounterpointReport | None = None
+    # Same idea for a `FiguredBassRequirement` - see `validation.
+    # check_figured_bass_requirement`.
+    figured_bass_findings: list[FiguredBassFindingRead] | None = None
 
 
 def grade_submission(
@@ -92,12 +97,16 @@ def grade_submission(
     results = run_requirements(context, requirements)
 
     counterpoint_report = None
+    figured_bass_findings = None
     for requirement in requirements:
         if isinstance(requirement, SpeciesCounterpointRequirement):
             counterpoint_report = build_counterpoint_report(
                 document, requirement.species, requirement.cantus_firmus_staff_index
             )
-            break
+        elif isinstance(requirement, FiguredBassRequirement):
+            figured_bass_findings = check_figured_bass(
+                document, requirement.bass_staff_index, requirement.figures
+            )
 
     grade = DeterministicGrade(
         requirement_results=results,
@@ -108,6 +117,7 @@ def grade_submission(
         rhythm_analysis=rhythm,
         unavailable=unavailable,
         counterpoint_report=counterpoint_report,
+        figured_bass_findings=figured_bass_findings,
     )
     return grade, content
 

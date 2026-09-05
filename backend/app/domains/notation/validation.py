@@ -20,9 +20,11 @@ from music21 import pitch as m21pitch
 
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
 from app.domains.notation.counterpoint import build_counterpoint_report
+from app.domains.notation.figured_bass import check_figured_bass
 from app.domains.notation.requirements import (
     CadenceRequirement,
     DiatonicOnlyRequirement,
+    FiguredBassRequirement,
     ForbiddenPitchesRequirement,
     KeyRequirement,
     LeapRecoveryRequirement,
@@ -453,6 +455,39 @@ def check_species_counterpoint(
     return RequirementResult(requirement=requirement, passed=report.passed, message=message)
 
 
+def check_figured_bass_requirement(
+    context: RequirementContext, requirement: FiguredBassRequirement
+) -> RequirementResult:
+    """The flat pass/fail this requirement contributes to the checklist.
+
+    Mirrors `check_species_counterpoint`: the per-measure findings aren't
+    carried on `RequirementResult`, only recomputed for
+    `DeterministicGrade.figured_bass_findings` in `grading.py`, which is
+    where a student actually reads them.
+    """
+    findings = check_figured_bass(
+        context.document, requirement.bass_staff_index, requirement.figures
+    )
+    if findings is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message=(
+                "This isn't a gradeable figured-bass exercise against the given bass - check "
+                "that the bass staff has exactly one note per measure, matching the figures."
+            ),
+        )
+
+    violations = [finding for finding in findings if not finding.passed]
+    passed = not violations
+    message = (
+        "Every measure realizes its figure correctly."
+        if passed
+        else f"{len(violations)} measure(s) don't realize their figure correctly."
+    )
+    return RequirementResult(requirement=requirement, passed=passed, message=message)
+
+
 # --------------------------------------------------------------------------- #
 # Runner
 # --------------------------------------------------------------------------- #
@@ -475,6 +510,7 @@ _CHECKERS: dict[type[Requirement], object] = {
     RequiredScaleDegreesRequirement: check_required_scale_degrees,
     ForbiddenPitchesRequirement: check_forbidden_pitches,
     SpeciesCounterpointRequirement: check_species_counterpoint,
+    FiguredBassRequirement: check_figured_bass_requirement,
 }
 
 
