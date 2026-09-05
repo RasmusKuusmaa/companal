@@ -41,6 +41,25 @@ const areaGroups = computed<AreaGroup[]>(() => {
 
 const hasTopics = computed(() => (store.skillMap?.topicCount ?? 0) > 0);
 
+/**
+ * The explicit answer to "what should I work on" - `needsPractice` sorted
+ * worst-first is the priority list, `strengths` best-first is the reward
+ * for having got there. Both read straight off `status`, the same
+ * classification the heatmap colors by, so this list and the map never
+ * disagree about where a topic stands.
+ */
+const needsPractice = computed(() =>
+  (store.skillMap?.topics ?? [])
+    .filter((topic) => topic.status === "needs_practice")
+    .sort((a, b) => a.accuracy - b.accuracy),
+);
+
+const strengths = computed(() =>
+  (store.skillMap?.topics ?? [])
+    .filter((topic) => topic.status === "solid")
+    .sort((a, b) => b.accuracy - a.accuracy),
+);
+
 function areaLabel(area: string): string {
   return area.replace(/[-_]/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
@@ -107,6 +126,48 @@ onMounted(async () => {
           {{ store.skillMap?.touchedTopicCount }} of {{ store.skillMap?.topicCount }} topics
           touched.
         </p>
+
+        <div v-if="needsPractice.length || strengths.length" class="mb-8 grid gap-4 sm:grid-cols-2">
+          <BaseCard title="Needs practice">
+            <p v-if="!needsPractice.length" class="text-sm text-slate-500">
+              Nothing flagged right now.
+            </p>
+            <ul v-else class="space-y-2">
+              <li
+                v-for="topic in needsPractice"
+                :key="topic.id"
+                class="flex items-center justify-between gap-2 text-sm"
+              >
+                <span class="text-slate-900">{{ topic.name }}</span>
+                <RouterLink
+                  v-if="topic.lessons[0]"
+                  :to="`/learn/${topic.lessons[0].slug}`"
+                  class="shrink-0 text-xs font-medium text-slate-500 hover:text-slate-900"
+                >
+                  Practice →
+                </RouterLink>
+              </li>
+            </ul>
+          </BaseCard>
+
+          <BaseCard title="Strengths">
+            <p v-if="!strengths.length" class="text-sm text-slate-500">
+              Nothing solid yet - keep going.
+            </p>
+            <ul v-else class="space-y-2">
+              <li
+                v-for="topic in strengths"
+                :key="topic.id"
+                class="flex items-center justify-between gap-2 text-sm"
+              >
+                <span class="text-slate-900">{{ topic.name }}</span>
+                <span class="shrink-0 text-xs text-slate-500">
+                  {{ Math.round(topic.accuracy * 100) }}%
+                </span>
+              </li>
+            </ul>
+          </BaseCard>
+        </div>
 
         <section v-for="group in areaGroups" :key="group.area" class="mb-8">
           <h2 class="mb-3 text-base font-semibold text-slate-900">{{ areaLabel(group.area) }}</h2>
