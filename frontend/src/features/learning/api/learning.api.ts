@@ -306,6 +306,7 @@ interface TopicMasteryDto {
   attempt_count: number;
   correct_count: number;
   accuracy: number;
+  recent_results: boolean[];
   last_seen_at: string | null;
   lessons: { slug: string; title: string }[];
 }
@@ -327,6 +328,7 @@ function mapTopicMastery(dto: TopicMasteryDto): TopicMastery {
     attemptCount: dto.attempt_count,
     correctCount: dto.correct_count,
     accuracy: dto.accuracy,
+    recentResults: dto.recent_results,
     lastSeenAt: dto.last_seen_at,
     lessons: dto.lessons,
   };

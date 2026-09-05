@@ -390,6 +390,10 @@ class TopicMasteryRead(BaseModel):
     attempt_count: int
     correct_count: int
     accuracy: float
+    # Oldest first, capped at ten - see `models.TopicMastery`'s own
+    # docstring. What a topic detail panel renders as "your attempt
+    # history" without a second request.
+    recent_results: list[bool]
     last_seen_at: datetime | None
     lessons: list[TopicLessonRef]
 

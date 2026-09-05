@@ -229,6 +229,9 @@ export interface TopicMastery {
   attemptCount: number;
   correctCount: number;
   accuracy: number;
+  /** Oldest first, capped at ten - "your attempt history" in the topic
+   *  detail panel. */
+  recentResults: boolean[];
   lastSeenAt: string | null;
   lessons: TopicLessonRef[];
 }

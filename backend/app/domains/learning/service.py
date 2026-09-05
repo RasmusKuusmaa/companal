@@ -708,6 +708,7 @@ async def get_skill_map(db: AsyncSession, user_id: uuid.UUID) -> SkillMapRead:
                 attempt_count=mastery.attempt_count if mastery is not None else 0,
                 correct_count=mastery.correct_count if mastery is not None else 0,
                 accuracy=mastery.accuracy if mastery is not None else 0.0,
+                recent_results=mastery.recent_results if mastery is not None else [],
                 last_seen_at=mastery.last_seen_at if mastery is not None else None,
                 lessons=lessons_by_topic.get(topic.id, []),
             )

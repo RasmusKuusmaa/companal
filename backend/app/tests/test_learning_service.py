@@ -529,7 +529,9 @@ class TestSkillMap:
         assert by_slug["intervals"].attempt_count == 1
         assert by_slug["intervals"].correct_count == 1
         assert by_slug["intervals"].last_seen_at is not None
+        assert by_slug["intervals"].recent_results == [True]
         assert by_slug["cadences"].status is MasteryStatus.UNTOUCHED
+        assert by_slug["cadences"].recent_results == []
 
     async def test_mastery_is_per_student(self, db_session: AsyncSession) -> None:
         await _seed(db_session)

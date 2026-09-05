@@ -12,11 +12,20 @@ import { computed, onMounted, ref } from "vue";
 import { BaseCard } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
 
+import TopicDetailPanel from "../components/TopicDetailPanel.vue";
 import { useLearningStore } from "../stores/learning.store";
 import type { MasteryStatus, TopicMastery } from "../types";
 
 const store = useLearningStore();
 const loadError = ref("");
+const selectedTopicSlug = ref<string | null>(null);
+const selectedTopic = computed(() =>
+  (store.skillMap?.topics ?? []).find((topic) => topic.slug === selectedTopicSlug.value) ?? null,
+);
+
+function selectTopic(slug: string): void {
+  selectedTopicSlug.value = selectedTopicSlug.value === slug ? null : slug;
+}
 
 interface AreaGroup {
   area: string;
@@ -127,6 +136,13 @@ onMounted(async () => {
           touched.
         </p>
 
+        <TopicDetailPanel
+          v-if="selectedTopic"
+          :topic="selectedTopic"
+          class="mb-8"
+          @close="selectedTopicSlug = null"
+        />
+
         <div v-if="needsPractice.length || strengths.length" class="mb-8 grid gap-4 sm:grid-cols-2">
           <BaseCard title="Needs practice">
             <p v-if="!needsPractice.length" class="text-sm text-slate-500">
@@ -172,12 +188,14 @@ onMounted(async () => {
         <section v-for="group in areaGroups" :key="group.area" class="mb-8">
           <h2 class="mb-3 text-base font-semibold text-slate-900">{{ areaLabel(group.area) }}</h2>
           <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <div
+            <button
               v-for="topic in group.topics"
               :key="topic.id"
-              class="rounded-lg border p-3"
+              type="button"
+              class="rounded-lg border p-3 text-left transition-shadow hover:shadow-sm"
               :class="statusClasses(topic.status)"
               :title="topic.description"
+              @click="selectTopic(topic.slug)"
             >
               <p class="text-sm font-medium">{{ topic.name }}</p>
               <p class="mt-1 text-xs">
@@ -186,7 +204,7 @@ onMounted(async () => {
                   · {{ Math.round(topic.accuracy * 100) }}%
                 </template>
               </p>
-            </div>
+            </button>
           </div>
         </section>
       </template>
