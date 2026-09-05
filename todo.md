@@ -340,4 +340,4 @@ composition task where the topic calls for one, and its topic tags.
 
 ## Housekeeping
 
-- [ ] `add gitignore for local claude workspace files` — `.claude/claude.md` is currently untracked
+- [x] `add gitignore for local claude workspace files` — `.claude/claude.md` is currently untracked
