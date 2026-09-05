@@ -22,7 +22,12 @@ from app.domains.analysis.schemas import (
 )
 from app.domains.analysis.service import AnalysisError, analyze
 from app.domains.notation.builder import to_musicxml_bytes
-from app.domains.notation.requirements import Requirement, RequirementResult
+from app.domains.notation.counterpoint import CounterpointReport, build_counterpoint_report
+from app.domains.notation.requirements import (
+    Requirement,
+    RequirementResult,
+    SpeciesCounterpointRequirement,
+)
 from app.domains.notation.schemas import NotationDocument
 from app.domains.notation.validation import RequirementContext, all_passed, run_requirements
 
@@ -45,6 +50,11 @@ class DeterministicGrade(BaseModel):
     harmony_analysis: HarmonyAnalysis | None
     rhythm_analysis: RhythmAnalysis | None
     unavailable: list[EngineUnavailable]
+    # Set only when `requirements` includes a `SpeciesCounterpointRequirement` -
+    # the per-bar findings behind that requirement's flat pass/fail, which
+    # is all `requirement_results` itself carries (see `validation.
+    # check_species_counterpoint`).
+    counterpoint_report: CounterpointReport | None = None
 
 
 def grade_submission(
@@ -81,6 +91,14 @@ def grade_submission(
     context = RequirementContext(document=document, score=score, melody=melody, harmony=harmony)
     results = run_requirements(context, requirements)
 
+    counterpoint_report = None
+    for requirement in requirements:
+        if isinstance(requirement, SpeciesCounterpointRequirement):
+            counterpoint_report = build_counterpoint_report(
+                document, requirement.species, requirement.cantus_firmus_staff_index
+            )
+            break
+
     grade = DeterministicGrade(
         requirement_results=results,
         passed=all_passed(results),
@@ -89,6 +107,7 @@ def grade_submission(
         harmony_analysis=harmony,
         rhythm_analysis=rhythm,
         unavailable=unavailable,
+        counterpoint_report=counterpoint_report,
     )
     return grade, content
 

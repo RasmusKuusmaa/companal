@@ -106,6 +106,24 @@ class ForbiddenPitchesRequirement(BaseModel):
     pitches: list[str] = Field(min_length=1)
 
 
+class SpeciesCounterpointRequirement(BaseModel):
+    """The submission must be a valid species-counterpoint exercise against
+    a given cantus firmus.
+
+    `cantus_firmus_staff_index` names the given, locked staff directly
+    (see `learning.schemas.CompositionPayload.locked_staff_indices`,
+    which an exercise using this requirement should set to the same
+    index) - the cantus firmus is identified by which staff it is, not
+    guessed at from its shape. `species` picks the rule set: 1 (note
+    against note), 2 or 3 (two or three/four notes against one), or 4
+    (syncopated suspensions) - see `notation.counterpoint`.
+    """
+
+    type: Literal["species_counterpoint"] = "species_counterpoint"
+    species: Literal[1, 2, 3, 4]
+    cantus_firmus_staff_index: int = Field(ge=0)
+
+
 Requirement = Annotated[
     KeyRequirement
     | TimeSignatureRequirement
@@ -116,7 +134,8 @@ Requirement = Annotated[
     | LeapRecoveryRequirement
     | DiatonicOnlyRequirement
     | RequiredScaleDegreesRequirement
-    | ForbiddenPitchesRequirement,
+    | ForbiddenPitchesRequirement
+    | SpeciesCounterpointRequirement,
     Field(discriminator="type"),
 ]
 

@@ -19,6 +19,7 @@ from music21 import key as m21key
 from music21 import pitch as m21pitch
 
 from app.domains.analysis.schemas import HarmonyAnalysis, MelodyAnalysis, ScoreAnalysis
+from app.domains.notation.counterpoint import build_counterpoint_report
 from app.domains.notation.requirements import (
     CadenceRequirement,
     DiatonicOnlyRequirement,
@@ -31,6 +32,7 @@ from app.domains.notation.requirements import (
     RequiredScaleDegreesRequirement,
     Requirement,
     RequirementResult,
+    SpeciesCounterpointRequirement,
     TimeSignatureRequirement,
 )
 from app.domains.notation.schemas import NotationDocument, NotationVoice, TimeSignature
@@ -417,6 +419,40 @@ def check_time_signature(
     return RequirementResult(requirement=requirement, passed=passed, message=message)
 
 
+def check_species_counterpoint(
+    context: RequirementContext, requirement: SpeciesCounterpointRequirement
+) -> RequirementResult:
+    """The flat pass/fail this requirement contributes to the checklist.
+
+    The full per-bar findings (`CounterpointReport`) aren't carried on
+    `RequirementResult` - every requirement type shares that shape, and
+    this is the only one with a per-bar report to show. `grading.py`
+    builds the same report again for `DeterministicGrade.counterpoint_report`,
+    which is where a student actually reads it; this is recomputed rather
+    than threaded through because species checking is cheap and doing so
+    keeps `RequirementResult` generic.
+    """
+    report = build_counterpoint_report(
+        context.document, requirement.species, requirement.cantus_firmus_staff_index
+    )
+    if report is None:
+        return RequirementResult(
+            requirement=requirement,
+            passed=False,
+            message=(
+                "This isn't a two-voice exercise against the given cantus firmus - species "
+                "counterpoint needs exactly the given line and one written line."
+            ),
+        )
+
+    if report.passed:
+        message = f"Every species-{requirement.species} rule is satisfied."
+    else:
+        violations = [finding for finding in report.findings if not finding.passed]
+        message = f"{len(violations)} species-{requirement.species} rule violation(s) found."
+    return RequirementResult(requirement=requirement, passed=report.passed, message=message)
+
+
 # --------------------------------------------------------------------------- #
 # Runner
 # --------------------------------------------------------------------------- #
@@ -438,6 +474,7 @@ _CHECKERS: dict[type[Requirement], object] = {
     DiatonicOnlyRequirement: check_diatonic_only,
     RequiredScaleDegreesRequirement: check_required_scale_degrees,
     ForbiddenPitchesRequirement: check_forbidden_pitches,
+    SpeciesCounterpointRequirement: check_species_counterpoint,
 }
 
 

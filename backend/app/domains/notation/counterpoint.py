@@ -23,7 +23,23 @@ from music21 import voiceLeading as m21voiceLeading
 from pydantic import BaseModel
 
 from app.domains.notation.schemas import NotationDocument, NotationNote
-from app.domains.notation.validation import _note_quarters
+
+# Duplicated from `validation._BASE_QUARTER_LENGTH` rather than imported -
+# `validation.py` imports this module for `build_counterpoint_report`, so
+# importing back from it would be circular. It's a fixed, five-line table
+# with nowhere more central to live.
+_BASE_QUARTER_LENGTH: dict[str, Fraction] = {
+    "whole": Fraction(4),
+    "half": Fraction(2),
+    "quarter": Fraction(1),
+    "eighth": Fraction(1, 2),
+    "16th": Fraction(1, 4),
+    "32nd": Fraction(1, 8),
+}
+
+
+def _note_quarters(duration: str, dots: int) -> Fraction:
+    return _BASE_QUARTER_LENGTH[duration] * (Fraction(2) - Fraction(1, 2**dots))
 
 
 def _pitch(note: NotationNote) -> m21pitch.Pitch:
@@ -589,3 +605,49 @@ def check_fourth_species(lines: CounterpointLines) -> list[CounterpointFindingRe
         *_check_suspensions(aligned),
         *_check_cadence_formula(aligned),
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Report
+# --------------------------------------------------------------------------- #
+
+_CHECKERS_BY_SPECIES = {
+    1: check_first_species,
+    2: check_second_and_third_species,
+    3: check_second_and_third_species,
+    4: check_fourth_species,
+}
+
+
+class CounterpointReport(BaseModel):
+    """Every species-counterpoint finding in one shape - the per-bar
+    checklist a student sees, the same role `VoicingReport` plays for SATB
+    checks. Tied to the species the exercise asked for, since the same
+    interval or motion is a violation in one species and normal writing
+    in another.
+    """
+
+    species: int
+    findings: list[CounterpointFindingRead]
+    passed: bool
+
+
+def build_counterpoint_report(
+    document: NotationDocument, species: int, cantus_firmus_staff_index: int
+) -> CounterpointReport | None:
+    """Identifies the two lines and runs the rule set for the stated species.
+
+    `None` when the document isn't a gradeable two-voice exercise against
+    the named staff at all - the wrong shape entirely, which is a
+    different failure than a rule violation and is left for the caller
+    (`validation.check_species_counterpoint`) to report as such.
+    """
+    lines = identify_lines(document, cantus_firmus_staff_index)
+    if lines is None:
+        return None
+
+    checker = _CHECKERS_BY_SPECIES[species]
+    findings = checker(lines)
+    return CounterpointReport(
+        species=species, findings=findings, passed=all(finding.passed for finding in findings)
+    )
