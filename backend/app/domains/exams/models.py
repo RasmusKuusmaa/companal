@@ -14,7 +14,18 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Index, Integer, String, Text, func
+from sqlalchemy import (
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -91,3 +102,72 @@ class ExamQuestion(Base):
     )
 
     __table_args__ = (Index("ix_exam_questions_exam_id_position", "exam_id", "position"),)
+
+
+class ExamAttempt(Base):
+    """One student's attempt at one exam.
+
+    `attempt_number` (1, 2, 3, ...) rather than relying on `started_at`
+    ordering, because "retake as often as you like" means the ordinal
+    itself is shown to the student - "your 3rd attempt" - not just derived
+    for sorting. `score`/`max_score`/`submitted_at` stay null until the
+    attempt is submitted: answers are held back and graded together (see
+    `ExamAnswer`), not scored one at a time as the student goes.
+    """
+
+    __tablename__ = "exam_attempts"
+    __table_args__ = (UniqueConstraint("user_id", "exam_id", "attempt_number"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    exam_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("exams.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ExamAnswer(Base):
+    """One question's answer within one attempt.
+
+    Held rather than graded on arrival - `score`/`max_score`/`result` stay
+    null until the attempt is submitted, the same "grade the whole thing
+    together, once" rule `ExamAttempt` describes. `payload` mirrors
+    `StepAttempt.payload`: a `{"choice_index": 2}` for a quiz question, the
+    submitted notation document for a composition one.
+    """
+
+    __tablename__ = "exam_answers"
+    __table_args__ = (UniqueConstraint("attempt_id", "question_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("exam_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    question_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("exam_questions.id", ondelete="CASCADE"), nullable=False
+    )
+    payload: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    max_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    result: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
+    )
