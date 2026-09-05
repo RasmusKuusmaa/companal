@@ -1,0 +1,14 @@
+# Claude Code's own local workspace state - per-machine runtime files, not
+# meant to be shared between clones. `.claude/settings.json` is the one
+# file under `.claude/` that *is* checked in deliberately (project-level
+# Claude Code configuration everyone working on this repo should share).
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json
+.claude/routines/.state/
+.claude/worktrees/
+.claude/checkpoints/
+.claude/mailbox/
+.claude/agent-registry.json
+.claude/agent-memory-local
+.claude/first-run
+.claude/assistant-daemon-state.json
