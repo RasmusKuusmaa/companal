@@ -788,5 +788,80 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="non-chord-tones",
+            title="Non-Chord Tones",
+            summary="Passing tones, neighbors, suspensions - notes outside the chord beneath them.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="non-chord-tones-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Non-chord tones\n\n"
+                            "Not every melody note belongs to the chord sounding "
+                            "underneath it. A **non-chord tone** decorates the harmony "
+                            "without being part of it, and each type is defined by how "
+                            "it's approached and how it's left.\n\n"
+                            "- **Passing tone**: approached by step, left by step in the "
+                            "same direction - filling in the gap between two chord tones "
+                            "a third apart.\n"
+                            "- **Neighbor tone**: approached by step, then left by step "
+                            "back to the same note it came from - stepping away and "
+                            "returning.\n"
+                            "- **Suspension**: a note held over from the previous chord "
+                            "that becomes dissonant against the new one, then resolves "
+                            "**down by step**. Suspensions are always prepared (present "
+                            "and consonant just before), suspended (held into the "
+                            "dissonance), then resolved.\n"
+                            "- **Anticipation**: a chord tone from the *next* chord "
+                            "arrives early, before the harmony actually changes.\n"
+                            "- **Appoggiatura**: approached by **leap**, then left by "
+                            "step - a \"leaning tone\" that lands hard and settles.\n"
+                            "- **Escape tone**: the mirror image of an appoggiatura - "
+                            "approached by step, then left by leap in the opposite "
+                            "direction."
+                        )
+                    },
+                    topics=["non-chord-tones"],
+                ),
+                StepDef(
+                    slug="non-chord-tones-quiz-escape",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "A non-chord tone approached by step and left by leap in "
+                            "the opposite direction is a(n):"
+                        ),
+                        "choices": ["Escape tone", "Appoggiatura", "Passing tone", "Suspension"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "An escape tone steps in, then leaps away in the opposite "
+                            "direction - the reverse of an appoggiatura, which leaps in "
+                            "and steps away."
+                        ),
+                    },
+                    topics=["non-chord-tones"],
+                ),
+                StepDef(
+                    slug="non-chord-tones-quiz-suspension",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "After becoming dissonant, a suspension resolves by moving:"
+                        ),
+                        "choices": ["Down by step", "Up by leap", "Up by step", "Down by leap"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A suspension always resolves downward by step - that "
+                            "downward step is what defines it as a suspension rather "
+                            "than some other non-chord tone."
+                        ),
+                    },
+                    topics=["non-chord-tones"],
+                ),
+            ],
+        ),
     ],
 )
