@@ -908,5 +908,106 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="florid-counterpoint",
+            title="Florid Counterpoint",
+            summary="Freely mixing every species' rhythms in one line.",
+            estimated_minutes=20,
+            steps=[
+                StepDef(
+                    slug="florid-counterpoint-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Florid counterpoint\n\n"
+                            "Florid counterpoint is where the four species stop being "
+                            "separate exercises and become one shared vocabulary. A "
+                            "florid line can move in whole notes, half notes, quarter "
+                            "notes, and syncopated ties, all within the same phrase - "
+                            "whatever the moment calls for - while still honoring "
+                            "everything each species taught along the way:\n\n"
+                            "- Strong beats stay consonant.\n"
+                            "- Any dissonance is a passing tone, neighbor tone, or "
+                            "properly prepared-and-resolved suspension - never just "
+                            "left sitting there unprepared.\n"
+                            "- Leaps are still answered by a step in the opposite "
+                            "direction.\n"
+                            "- The line still opens and closes on a stable, consonant "
+                            "arrival.\n\n"
+                            "This is the last stop before free composition: the rules "
+                            "haven't gone away, but they've stopped being a checklist "
+                            "for one rhythm at a time and become a single, flexible "
+                            "sense of what a good line does."
+                        )
+                    },
+                    topics=["florid-counterpoint"],
+                ),
+                StepDef(
+                    slug="florid-counterpoint-quiz-combines",
+                    kind="quiz",
+                    payload={
+                        "question": "Florid counterpoint combines elements of:",
+                        "choices": [
+                            "All four species' rhythms and dissonance treatments, "
+                            "in one line",
+                            "Only first species, simply repeated",
+                            "A single fixed rhythm held throughout",
+                            "Species written in a different key from the cantus firmus",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Florid counterpoint mixes the rhythmic freedom and "
+                            "dissonance treatments of every earlier species into one "
+                            "continuous line."
+                        ),
+                    },
+                    topics=["florid-counterpoint"],
+                ),
+                StepDef(
+                    slug="florid-counterpoint-quiz-inherited-rule",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Which principle from the earlier species still applies "
+                            "in florid counterpoint?"
+                        ),
+                        "choices": [
+                            "Dissonance must be a passing tone, neighbor tone, or a "
+                            "properly resolved suspension - never left unprepared",
+                            "Any interval may be used freely, without restriction",
+                            "Only steps are allowed - no leaps at all",
+                            "The cantus firmus must sit in the top voice",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The rhythmic freedom is new; the discipline around how "
+                            "dissonance is reached and left carries over from every "
+                            "species that came before it."
+                        ),
+                    },
+                    topics=["florid-counterpoint"],
+                ),
+                StepDef(
+                    slug="florid-counterpoint-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "Write an eight-measure florid line in C major, freely "
+                            "mixing note values. Stay diatonic, keep every leap to a "
+                            "sixth or smaller, and answer every leap of a fourth or "
+                            "more with a step in the opposite direction."
+                        ),
+                        "requirements": [
+                            {"type": "key", "key": "C major"},
+                            {"type": "diatonic_only"},
+                            {"type": "max_leap", "semitones": 9},
+                            {"type": "leap_recovery", "max_unresolved": 0},
+                            {"type": "measure_count", "count": 8},
+                        ],
+                    },
+                    topics=["florid-counterpoint"],
+                ),
+            ],
+        ),
     ],
 )
