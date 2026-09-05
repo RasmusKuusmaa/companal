@@ -445,6 +445,22 @@ class VoiceOverlapViolationRead(BaseModel):
     lower_motion: str
 
 
+class VoicingReport(BaseModel):
+    """Every SATB voicing check in one shape - what the UI renders and what
+    the AI prompt reads, the same way `VoiceLeadingData` bundles the
+    parallel-motion findings.
+
+    Only ever built for a genuine four-real-voice texture (see
+    `voicing.py`'s module docstring) - `HarmonyTechnicalData.voicing` is
+    `None` for anything else, since there's nothing here to check.
+    """
+
+    range_violations: list[VoiceRangeViolationRead]
+    spacing_violations: list[VoiceSpacingViolationRead]
+    doubling_violations: list[VoiceDoublingViolationRead]
+    overlaps: list[VoiceOverlapViolationRead]
+
+
 # --------------------------------------------------------------------------- #
 # Rhythm analysis
 #

@@ -27,6 +27,7 @@ from app.domains.analysis.schemas import (
     VoiceOverlapViolationRead,
     VoiceRangeViolationRead,
     VoiceSpacingViolationRead,
+    VoicingReport,
 )
 
 SOPRANO, ALTO, TENOR, BASS = 0, 1, 2, 3
@@ -295,3 +296,34 @@ def check_overlaps(chords: list[VoicedChord]) -> list[VoiceOverlapViolationRead]
                     )
                 )
     return violations
+
+
+# --------------------------------------------------------------------------- #
+# Report
+# --------------------------------------------------------------------------- #
+
+
+def build_voicing_report(
+    voice_source: str,
+    voice_ids: list[str],
+    grid: dict[str, list[str | None]],
+    measures: list[int],
+    chord_tones: list[ChordTones],
+    leading_tone_pc: int | None,
+) -> VoicingReport | None:
+    """Runs every SATB voicing check and bundles the findings.
+
+    `None` when the texture isn't a genuine four-real-voice score, or none
+    of its sonorities have all four voices sounding at once - either way,
+    there is nothing for these checks to judge.
+    """
+    chords = four_part_chords(voice_source, voice_ids, grid, measures, chord_tones)
+    if not chords:
+        return None
+
+    return VoicingReport(
+        range_violations=check_voice_ranges(chords),
+        spacing_violations=check_spacing(chords),
+        doubling_violations=check_doubling(chords, leading_tone_pc),
+        overlaps=check_overlaps(chords),
+    )
