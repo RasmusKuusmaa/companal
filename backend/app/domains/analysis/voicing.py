@@ -21,6 +21,8 @@ from typing import cast
 
 from music21 import note as m21note
 
+from app.domains.analysis.schemas import VoiceRangeViolationRead
+
 SOPRANO, ALTO, TENOR, BASS = 0, 1, 2, 3
 
 
@@ -79,3 +81,46 @@ def pitch_class(name: str) -> int:
 
 def midi(name: str) -> int:
     return int(m21note.Note(name).pitch.midi)
+
+
+# --------------------------------------------------------------------------- #
+# Range
+# --------------------------------------------------------------------------- #
+
+# The tessitura a textbook part-writing exercise is judged against (Kostka
+# & Payne, "Tonal Harmony") - not any real singer's absolute limit, and
+# deliberately a little generous so a well-written exercise doesn't trip
+# it at the edges.
+_VOICE_RANGES: dict[int, tuple[str, str]] = {
+    SOPRANO: ("C4", "A5"),
+    ALTO: ("F3", "D5"),
+    TENOR: ("C3", "G4"),
+    BASS: ("E2", "C4"),
+}
+_VOICE_NAMES: dict[int, str] = {SOPRANO: "soprano", ALTO: "alto", TENOR: "tenor", BASS: "bass"}
+
+
+def check_voice_ranges(chords: list[VoicedChord]) -> list[VoiceRangeViolationRead]:
+    """Flags every chord where a voice sings outside its conventional range.
+
+    Every offending occurrence is reported, not just the first per voice -
+    a passage that sits out of range for eight bars is a bigger problem
+    than one that strays for a beat, and the checklist should say so.
+    """
+    violations: list[VoiceRangeViolationRead] = []
+    for position, (low, high) in _VOICE_RANGES.items():
+        low_midi, high_midi = midi(low), midi(high)
+        for chord in chords:
+            pitch = chord.pitch(position)
+            if midi(pitch) < low_midi or midi(pitch) > high_midi:
+                violations.append(
+                    VoiceRangeViolationRead(
+                        voice=_VOICE_NAMES[position],
+                        chord_index=chord.slice_index,
+                        measure=chord.measure,
+                        pitch=pitch,
+                        expected_low=low,
+                        expected_high=high,
+                    )
+                )
+    return violations

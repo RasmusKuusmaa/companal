@@ -377,6 +377,26 @@ class HarmonyAnalysis(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# SATB voicing checks
+#
+# Only meaningful for a genuine four-real-voice texture - see
+# `voicing.py`'s module docstring for why the positional voice-grid
+# fallback is excluded from all of these.
+# --------------------------------------------------------------------------- #
+
+
+class VoiceRangeViolationRead(BaseModel):
+    """One voice sounding outside its conventional tessitura."""
+
+    voice: str  # soprano / alto / tenor / bass
+    chord_index: int
+    measure: int
+    pitch: str
+    expected_low: str
+    expected_high: str
+
+
+# --------------------------------------------------------------------------- #
 # Rhythm analysis
 #
 # The temporal counterpart to the melody and harmony engines, and algorithmic
