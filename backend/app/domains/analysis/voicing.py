@@ -21,7 +21,7 @@ from typing import cast
 
 from music21 import note as m21note
 
-from app.domains.analysis.schemas import VoiceRangeViolationRead
+from app.domains.analysis.schemas import VoiceRangeViolationRead, VoiceSpacingViolationRead
 
 SOPRANO, ALTO, TENOR, BASS = 0, 1, 2, 3
 
@@ -121,6 +121,40 @@ def check_voice_ranges(chords: list[VoicedChord]) -> list[VoiceRangeViolationRea
                         pitch=pitch,
                         expected_low=low,
                         expected_high=high,
+                    )
+                )
+    return violations
+
+
+# --------------------------------------------------------------------------- #
+# Spacing
+# --------------------------------------------------------------------------- #
+
+_OCTAVE_SEMITONES = 12
+
+# Only the upper adjacent pairs - a wide gap between tenor and bass is
+# ordinary voicing (it's what lets the bass leap for a strong root), not a
+# fault the way an open soprano-alto or alto-tenor gap is.
+_ADJACENT_UPPER_PAIRS: tuple[tuple[int, int], ...] = ((SOPRANO, ALTO), (ALTO, TENOR))
+
+
+def check_spacing(chords: list[VoicedChord]) -> list[VoiceSpacingViolationRead]:
+    """Flags a gap of more than an octave between an adjacent pair of upper voices."""
+    violations: list[VoiceSpacingViolationRead] = []
+    for chord in chords:
+        for upper_pos, lower_pos in _ADJACENT_UPPER_PAIRS:
+            upper, lower = chord.pitch(upper_pos), chord.pitch(lower_pos)
+            gap = midi(upper) - midi(lower)
+            if gap > _OCTAVE_SEMITONES:
+                violations.append(
+                    VoiceSpacingViolationRead(
+                        upper_voice=_VOICE_NAMES[upper_pos],
+                        lower_voice=_VOICE_NAMES[lower_pos],
+                        chord_index=chord.slice_index,
+                        measure=chord.measure,
+                        upper_pitch=upper,
+                        lower_pitch=lower,
+                        interval_semitones=gap,
                     )
                 )
     return violations

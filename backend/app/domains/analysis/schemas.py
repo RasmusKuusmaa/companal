@@ -396,6 +396,22 @@ class VoiceRangeViolationRead(BaseModel):
     expected_high: str
 
 
+class VoiceSpacingViolationRead(BaseModel):
+    """More than an octave between a pair of adjacent upper voices.
+
+    Soprano-alto and alto-tenor only - a wide tenor-bass gap is normal
+    voicing, not a fault (see `voicing.check_spacing`).
+    """
+
+    upper_voice: str
+    lower_voice: str
+    chord_index: int
+    measure: int
+    upper_pitch: str
+    lower_pitch: str
+    interval_semitones: int
+
+
 # --------------------------------------------------------------------------- #
 # Rhythm analysis
 #
