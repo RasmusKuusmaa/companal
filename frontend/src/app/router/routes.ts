@@ -23,6 +23,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: "/skills",
+    name: "skill-map",
+    component: () => import("@/features/learning/views/SkillMapView.vue"),
+    meta: { requiresAuth: true },
+  },
+  {
     path: "/projects/new",
     name: "project-create",
     component: () => import("@/features/projects/views/ProjectCreateView.vue"),

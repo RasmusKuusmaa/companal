@@ -13,6 +13,7 @@ import type {
   QuizAnswerResult,
   Roadmap,
   SkillLevel,
+  SkillMap,
 } from "../types";
 
 /**
@@ -32,6 +33,7 @@ import type {
 export const useLearningStore = defineStore("learning", () => {
   const roadmap = ref<Roadmap | null>(null);
   const progress = ref<ProgressSummary | null>(null);
+  const skillMap = ref<SkillMap | null>(null);
   const lesson = ref<Lesson | null>(null);
   const stepIndex = ref(0);
   const quizResults = ref<Record<string, QuizAnswerResult>>({});
@@ -41,6 +43,7 @@ export const useLearningStore = defineStore("learning", () => {
 
   const isLoadingRoadmap = ref(false);
   const isLoadingLesson = ref(false);
+  const isLoadingSkillMap = ref(false);
 
   const steps = computed<LessonStep[]>(() => lesson.value?.steps ?? []);
   const currentStep = computed<LessonStep | null>(() => steps.value[stepIndex.value] ?? null);
@@ -86,6 +89,15 @@ export const useLearningStore = defineStore("learning", () => {
 
   async function fetchProgress(): Promise<void> {
     progress.value = await learningApi.getProgress();
+  }
+
+  async function fetchSkillMap(): Promise<void> {
+    isLoadingSkillMap.value = true;
+    try {
+      skillMap.value = await learningApi.getSkillMap();
+    } finally {
+      isLoadingSkillMap.value = false;
+    }
   }
 
   /** Opens a lesson, resuming at the step the student last reached. */
@@ -202,18 +214,21 @@ export const useLearningStore = defineStore("learning", () => {
   return {
     roadmap,
     progress,
+    skillMap,
     lesson,
     stepIndex,
     quizResults,
     compositionResults,
     isLoadingRoadmap,
     isLoadingLesson,
+    isLoadingSkillMap,
     steps,
     currentStep,
     isFirstStep,
     isLastStep,
     fetchRoadmap,
     fetchProgress,
+    fetchSkillMap,
     openLesson,
     goToStep,
     nextStep,
