@@ -40,6 +40,17 @@ disallow_untyped_calls = false
 module = "app.domains.notation.*"
 disallow_untyped_calls = false
 
+[[tool.mypy.overrides]]
+# Same music21 typing gap again - these three test modules build their own
+# input scores directly with music21 (Part(), .append(), .makeMeasures())
+# rather than only calling the analysis functions under test.
+module = [
+    "app.tests.test_rhythm_service",
+    "app.tests.test_melody_service",
+    "app.tests.test_harmony_service",
+]
+disallow_untyped_calls = false
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 # Session-scoped, not function-scoped: the app's async engine (db/session.py)

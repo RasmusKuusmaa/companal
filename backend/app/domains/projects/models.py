@@ -110,13 +110,16 @@ class CompositionAnalysis(Base):
     # NULL` would never match an engine that could not run - defeating the
     # point of making these queryable alongside the score columns.
     melody_analysis: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB(none_as_null=True), nullable=True
+        JSONB(none_as_null=True),  # type: ignore[no-untyped-call]
+        nullable=True,
     )
     harmony_analysis: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB(none_as_null=True), nullable=True
+        JSONB(none_as_null=True),  # type: ignore[no-untyped-call]
+        nullable=True,
     )
     rhythm_analysis: Mapped[dict[str, Any] | None] = mapped_column(
-        JSONB(none_as_null=True), nullable=True
+        JSONB(none_as_null=True),  # type: ignore[no-untyped-call]
+        nullable=True,
     )
     unavailable: Mapped[list[dict[str, Any]]] = mapped_column(
         JSONB, nullable=False, default=list, server_default=text("'[]'::jsonb")
