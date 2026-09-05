@@ -1,17 +1,68 @@
 import uuid
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.exams.definitions import ExamDef, ExamQuestionDef
-from app.domains.exams.models import Exam, ExamQuestion
-from app.domains.exams.schemas import ExamQuizQuestionRead
+from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion
+from app.domains.exams.schemas import (
+    ExamCompositionAnswerPayload,
+    ExamQuizAnswerPayload,
+    ExamQuizQuestionRead,
+)
 from app.domains.exams.seeding import UnknownCourseError, seed_exams
-from app.domains.exams.service import ExamNotFoundError, start_attempt
+from app.domains.exams.service import (
+    ExamAnswerKindMismatchError,
+    ExamAttemptAlreadySubmittedError,
+    ExamAttemptNotFoundError,
+    ExamNotFoundError,
+    ExamQuestionNotFoundError,
+    answer_question,
+    start_attempt,
+)
 from app.domains.learning.curriculum.definitions import CourseDef
 from app.domains.learning.seeding import seed_curriculum
+from app.domains.notation.schemas import NotationDocument
 from app.domains.users.models import User
+
+
+def _note() -> dict[str, object]:
+    return {
+        "id": "n",
+        "step": "C",
+        "octave": 4,
+        "alter": 0,
+        "duration": "whole",
+        "dots": 0,
+        "is_rest": False,
+        "tied_to_next": False,
+    }
+
+
+def _document() -> NotationDocument:
+    return NotationDocument.model_validate(
+        {
+            "fifths": 0,
+            "mode": "major",
+            "time": {"beats": 4, "beat_type": 4},
+            "tempo": 90,
+            "staves": [
+                {
+                    "id": "s1",
+                    "clef": "treble",
+                    "measures": [{"id": "m0", "voices": [{"id": "1", "notes": [_note()]}]}],
+                }
+            ],
+        }
+    )
+
+
+def _composition(slug: str) -> ExamQuestionDef:
+    return ExamQuestionDef(
+        slug=slug, kind="composition", payload={"brief": "Write something.", "requirements": []}
+    )
 
 
 def _quiz(slug: str) -> ExamQuestionDef:
@@ -235,3 +286,152 @@ class TestStartAttempt:
 
         with pytest.raises(ExamNotFoundError):
             await start_attempt(db_session, user.id, uuid.uuid4().hex)
+
+
+class TestAnswerQuestion:
+    async def _started(self, db_session: AsyncSession) -> tuple[uuid.UUID, uuid.UUID, uuid.UUID]:
+        """Seeds a final exam with one quiz and one composition question,
+        starts an attempt, and returns (attempt_id, quiz_question_id,
+        composition_question_id)."""
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(
+                    slug="final-exam",
+                    title="Final",
+                    description="d",
+                    questions=[_quiz("q1"), _composition("q2")],
+                )
+            ],
+        )
+        user = await _make_user(db_session)
+        start = await start_attempt(db_session, user.id, "final-exam")
+        return start.attempt_id, start.exam.questions[0].id, start.exam.questions[1].id
+
+    async def test_holds_a_quiz_answer_without_grading_it(self, db_session: AsyncSession) -> None:
+        attempt_id, quiz_id, _composition_id = await self._started(db_session)
+        user_id = (await db_session.get(ExamAttempt, attempt_id)).user_id  # type: ignore[union-attr]
+
+        result = await answer_question(
+            db_session, user_id, attempt_id, quiz_id, ExamQuizAnswerPayload(choice_index=1)
+        )
+
+        assert result.answered is True
+        answer = await db_session.scalar(
+            select(ExamAnswer).where(
+                ExamAnswer.attempt_id == attempt_id, ExamAnswer.question_id == quiz_id
+            )
+        )
+        assert answer is not None
+        assert answer.score is None
+        assert answer.payload == {"kind": "quiz", "choice_index": 1}
+
+    async def test_resubmitting_an_answer_replaces_it(self, db_session: AsyncSession) -> None:
+        attempt_id, quiz_id, _composition_id = await self._started(db_session)
+        user_id = (await db_session.get(ExamAttempt, attempt_id)).user_id  # type: ignore[union-attr]
+
+        await answer_question(
+            db_session, user_id, attempt_id, quiz_id, ExamQuizAnswerPayload(choice_index=1)
+        )
+        await answer_question(
+            db_session, user_id, attempt_id, quiz_id, ExamQuizAnswerPayload(choice_index=0)
+        )
+
+        answers = (
+            await db_session.scalars(
+                select(ExamAnswer).where(
+                    ExamAnswer.attempt_id == attempt_id, ExamAnswer.question_id == quiz_id
+                )
+            )
+        ).all()
+        assert len(answers) == 1
+        assert answers[0].payload == {"kind": "quiz", "choice_index": 0}
+
+    async def test_a_composition_answer_holds_the_document(self, db_session: AsyncSession) -> None:
+        attempt_id, _quiz_id, composition_id = await self._started(db_session)
+        user_id = (await db_session.get(ExamAttempt, attempt_id)).user_id  # type: ignore[union-attr]
+
+        await answer_question(
+            db_session,
+            user_id,
+            attempt_id,
+            composition_id,
+            ExamCompositionAnswerPayload(document=_document()),
+        )
+
+        answer = await db_session.scalar(
+            select(ExamAnswer).where(
+                ExamAnswer.attempt_id == attempt_id, ExamAnswer.question_id == composition_id
+            )
+        )
+        assert answer is not None
+        assert answer.payload["kind"] == "composition"
+
+    async def test_answering_a_quiz_question_with_a_composition_answer_raises(
+        self, db_session: AsyncSession
+    ) -> None:
+        attempt_id, quiz_id, _composition_id = await self._started(db_session)
+        user_id = (await db_session.get(ExamAttempt, attempt_id)).user_id  # type: ignore[union-attr]
+
+        with pytest.raises(ExamAnswerKindMismatchError):
+            await answer_question(
+                db_session,
+                user_id,
+                attempt_id,
+                quiz_id,
+                ExamCompositionAnswerPayload(document=_document()),
+            )
+
+    async def test_a_question_from_a_different_exam_raises(
+        self, db_session: AsyncSession
+    ) -> None:
+        attempt_id, _quiz_id, _composition_id = await self._started(db_session)
+        user_id = (await db_session.get(ExamAttempt, attempt_id)).user_id  # type: ignore[union-attr]
+        await seed_exams(
+            db_session,
+            exams=[
+                ExamDef(slug="final-exam", title="Final", description="d", questions=[]),
+                ExamDef(
+                    slug="another-exam", title="Another", description="d", questions=[_quiz("aq1")]
+                ),
+            ],
+        )
+        other_question = await db_session.scalar(
+            select(ExamQuestion).where(ExamQuestion.slug == "aq1")
+        )
+        assert other_question is not None
+
+        with pytest.raises(ExamQuestionNotFoundError):
+            await answer_question(
+                db_session,
+                user_id,
+                attempt_id,
+                other_question.id,
+                ExamQuizAnswerPayload(choice_index=0),
+            )
+
+    async def test_answering_a_submitted_attempt_raises(self, db_session: AsyncSession) -> None:
+        attempt_id, quiz_id, _composition_id = await self._started(db_session)
+        attempt = await db_session.get(ExamAttempt, attempt_id)
+        assert attempt is not None
+        user_id = attempt.user_id
+        attempt.submitted_at = datetime.now(UTC)
+        await db_session.commit()
+
+        with pytest.raises(ExamAttemptAlreadySubmittedError):
+            await answer_question(
+                db_session, user_id, attempt_id, quiz_id, ExamQuizAnswerPayload(choice_index=0)
+            )
+
+    async def test_answering_someone_elses_attempt_raises(self, db_session: AsyncSession) -> None:
+        attempt_id, quiz_id, _composition_id = await self._started(db_session)
+        someone_else = await _make_user(db_session, "someone-else@example.com")
+
+        with pytest.raises(ExamAttemptNotFoundError):
+            await answer_question(
+                db_session,
+                someone_else.id,
+                attempt_id,
+                quiz_id,
+                ExamQuizAnswerPayload(choice_index=0),
+            )

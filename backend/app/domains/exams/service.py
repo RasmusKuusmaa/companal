@@ -9,10 +9,13 @@ no field on the read model for it to leak through.
 import uuid
 
 from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.exams.models import Exam, ExamAttempt, ExamQuestion, ExamQuestionKind
+from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion, ExamQuestionKind
 from app.domains.exams.schemas import (
+    ExamAnswerPayload,
+    ExamAnswerRead,
     ExamAttemptStartRead,
     ExamCompositionQuestionRead,
     ExamQuestionRead,
@@ -25,6 +28,22 @@ from app.domains.learning.schemas import CompositionPayload, QuizPayload
 
 class ExamNotFoundError(Exception):
     """No exam has this slug."""
+
+
+class ExamAttemptNotFoundError(Exception):
+    """No attempt with this id belongs to this user."""
+
+
+class ExamAttemptAlreadySubmittedError(Exception):
+    """An answer was held against an attempt that's already been graded."""
+
+
+class ExamQuestionNotFoundError(Exception):
+    """The question doesn't belong to the attempt's own exam."""
+
+
+class ExamAnswerKindMismatchError(Exception):
+    """The submitted answer's kind doesn't match the question's own kind."""
 
 
 def _public_question(question: ExamQuestion) -> ExamQuestionRead:
@@ -126,3 +145,60 @@ async def start_attempt(
         exam=exam_read,
         started_at=attempt.started_at,
     )
+
+
+async def _get_attempt(db: AsyncSession, user_id: uuid.UUID, attempt_id: uuid.UUID) -> ExamAttempt:
+    attempt = await db.scalar(
+        select(ExamAttempt).where(ExamAttempt.id == attempt_id, ExamAttempt.user_id == user_id)
+    )
+    if attempt is None:
+        raise ExamAttemptNotFoundError
+    return attempt
+
+
+async def answer_question(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    attempt_id: uuid.UUID,
+    question_id: uuid.UUID,
+    answer: ExamAnswerPayload,
+) -> ExamAnswerRead:
+    """Holds one answer against an in-progress attempt.
+
+    Nothing is graded here - see `models.ExamAttempt`'s docstring for why
+    grading waits for the whole attempt to be submitted. Answering the same
+    question again replaces what was held rather than erroring or keeping
+    both: changing an answer before submitting is the normal case, not an
+    edge one.
+    """
+    attempt = await _get_attempt(db, user_id, attempt_id)
+    if attempt.submitted_at is not None:
+        raise ExamAttemptAlreadySubmittedError
+
+    question = await db.scalar(
+        select(ExamQuestion).where(
+            ExamQuestion.id == question_id, ExamQuestion.exam_id == attempt.exam_id
+        )
+    )
+    if question is None:
+        raise ExamQuestionNotFoundError
+
+    expected_kind = "quiz" if question.kind is ExamQuestionKind.QUIZ else "composition"
+    if answer.kind != expected_kind:
+        raise ExamAnswerKindMismatchError(
+            f"question '{question.slug}' is a {question.kind.value} question, "
+            f"not a {answer.kind} answer"
+        )
+
+    payload = answer.model_dump(mode="json")
+    upsert = (
+        pg_insert(ExamAnswer)
+        .values(id=uuid.uuid4(), attempt_id=attempt.id, question_id=question.id, payload=payload)
+        .on_conflict_do_update(
+            index_elements=["attempt_id", "question_id"], set_={"payload": payload}
+        )
+    )
+    await db.execute(upsert)
+    await db.commit()
+
+    return ExamAnswerRead(question_id=question.id, answered=True)
