@@ -220,5 +220,71 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="roman-numeral-analysis-in-major",
+            title="Roman Numeral Analysis in Major",
+            summary="Labeling chords by scale degree and quality within a major key.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="roman-numerals-major-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Roman numeral analysis in major\n\n"
+                            "Build a triad on every degree of a major scale, using only "
+                            "notes from that scale, and the qualities come out fixed - "
+                            "always in the same order. **Roman numerals** name each chord "
+                            "by which scale degree it's built on, and their case records "
+                            "the quality: uppercase for major, lowercase for minor, a "
+                            "small circle for diminished.\n\n"
+                            "In any major key, the seven diatonic triads are:\n\n"
+                            "- **I** (major) - the tonic\n"
+                            "- **ii** (minor)\n"
+                            "- **iii** (minor)\n"
+                            "- **IV** (major) - the subdominant\n"
+                            "- **V** (major) - the dominant\n"
+                            "- **vi** (minor)\n"
+                            "- **vii°** (diminished) - the leading-tone triad\n\n"
+                            "This pattern - major, minor, minor, major, major, minor, "
+                            "diminished - falls directly out of the major scale's own "
+                            "whole-step/half-step layout, so it's worth memorizing once "
+                            "rather than re-deriving it every time."
+                        )
+                    },
+                    topics=["roman-numerals-major"],
+                ),
+                StepDef(
+                    slug="roman-numerals-major-quiz-diminished",
+                    kind="quiz",
+                    payload={
+                        "question": "In a major key, which scale degree's triad is diminished?",
+                        "choices": ["ii", "V", "vii", "IV"],
+                        "answer_index": 2,
+                        "explanation": (
+                            "The triad on the 7th degree (vii°) is diminished - it's the "
+                            "only diminished triad among the seven diatonic triads in "
+                            "major."
+                        ),
+                    },
+                    topics=["roman-numerals-major"],
+                ),
+                StepDef(
+                    slug="roman-numerals-major-quiz-iv",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "The triad built on the 4th scale degree of a major key is:"
+                        ),
+                        "choices": ["Minor", "Major", "Diminished", "Augmented"],
+                        "answer_index": 1,
+                        "explanation": (
+                            "The 4th degree carries a major triad (IV), the subdominant."
+                        ),
+                    },
+                    topics=["roman-numerals-major"],
+                ),
+            ],
+        ),
     ],
 )
