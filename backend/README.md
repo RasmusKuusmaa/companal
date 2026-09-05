@@ -42,6 +42,35 @@ createdb -h localhost -U postgres -O cadence cadence_test
 API docs: http://localhost:8000/api/v1/docs
 Health check: http://localhost:8000/api/v1/health
 
+### Running without an Anthropic API key
+
+`ANTHROPIC_API_KEY` in `.env` can be left blank - `.env.example`'s default.
+Nothing at startup checks for it; the client that needs it is only built
+the moment an AI-touching request actually arrives (`@lru_cache`d, see
+`app/domains/feedback/ai_service.py` and `app/domains/notation/
+ai_grading.py`), so the app boots and runs exactly the same either way.
+
+Everything that doesn't call Claude works in full: the entire curriculum
+(lessons, quizzes, composition tasks), every exam, deterministic
+composition grading (`notation.grading` - key, meter, cadence, voice-
+leading, species counterpoint, figured bass, all checked by the analysis
+engines, no AI involved), the skill map, MusicXML import/export, and the
+staff editor itself.
+
+What's unavailable, cleanly:
+
+- **AI composition feedback** (the "get AI feedback" toggle on a lesson's
+  composition step) - the request still grades deterministically and
+  returns that result; only the AI commentary is missing, and the frontend
+  says so rather than showing an error (`CompositionStep.vue`).
+- **AI exam rubric grading** for composition questions on a premium
+  account - same story, the deterministic grade still comes back.
+
+Both fail with `AIServiceUnavailableError` internally, surfaced as a plain
+503 ("AI feedback is not configured") - a deployment state the code
+explicitly treats as "this feature doesn't exist here," not a transient
+error worth retrying or an upgrade prompt.
+
 ## Local setup (with Docker, alternative)
 
 ```bash
