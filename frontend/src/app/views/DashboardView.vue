@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 
 import { useAuthStore } from "@/features/auth/stores/auth.store";
 import ContinueLearningCard from "@/features/learning/components/ContinueLearningCard.vue";
+import CoverageSummaryCard from "@/features/learning/components/CoverageSummaryCard.vue";
 import ProjectList from "@/features/projects/components/ProjectList.vue";
 import { useProjectsStore } from "@/features/projects/stores/projects.store";
 import { BaseButton, BaseCard } from "@/shared/components/base";
@@ -35,6 +36,10 @@ async function handleLogout(): Promise<void> {
 
       <div class="mb-4">
         <ContinueLearningCard />
+      </div>
+
+      <div class="mb-4">
+        <CoverageSummaryCard />
       </div>
 
       <BaseCard>
