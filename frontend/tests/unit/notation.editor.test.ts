@@ -634,3 +634,56 @@ describe("NotationEditor: undo and redo", () => {
     expect(wrapper.emitted("update:modelValue")).toBeUndefined();
   });
 });
+
+describe("NotationEditor: keyboard shortcut help", () => {
+  it("? opens the panel, and a letter typed while it's open doesn't land a note", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "?" });
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+
+    await root.trigger("keydown", { key: "d" });
+    expect(wrapper.emitted("update:modelValue")).toBeUndefined();
+  });
+
+  it("the toolbar button opens the panel too", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+
+    await wrapper.find('button[aria-label="Keyboard shortcuts"]').trigger("click");
+
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+  });
+
+  it("the close button dismisses the panel", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+    await root.trigger("keydown", { key: "?" });
+
+    await wrapper.find('button[aria-label="Close"]').trigger("click");
+
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+  });
+
+  it("Escape dismisses the panel", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+      attachTo: document.body,
+    });
+    const root = wrapper.find("[tabindex]");
+    await root.trigger("keydown", { key: "?" });
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(true);
+
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('[role="dialog"]').exists()).toBe(false);
+    wrapper.unmount();
+  });
+});

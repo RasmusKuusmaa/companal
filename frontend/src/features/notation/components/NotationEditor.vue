@@ -7,7 +7,7 @@
  * `v-model`, so the page around it - a lesson step, an exam question -
  * holds the score without knowing anything about how it's edited.
  */
-import { watch } from "vue";
+import { ref, watch } from "vue";
 
 import { useNotationEditor } from "../composables/useNotationEditor";
 import { useNotationPlayback } from "../composables/useNotationPlayback";
@@ -19,6 +19,7 @@ import BeamToggle from "./BeamToggle.vue";
 import CopyPasteControls from "./CopyPasteControls.vue";
 import DurationPalette from "./DurationPalette.vue";
 import ExportControls from "./ExportControls.vue";
+import KeyboardShortcutHelp from "./KeyboardShortcutHelp.vue";
 import MeasureControls from "./MeasureControls.vue";
 import PlaybackTransport from "./PlaybackTransport.vue";
 import RestToggle from "./RestToggle.vue";
@@ -28,6 +29,8 @@ import StaffSelector from "./StaffSelector.vue";
 import TieToggle from "./TieToggle.vue";
 import UndoRedoControls from "./UndoRedoControls.vue";
 import VoiceSelector from "./VoiceSelector.vue";
+
+const showShortcutHelp = ref(false);
 
 const ARTICULATION_SHORTCUT: Record<string, ArticulationKind> = {
   U: "staccato",
@@ -96,6 +99,15 @@ function handleStaffClick(click: StaffClick): void {
  * elsewhere on the page.
  */
 function handleKeydown(event: KeyboardEvent): void {
+  if (event.key === "?") {
+    event.preventDefault();
+    showShortcutHelp.value = true;
+    return;
+  }
+  // The help panel owns the keyboard while it's open (see its own Escape
+  // handling) - a letter typed to dismiss it shouldn't also land a note.
+  if (showShortcutHelp.value) return;
+
   switch (event.key) {
     case "ArrowLeft":
       event.preventDefault();
@@ -259,6 +271,15 @@ function handleKeydown(event: KeyboardEvent): void {
         @update:tempo="editor.setTempo"
       />
       <ExportControls :document="editor.document.value" />
+      <button
+        type="button"
+        class="flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 bg-white text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+        title="Keyboard shortcuts (?)"
+        aria-label="Keyboard shortcuts"
+        @click="showShortcutHelp = true"
+      >
+        ?
+      </button>
     </div>
 
     <StaffRenderer
@@ -273,5 +294,7 @@ function handleKeydown(event: KeyboardEvent): void {
     <p v-if="editor.lastRefusal.value" class="text-sm text-amber-700" role="status">
       {{ editor.lastRefusal.value }}
     </p>
+
+    <KeyboardShortcutHelp :open="showShortcutHelp" @close="showShortcutHelp = false" />
   </div>
 </template>
