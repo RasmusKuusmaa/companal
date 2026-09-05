@@ -204,3 +204,37 @@ export interface ProgressSummary {
   continueLessonSlug: string | null;
   continueLessonTitle: string | null;
 }
+
+export type MasteryStatus = "untouched" | "learning" | "solid" | "needs_practice";
+
+/** One lesson that exercises a topic - what a topic detail panel links to. */
+export interface TopicLessonRef {
+  slug: string;
+  title: string;
+}
+
+/**
+ * One topic's mastery, as the skill map renders it. Present for every topic
+ * in the curriculum whether or not the student has touched it - an
+ * untouched topic comes back with `status: "untouched"` and zeroed counts
+ * rather than being omitted.
+ */
+export interface TopicMastery {
+  id: string;
+  slug: string;
+  name: string;
+  area: string;
+  description: string;
+  status: MasteryStatus;
+  attemptCount: number;
+  correctCount: number;
+  accuracy: number;
+  lastSeenAt: string | null;
+  lessons: TopicLessonRef[];
+}
+
+export interface SkillMap {
+  topics: TopicMastery[];
+  topicCount: number;
+  touchedTopicCount: number;
+}

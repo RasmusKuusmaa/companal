@@ -30,7 +30,9 @@ import type {
   RequirementResult,
   Roadmap,
   SkillLevel,
+  SkillMap,
   StepSeen,
+  TopicMastery,
 } from "../types";
 
 type RequirementDto =
@@ -294,6 +296,50 @@ function mapLesson(dto: LessonDto): Lesson {
   };
 }
 
+interface TopicMasteryDto {
+  id: string;
+  slug: string;
+  name: string;
+  area: string;
+  description: string;
+  status: TopicMastery["status"];
+  attempt_count: number;
+  correct_count: number;
+  accuracy: number;
+  last_seen_at: string | null;
+  lessons: { slug: string; title: string }[];
+}
+
+interface SkillMapDto {
+  topics: TopicMasteryDto[];
+  topic_count: number;
+  touched_topic_count: number;
+}
+
+function mapTopicMastery(dto: TopicMasteryDto): TopicMastery {
+  return {
+    id: dto.id,
+    slug: dto.slug,
+    name: dto.name,
+    area: dto.area,
+    description: dto.description,
+    status: dto.status,
+    attemptCount: dto.attempt_count,
+    correctCount: dto.correct_count,
+    accuracy: dto.accuracy,
+    lastSeenAt: dto.last_seen_at,
+    lessons: dto.lessons,
+  };
+}
+
+function mapSkillMap(dto: SkillMapDto): SkillMap {
+  return {
+    topics: dto.topics.map(mapTopicMastery),
+    topicCount: dto.topic_count,
+    touchedTopicCount: dto.touched_topic_count,
+  };
+}
+
 function mapProgressSummary(dto: ProgressSummaryDto): ProgressSummary {
   return {
     lessonCount: dto.lesson_count,
@@ -392,5 +438,11 @@ export const learningApi = {
   async getProgress(): Promise<ProgressSummary> {
     const { data } = await httpClient.get<ProgressSummaryDto>("/learning/progress");
     return mapProgressSummary(data);
+  },
+
+  /** Every topic in the curriculum, touched or not, with this student's mastery of each. */
+  async getSkillMap(): Promise<SkillMap> {
+    const { data } = await httpClient.get<SkillMapDto>("/learning/skill-map");
+    return mapSkillMap(data);
   },
 };
