@@ -395,5 +395,97 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="the-neapolitan-sixth",
+            title="The Neapolitan Sixth",
+            summary="A borrowed, lowered supertonic chord that leans hard into V.",
+            estimated_minutes=13,
+            steps=[
+                StepDef(
+                    slug="neapolitan-sixth-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# The Neapolitan sixth\n\n"
+                            "The **Neapolitan chord**, labeled **N6** (or bII6), is a "
+                            "major triad built on the **lowered second scale degree**, "
+                            "almost always used in **first inversion** - hence the "
+                            "\"sixth\" in its name. In C major or C minor alike, N6 is a "
+                            "Db major triad in first inversion, with **F, the chord's "
+                            "third, in the bass**.\n\n"
+                            "N6 behaves like a chromatic substitute for iv or ii°6, and "
+                            "it typically resolves straight to **V** (often through a "
+                            "cadential 6/4), with the bass stepping down from F to the "
+                            "leading tone's neighbor or directly to the dominant root. "
+                            "The lowered 2nd scale degree itself often falls by a half "
+                            "step, or leaps down a diminished third to the raised 7th "
+                            "scale degree - a distinctive, unmistakably chromatic voice-"
+                            "leading gesture.\n\n"
+                            "The Neapolitan works equally well in major and minor keys "
+                            "(it's borrowed either way, since bII isn't diatonic in "
+                            "either), and it's prized for the dramatic half-step pull it "
+                            "creates on its way into the dominant."
+                        )
+                    },
+                    topics=["neapolitan-sixth"],
+                ),
+                StepDef(
+                    slug="neapolitan-sixth-quiz-built-on",
+                    kind="quiz",
+                    payload={
+                        "question": "The Neapolitan chord is a major triad built on:",
+                        "choices": [
+                            "The lowered 2nd scale degree",
+                            "The lowered 6th scale degree",
+                            "The raised 4th scale degree",
+                            "The tonic",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "N6 is a major triad on the lowered supertonic - bII - "
+                            "almost always heard in first inversion."
+                        ),
+                    },
+                    topics=["neapolitan-sixth"],
+                ),
+                StepDef(
+                    slug="neapolitan-sixth-quiz-inversion",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Why is the Neapolitan chord called \"N6\" rather than just "
+                            "\"N\"?"
+                        ),
+                        "choices": [
+                            "It is almost always used in first inversion, "
+                            "with the third in the bass",
+                            "It contains a minor sixth interval above the root",
+                            "It resolves to a chord six scale degrees away",
+                            "It is the sixth chord borrowed from the parallel mode",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The \"6\" marks first inversion - N6 is conventionally "
+                            "voiced with its third, not its root, in the bass."
+                        ),
+                    },
+                    topics=["neapolitan-sixth"],
+                ),
+                StepDef(
+                    slug="neapolitan-sixth-quiz-resolves-to",
+                    kind="quiz",
+                    payload={
+                        "question": "The Neapolitan sixth typically resolves to:",
+                        "choices": ["V", "IV", "vi", "ii"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "N6 functions as a predominant, most often resolving "
+                            "directly into V (frequently by way of a cadential 6/4)."
+                        ),
+                    },
+                    topics=["neapolitan-sixth"],
+                ),
+            ],
+        ),
     ],
 )
