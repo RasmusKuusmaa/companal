@@ -233,5 +233,87 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="pivot-chord-modulation",
+            title="Pivot Chord Modulation",
+            summary="Modulating smoothly through a chord shared by both keys.",
+            estimated_minutes=14,
+            steps=[
+                StepDef(
+                    slug="pivot-chord-modulation-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Pivot chord modulation\n\n"
+                            "The smoothest way to modulate is to find a chord that "
+                            "belongs to **both** the old key and the new key, reinterpret "
+                            "it in the new key's terms, and use it as a hinge to swing "
+                            "from one to the other. That shared chord is a **pivot "
+                            "chord**, and this is the most common way tonal music "
+                            "changes key.\n\n"
+                            "A pivot-chord analysis is written with both readings "
+                            "stacked, old key over new key - for example, modulating from "
+                            "C major to G major, the ii chord of C (Dm) is also the vi "
+                            "chord of G, so it can be labeled **ii/vi**, marking the "
+                            "instant the reinterpretation happens. After the pivot, a "
+                            "cadence in the new key (typically using the new key's own V "
+                            "or V7) confirms the modulation has actually taken hold.\n\n"
+                            "The strongest pivot chords are diatonic in **both** keys - "
+                            "the chord itself contains no accidental, so nothing sounds "
+                            "chromatic at the pivot. The first accidental usually arrives "
+                            "just after the pivot, in the new key's own leading tone, as "
+                            "the music heads toward the confirming cadence."
+                        )
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+                StepDef(
+                    slug="pivot-chord-modulation-quiz-label",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In a pivot-chord modulation, how is the pivot chord "
+                            "typically labeled?"
+                        ),
+                        "choices": [
+                            "With both roman numerals stacked, old key over new key",
+                            "With only the new key's roman numeral",
+                            "With only the old key's roman numeral",
+                            "It is left unlabeled since it belongs to neither key",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A pivot chord is analyzed in both keys at once - its "
+                            "old-key roman numeral stacked over its new-key roman "
+                            "numeral - to mark the exact moment of reinterpretation."
+                        ),
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+                StepDef(
+                    slug="pivot-chord-modulation-quiz-confirms",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "After the pivot chord, what actually confirms the "
+                            "modulation has taken hold?"
+                        ),
+                        "choices": [
+                            "A cadence in the new key",
+                            "The pivot chord itself",
+                            "A return to the original key signature",
+                            "A fermata",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The pivot chord only sets up the reinterpretation - a "
+                            "cadence in the new key, usually built from its own V or V7, "
+                            "is what confirms the modulation actually happened."
+                        ),
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+            ],
+        ),
     ],
 )
