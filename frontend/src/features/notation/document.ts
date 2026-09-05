@@ -54,8 +54,16 @@ export function createNote(overrides: Partial<NotationNote> = {}): NotationNote 
     dots: 0,
     isRest: false,
     tiedToNext: false,
+    beamBreakAfter: false,
     ...overrides,
   };
+}
+
+/** Eighth notes and shorter can beam together; rests and quarters-or-longer can't. */
+const BEAMABLE_DURATIONS: ReadonlySet<DurationName> = new Set(["eighth", "16th", "32nd"]);
+
+export function isBeamable(note: NotationNote): boolean {
+  return !note.isRest && BEAMABLE_DURATIONS.has(note.duration);
 }
 
 export function createVoice(id: string, notes: NotationNote[] = []): NotationVoice {
@@ -274,6 +282,22 @@ export function toggleTieBefore(
   const note = noteAt(document, target);
   if (!note || note.isRest) return document;
   return replaceNote(document, target, { tiedToNext: !note.tiedToNext });
+}
+
+/**
+ * Toggles a forced beam break just after the note before the cursor -
+ * overriding automatic grouping the same way `toggleTieBefore` overrides
+ * nothing being tied by default. Only beamable notes (eighth or shorter,
+ * not a rest) have a beam to break, so this is a no-op on anything else.
+ */
+export function toggleBeamBreakBefore(
+  document: NotationDocument,
+  cursor: NotationCursor,
+): NotationDocument {
+  const target = { ...cursor, noteIndex: cursor.noteIndex - 1 };
+  const note = noteAt(document, target);
+  if (!note || !isBeamable(note)) return document;
+  return replaceNote(document, target, { beamBreakAfter: !note.beamBreakAfter });
 }
 
 /**

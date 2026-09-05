@@ -39,6 +39,12 @@ export interface NotationNote {
   isRest: boolean;
   /** Tied into the following note. The tie's other end is implied. */
   tiedToNext: boolean;
+  /**
+   * Forces a beam break right after this note, overriding the automatic
+   * beat-based grouping eighths-and-shorter otherwise get - splitting four
+   * sixteenths into 2+2 instead of one beamed group, say.
+   */
+  beamBreakAfter: boolean;
 }
 
 export interface NotationVoice {

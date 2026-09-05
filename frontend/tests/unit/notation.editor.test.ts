@@ -290,6 +290,33 @@ describe("NotationEditor: keyboard entry", () => {
     expect(latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes[0]!.tiedToNext).toBe(true);
   });
 
+  it("K forces a beam break after the note before the cursor", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "4" }); // eighth note duration
+    await root.trigger("keydown", { key: "d" });
+    await root.trigger("keydown", { key: "k" });
+
+    expect(
+      latestDoc(wrapper).staves[0]!.measures[0]!.voices[0]!.notes[0]!.beamBreakAfter,
+    ).toBe(true);
+  });
+
+  it("K does nothing on a note too long to beam", async () => {
+    const wrapper = mount(NotationEditor, {
+      props: { modelValue: createDocument({ measureCount: 1 }) },
+    });
+    const root = wrapper.find("[tabindex]");
+
+    await root.trigger("keydown", { key: "d" }); // default quarter-note duration
+    await root.trigger("keydown", { key: "k" });
+
+    expect(wrapper.emitted("update:modelValue")).toHaveLength(1); // just the note entry
+  });
+
   it("leaves modified keystrokes to the browser", async () => {
     const wrapper = mount(NotationEditor, {
       props: { modelValue: createDocument({ measureCount: 1 }) },

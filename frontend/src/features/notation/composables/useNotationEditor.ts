@@ -25,6 +25,7 @@ import {
   diatonicIndex,
   fits,
   insertNote,
+  isBeamable,
   locateNote,
   measureCount as countMeasures,
   measureQuarters,
@@ -35,6 +36,7 @@ import {
   notesInRange,
   removeLastMeasure,
   setTempo as setDocumentTempo,
+  toggleBeamBreakBefore,
   toggleTieBefore,
 } from "../document";
 import type {
@@ -156,6 +158,13 @@ export function useNotationEditor(
   const isTiedAtCursor = computed(() => noteBeforeCursor.value?.tiedToNext ?? false);
   /** Which note to highlight, so the cursor is visible on the staff, not just internal state. */
   const cursorNoteId = computed(() => noteBeforeCursor.value?.id ?? null);
+
+  /** The note the "break beam" control acts on - same target as the tie control. */
+  const canToggleBeamAtCursor = computed(() => {
+    const note = noteBeforeCursor.value;
+    return note !== undefined && isBeamable(note);
+  });
+  const isBeamBrokenAtCursor = computed(() => noteBeforeCursor.value?.beamBreakAfter ?? false);
 
   /** The voices sharing the cursor's staff, for a voice selector to list. */
   const activeStaffVoices = computed<NotationVoice[]>(
@@ -305,6 +314,16 @@ export function useNotationEditor(
       return;
     }
     commit(toggleTieBefore(document.value, cursor.value));
+  }
+
+  /** Forces (or lifts) a beam break just after the note before the cursor. */
+  function toggleBeamBreak(): void {
+    if (!canToggleBeamAtCursor.value) return;
+    if (isStaffLocked(cursor.value.staffIndex)) {
+      lastRefusal.value = LOCKED_STAFF_MESSAGE;
+      return;
+    }
+    commit(toggleBeamBreakBefore(document.value, cursor.value));
   }
 
   /** Selects an existing note by clicking it - the cursor lands just after it. */
@@ -628,6 +647,8 @@ export function useNotationEditor(
     canRemoveMeasure,
     canTieAtCursor,
     isTiedAtCursor,
+    canToggleBeamAtCursor,
+    isBeamBrokenAtCursor,
     cursorNoteId,
     activeStaffVoices,
     selectedNoteIds,
@@ -646,6 +667,7 @@ export function useNotationEditor(
     placeAt,
     placeStep,
     toggleTie,
+    toggleBeamBreak,
     selectNote,
     clearSelection,
     extendSelectionLeft,

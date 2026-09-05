@@ -31,6 +31,7 @@ export interface NotationNoteDto {
   dots: number;
   is_rest: boolean;
   tied_to_next: boolean;
+  beam_break_after: boolean;
 }
 
 export interface NotationVoiceDto {
@@ -68,6 +69,7 @@ function mapNoteFromDto(dto: NotationNoteDto): NotationNote {
     dots: dto.dots,
     isRest: dto.is_rest,
     tiedToNext: dto.tied_to_next,
+    beamBreakAfter: dto.beam_break_after,
   };
 }
 
@@ -81,6 +83,7 @@ function mapNoteToDto(note: NotationNote): NotationNoteDto {
     dots: note.dots,
     is_rest: note.isRest,
     tied_to_next: note.tiedToNext,
+    beam_break_after: note.beamBreakAfter,
   };
 }
 

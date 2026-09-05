@@ -13,6 +13,7 @@ import {
   fromDiatonicIndex,
   getVoice,
   insertNote,
+  isBeamable,
   locateNote,
   measureCount,
   measureQuarters,
@@ -26,6 +27,7 @@ import {
   removeLastMeasure,
   replaceNote,
   setTempo,
+  toggleBeamBreakBefore,
   toggleTieBefore,
   voiceQuarters,
 } from "@/features/notation/document";
@@ -308,6 +310,42 @@ describe("ties", () => {
     const doc = createDocument({ measureCount: 1 });
     const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
     expect(toggleTieBefore(doc, cursor)).toBe(doc);
+  });
+});
+
+describe("beaming", () => {
+  it("only eighths and shorter, and never a rest, are beamable", () => {
+    expect(isBeamable(createNote({ duration: "eighth" }))).toBe(true);
+    expect(isBeamable(createNote({ duration: "16th" }))).toBe(true);
+    expect(isBeamable(createNote({ duration: "32nd" }))).toBe(true);
+    expect(isBeamable(createNote({ duration: "quarter" }))).toBe(false);
+    expect(isBeamable(createNote({ duration: "eighth", isRest: true }))).toBe(false);
+  });
+
+  it("toggles a forced break on the note before the cursor", () => {
+    let doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, { duration: "eighth" });
+    doc = r.document;
+
+    doc = toggleBeamBreakBefore(doc, r.cursor);
+    expect(getVoice(doc, cursor)!.notes[0]!.beamBreakAfter).toBe(true);
+    doc = toggleBeamBreakBefore(doc, r.cursor);
+    expect(getVoice(doc, cursor)!.notes[0]!.beamBreakAfter).toBe(false);
+  });
+
+  it("refuses to break a beam on a note too long to have one", () => {
+    const doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    const r = place(doc, cursor, { duration: "quarter" });
+    const after = toggleBeamBreakBefore(r.document, r.cursor);
+    expect(after).toBe(r.document);
+  });
+
+  it("does nothing with no note before the cursor", () => {
+    const doc = createDocument({ measureCount: 1 });
+    const cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    expect(toggleBeamBreakBefore(doc, cursor)).toBe(doc);
   });
 });
 

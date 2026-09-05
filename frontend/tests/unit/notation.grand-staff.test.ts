@@ -3,8 +3,9 @@ import { describe, expect, it } from "vitest";
 
 import StaffRenderer from "@/features/notation/components/StaffRenderer.vue";
 import { useNotationEditor } from "@/features/notation/composables/useNotationEditor";
-import { createDocument, createSatbDocument } from "@/features/notation/document";
-import { stemDirectionForVoice } from "@/features/notation/vexflow";
+import { createDocument, createNote, createSatbDocument, insertNote } from "@/features/notation/document";
+import type { NotationCursor } from "@/features/notation/types";
+import { buildBeams, buildVoice, stemDirectionForVoice } from "@/features/notation/vexflow";
 
 describe("createSatbDocument", () => {
   it("builds a treble+bass grand staff with two voices per staff", () => {
@@ -28,6 +29,41 @@ describe("stemDirectionForVoice", () => {
     expect(stemDirectionForVoice(1, 2)).toBe(-1);
     expect(stemDirectionForVoice(2, 4)).toBe(1);
     expect(stemDirectionForVoice(3, 4)).toBe(-1);
+  });
+});
+
+describe("buildBeams", () => {
+  function eighthsDocument(count: number): ReturnType<typeof createDocument> {
+    let doc = createDocument({ measureCount: 1 });
+    let cursor: NotationCursor = { staffIndex: 0, measureIndex: 0, voiceId: "1", noteIndex: 0 };
+    for (let i = 0; i < count; i += 1) {
+      const result = insertNote(doc, cursor, createNote({ duration: "eighth" }));
+      doc = result.document;
+      cursor = result.cursor;
+    }
+    return doc;
+  }
+
+  it("groups eighths in pairs by default", () => {
+    const doc = eighthsDocument(4);
+    const voice = doc.staves[0]!.measures[0]!.voices[0]!;
+    const built = buildVoice(doc, voice, "treble");
+
+    const beams = buildBeams(built);
+    expect(beams.map((beam) => beam.getNotes().length)).toEqual([2, 2]);
+  });
+
+  it("splits a beam wherever a note forces a break, without touching the rest", () => {
+    const doc = eighthsDocument(4);
+    const voice = doc.staves[0]!.measures[0]!.voices[0]!;
+    voice.notes[0]!.beamBreakAfter = true;
+    const built = buildVoice(doc, voice, "treble");
+
+    const beams = buildBeams(built);
+    // Note 0 stands alone (no beam), notes 1-2 still pair up by default,
+    // and note 3 is left over with no partner.
+    expect(beams).toHaveLength(1);
+    expect(beams[0]!.getNotes()).toHaveLength(2);
   });
 });
 

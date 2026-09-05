@@ -36,6 +36,10 @@ class NotationNote(BaseModel):
     dots: int = Field(ge=0, le=2)
     is_rest: bool
     tied_to_next: bool
+    # Forces a beam break right after this note, overriding automatic
+    # beat-based grouping. Defaulted rather than required so a document
+    # saved before this field existed still validates.
+    beam_break_after: bool = False
 
 
 class NotationVoice(BaseModel):

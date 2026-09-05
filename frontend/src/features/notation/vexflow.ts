@@ -126,9 +126,29 @@ export function applyAccidentals(document: NotationDocument, voices: Voice[]): v
   Accidental.applyAccidentals(voices, keySignatureName(document.fifths));
 }
 
-/** Beams eighths and shorter, leaving quarters and longer alone. */
+/**
+ * Beams eighths and shorter, leaving quarters and longer alone.
+ *
+ * Split into chunks at every `beamBreakAfter` note before handing each one
+ * to VexFlow - a forced break just means "don't let this note's own chunk
+ * extend past it", which `generateBeams` still figures out beat-grouping
+ * and rest/long-note breaks for on its own, exactly as it would for the
+ * whole voice at once.
+ */
 export function buildBeams(built: BuiltVoice): Beam[] {
-  return Beam.generateBeams(built.notes.map((entry) => entry.staveNote));
+  const beams: Beam[] = [];
+  let chunkStart = 0;
+
+  built.notes.forEach((entry, index) => {
+    const isLast = index === built.notes.length - 1;
+    if (entry.note.beamBreakAfter || isLast) {
+      const chunk = built.notes.slice(chunkStart, index + 1).map((e) => e.staveNote);
+      beams.push(...Beam.generateBeams(chunk));
+      chunkStart = index + 1;
+    }
+  });
+
+  return beams;
 }
 
 /**

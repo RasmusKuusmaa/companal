@@ -14,6 +14,7 @@ import { useNotationPlayback } from "../composables/useNotationPlayback";
 import { DURATIONS, MAX_DOTS, PITCH_STEPS } from "../constants";
 import type { NotationDocument, PitchStep } from "../types";
 import AccidentalPalette from "./AccidentalPalette.vue";
+import BeamToggle from "./BeamToggle.vue";
 import CopyPasteControls from "./CopyPasteControls.vue";
 import DurationPalette from "./DurationPalette.vue";
 import MeasureControls from "./MeasureControls.vue";
@@ -156,6 +157,11 @@ function handleKeydown(event: KeyboardEvent): void {
     editor.toggleTie();
     return;
   }
+  if (letter === "K") {
+    event.preventDefault();
+    editor.toggleBeamBreak();
+    return;
+  }
   if ((PITCH_STEPS as readonly string[]).includes(letter)) {
     event.preventDefault();
     editor.placeStep(letter as PitchStep);
@@ -189,6 +195,11 @@ function handleKeydown(event: KeyboardEvent): void {
         :active="editor.isTiedAtCursor.value"
         :disabled="!editor.canTieAtCursor.value"
         @toggle="editor.toggleTie"
+      />
+      <BeamToggle
+        :active="editor.isBeamBrokenAtCursor.value"
+        :disabled="!editor.canToggleBeamAtCursor.value"
+        @toggle="editor.toggleBeamBreak"
       />
       <CopyPasteControls
         :can-copy="editor.canCopy.value"
