@@ -256,5 +256,94 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="irregular-meter-and-anacrusis",
+            title="Irregular Meter and Anacrusis",
+            summary="Asymmetrical groupings and pickup notes that begin before the downbeat.",
+            estimated_minutes=10,
+            steps=[
+                StepDef(
+                    slug="irregular-meter-anacrusis-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Irregular meter and anacrusis\n\n"
+                            "## Irregular meter\n\n"
+                            "Not every meter divides evenly into twos or threes. "
+                            "**Irregular** (or asymmetrical) meters like 5/4 and 7/8 mix "
+                            "groups of two and three beats within the same measure. A 5/4 "
+                            "measure is usually felt as 3+2 or 2+3; a 7/8 measure as "
+                            "2+2+3, 3+2+2 or 2+3+2. The grouping isn't arbitrary - it's "
+                            "chosen by the composer and often marked in the score, and it "
+                            "changes where the strong beats fall.\n\n"
+                            "## Anacrusis\n\n"
+                            "A phrase doesn't have to start on beat one. An **anacrusis** - "
+                            "a pickup note or notes - leads into the first downbeat from "
+                            "before it, borrowing time rather than adding it: the note "
+                            "values in the pickup measure and the final measure of the "
+                            "phrase together add up to one full measure, as if the last "
+                            "measure lent the first one its missing beats. Countless "
+                            "melodies begin this way - think of a tune that starts on an "
+                            "upbeat rather than landing squarely on beat one."
+                        )
+                    },
+                    topics=["irregular-meter-and-anacrusis"],
+                ),
+                StepDef(
+                    slug="irregular-meter-anacrusis-quiz-grouping",
+                    kind="quiz",
+                    payload={
+                        "question": "A 7/8 measure is most naturally grouped as:",
+                        "choices": [
+                            "2+2+3 (or another mix of twos and threes)",
+                            "Seven equal quarter notes",
+                            "3+4+1",
+                            "One long undivided beat",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "7/8 doesn't divide evenly into twos or threes alone, so it "
+                            "mixes them - commonly 2+2+3, though 3+2+2 and 2+3+2 are just "
+                            "as valid depending on where the composer wants the accents."
+                        ),
+                    },
+                    topics=["irregular-meter-and-anacrusis"],
+                ),
+                StepDef(
+                    slug="irregular-meter-anacrusis-quiz-pickup",
+                    kind="quiz",
+                    payload={
+                        "question": "What is an anacrusis?",
+                        "choices": [
+                            "A note played deliberately out of tune",
+                            "A pickup note or notes before the first full measure",
+                            "A rest that closes out a piece",
+                            "A written-out slowing down at a cadence",
+                        ],
+                        "answer_index": 1,
+                        "explanation": (
+                            "An anacrusis is the pickup - one or more notes that lead into "
+                            "the first downbeat from before the first full measure begins."
+                        ),
+                    },
+                    topics=["irregular-meter-and-anacrusis"],
+                ),
+                StepDef(
+                    slug="irregular-meter-anacrusis-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "Write a four-measure phrase in 4/4 that begins with a "
+                            "one-beat pickup."
+                        ),
+                        "requirements": [
+                            {"type": "time_signature", "value": "4/4"},
+                            {"type": "measure_count", "count": 4},
+                        ],
+                    },
+                    topics=["irregular-meter-and-anacrusis"],
+                ),
+            ],
+        ),
     ],
 )
