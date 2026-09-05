@@ -1,8 +1,8 @@
-# Cadence API — backend foundation
+# Cadence API
 
-FastAPI + SQLAlchemy 2.0 (async) + PostgreSQL + Alembic + JWT auth. The
-`auth` domain (register/login/refresh/logout/me) is fully implemented; see
-`app/domains/` to add the next one (courses, projects, analysis, feedback, ...).
+FastAPI + SQLAlchemy 2.0 (async) + PostgreSQL + Alembic + music21, behind
+JWT auth. See the root `README.md` for what the app as a whole does; this
+one is the backend's own setup and layout.
 
 ## Local setup — native Postgres (recommended for this project)
 
@@ -128,16 +128,23 @@ replayed — revokes every session for that user, not just the one token. See
 ```
 app/
 ├─ main.py              # app factory / entry point
-├─ core/                # config, security (JWT + password hashing), logging, shared deps
-├─ db/                  # declarative base, async session, Alembic env + migrations
+├─ cli.py                # `python -m app.cli seed-curriculum` - migrates nothing, just syncs content
+├─ core/                  # config, security (JWT + password hashing), logging, shared deps
+├─ db/                     # declarative base, async session, Alembic env + migrations
 ├─ domains/
-│  ├─ users/             # User model + read schema
-│  └─ auth/               # registration, login, refresh-token rotation, RefreshToken model
+│  ├─ users/                # User model + read schema
+│  ├─ auth/                  # registration, login, refresh-token rotation, RefreshToken model
+│  ├─ learning/                # curriculum content, lessons, mastery/skill-map, progress
+│  ├─ exams/                     # per-stage + comprehensive exams, held-and-graded attempts
+│  ├─ notation/                   # the shared document model, deterministic grading, MusicXML
+│  ├─ projects/                     # standalone composition uploads/versions, outside any lesson
+│  ├─ feedback/                       # AI composition feedback (additive, never the grader)
+│  ├─ billing/                         # subscription tier, AI usage ledger
+│  └─ analysis/                         # melody/harmony/rhythm engines composition grading runs on
 ├─ api/v1/               # routers, aggregated in router.py
 └─ tests/
 ```
 
-Layering convention: `router → service → repository → ORM model`. A domain
-never imports another domain's internals directly — only what that domain
-exposes from its own `service.py` (not yet needed until a second domain
-exists).
+Layering convention: `router → service → repository/ORM model`. A domain
+only imports another domain's own `service.py`/`schemas.py`, never another
+domain's internals directly.

@@ -1,9 +1,8 @@
-# Cadence frontend foundation
+# Cadence frontend
 
 Vue 3 + TypeScript + Vite, with Pinia, Vue Router, an axios service layer,
-and a small reusable component set. No feature pages yet — see `src/app/views`
-and `src/features/auth/views` for the placeholder routes that prove the
-wiring works.
+and a shared component set. See the root `README.md` for what the app as
+a whole does; this one is the frontend's own setup and layout.
 
 ## Setup
 
@@ -43,24 +42,30 @@ chromium`.
 
 ```
 src/
-├─ app/                  # shell: main.ts, App.vue, router, app-level placeholder views
+├─ app/                  # shell: main.ts, App.vue, router, DashboardView
 ├─ features/
-│  └─ auth/               # types, api client, Pinia store, placeholder login route
+│  ├─ auth/               # types, api client, Pinia store, login/register views
+│  ├─ learning/             # curriculum player, roadmap, skill map
+│  ├─ exams/                 # exam overview, attempt runner, result, history
+│  ├─ notation/                # the staff editor (VexFlow) and its ~20 components/composables
+│  ├─ projects/                  # standalone composition workspace, score viewer
+│  ├─ feedback/                    # AI feedback display components
+│  └─ billing/                      # pricing view
 ├─ shared/
 │  ├─ components/base/     # BaseButton, BaseInput, BaseCard
-│  └─ utils/                # toApiProblem (axios error -> Problem Details)
+│  └─ utils/                # toApiProblem (axios error -> Problem Details), markdown, download
 ├─ services/
 │  ├─ http.ts                # axios instance: auth header + 401 refresh-and-retry
 │  └─ token-storage.ts        # in-memory access token, persisted refresh token
 ├─ types/                      # cross-feature API types
 └─ styles/                      # Tailwind entry
-tests/unit/                      # Vitest + @vue/test-utils
+tests/unit/                      # Vitest + @vue/test-utils (component-level, APIs mocked)
+e2e/                               # Playwright (real browser, real backend)
 ```
 
 Same layering convention as the backend: a feature owns its `api/` (DTOs +
 mapping to domain types) and `stores/`; `shared/` and `services/` never
-import from a feature. Auth is the only populated feature so far — the next
-slice (courses, projects, score-editor, ...) follows this same shape.
+import from a feature.
 
 ### Why the auth store looks the way it does
 
