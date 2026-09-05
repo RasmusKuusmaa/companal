@@ -8,7 +8,56 @@ from app.domains.exams.definitions import ExamDef, ExamQuestionDef
 from app.domains.exams.seeding import seed_exams
 from app.domains.exams.service import start_attempt
 
+EXAMS_URL = "/api/v1/exams"
 HISTORY_URL = "/api/v1/exams/final-exam/history"
+
+
+def _quiz_question(slug: str = "q1") -> ExamQuestionDef:
+    return ExamQuestionDef(
+        slug=slug,
+        kind="quiz",
+        payload={
+            "question": "2+2?",
+            "choices": ["3", "4"],
+            "answer_index": 1,
+            "explanation": "math",
+        },
+    )
+
+
+def _composition_question(slug: str = "c1") -> ExamQuestionDef:
+    return ExamQuestionDef(
+        slug=slug, kind="composition", payload={"brief": "Write something.", "requirements": []}
+    )
+
+
+def _note() -> dict[str, object]:
+    return {
+        "id": "n",
+        "step": "C",
+        "octave": 4,
+        "alter": 0,
+        "duration": "whole",
+        "dots": 0,
+        "is_rest": False,
+        "tied_to_next": False,
+    }
+
+
+def _document() -> dict[str, object]:
+    return {
+        "fifths": 0,
+        "mode": "major",
+        "time": {"beats": 4, "beat_type": 4},
+        "tempo": 90,
+        "staves": [
+            {
+                "id": "s1",
+                "clef": "treble",
+                "measures": [{"id": "m0", "voices": [{"id": "1", "notes": [_note()]}]}],
+            }
+        ],
+    }
 
 
 async def _auth_headers(client: AsyncClient, email: str = "examer@example.com") -> dict[str, str]:
@@ -37,18 +86,7 @@ async def seeded(db_session: AsyncSession) -> None:
                 slug="final-exam",
                 title="Final",
                 description="d",
-                questions=[
-                    ExamQuestionDef(
-                        slug="q1",
-                        kind="quiz",
-                        payload={
-                            "question": "2+2?",
-                            "choices": ["3", "4"],
-                            "answer_index": 1,
-                            "explanation": "math",
-                        },
-                    )
-                ],
+                questions=[_quiz_question(), _composition_question()],
             )
         ],
     )
@@ -110,3 +148,177 @@ class TestAttemptHistory:
         response = await client.get("/api/v1/exams/no-such-exam/history", headers=headers)
 
         assert response.status_code == 404
+
+
+class TestListExams:
+    async def test_requires_a_token(self, client: AsyncClient, seeded: None) -> None:
+        response = await client.get(EXAMS_URL)
+        assert response.status_code == 401
+
+    async def test_lists_every_exam(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.get(EXAMS_URL, headers=headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert len(body) == 1
+        assert body[0]["slug"] == "final-exam"
+        assert body[0]["question_count"] == 2
+        assert body[0]["course_slug"] is None
+
+
+class TestStartAttemptEndpoint:
+    async def test_starts_a_fresh_attempt(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["attempt_number"] == 1
+        assert len(body["exam"]["questions"]) == 2
+
+    async def test_unknown_exam_slug_is_a_404(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post("/api/v1/exams/no-such-exam/attempts", headers=headers)
+
+        assert response.status_code == 404
+
+
+class TestAnswerEndpoint:
+    async def _attempt(self, client: AsyncClient, headers: dict[str, str]) -> dict[str, object]:
+        start = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        body: dict[str, object] = start.json()
+        return body
+
+    async def test_holds_a_quiz_answer(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        attempt = await self._attempt(client, headers)
+        attempt_id = attempt["attempt_id"]
+        question_id = attempt["exam"]["questions"][0]["id"]  # type: ignore[index]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{question_id}/answer",
+            json={"answer": {"kind": "quiz", "choice_index": 1}},
+            headers=headers,
+        )
+
+        assert response.status_code == 200
+        assert response.json()["answered"] is True
+
+    async def test_holds_a_composition_answer(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        attempt = await self._attempt(client, headers)
+        attempt_id = attempt["attempt_id"]
+        question_id = attempt["exam"]["questions"][1]["id"]  # type: ignore[index]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{question_id}/answer",
+            json={"answer": {"kind": "composition", "document": _document()}},
+            headers=headers,
+        )
+
+        assert response.status_code == 200
+
+    async def test_a_kind_mismatch_is_a_400(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        attempt = await self._attempt(client, headers)
+        attempt_id = attempt["attempt_id"]
+        quiz_question_id = attempt["exam"]["questions"][0]["id"]  # type: ignore[index]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{quiz_question_id}/answer",
+            json={"answer": {"kind": "composition", "document": _document()}},
+            headers=headers,
+        )
+
+        assert response.status_code == 400
+
+    async def test_unknown_attempt_is_a_404(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        attempt = await self._attempt(client, headers)
+        question_id = attempt["exam"]["questions"][0]["id"]  # type: ignore[index]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{uuid.uuid4()}/questions/{question_id}/answer",
+            json={"answer": {"kind": "quiz", "choice_index": 0}},
+            headers=headers,
+        )
+
+        assert response.status_code == 404
+
+    async def test_unknown_question_is_a_404(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        attempt = await self._attempt(client, headers)
+        attempt_id = attempt["attempt_id"]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{uuid.uuid4()}/answer",
+            json={"answer": {"kind": "quiz", "choice_index": 0}},
+            headers=headers,
+        )
+
+        assert response.status_code == 404
+
+
+class TestSubmitEndpoint:
+    async def test_grades_the_attempt(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        start = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        attempt_id = start.json()["attempt_id"]
+        question_id = start.json()["exam"]["questions"][0]["id"]
+        await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/questions/{question_id}/answer",
+            json={"answer": {"kind": "quiz", "choice_index": 1}},
+            headers=headers,
+        )
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/submit", json={}, headers=headers
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["score"] == 1.0
+        assert body["max_score"] == 2.0
+
+    async def test_submitting_twice_is_a_400(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+        start = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        attempt_id = start.json()["attempt_id"]
+        await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/submit", json={}, headers=headers
+        )
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/submit", json={}, headers=headers
+        )
+
+        assert response.status_code == 400
+
+    async def test_unknown_attempt_is_a_404(self, client: AsyncClient, seeded: None) -> None:
+        headers = await _auth_headers(client)
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{uuid.uuid4()}/submit", json={}, headers=headers
+        )
+
+        assert response.status_code == 404
+
+    async def test_ai_feedback_is_gated_behind_premium(
+        self, client: AsyncClient, seeded: None
+    ) -> None:
+        headers = await _auth_headers(client)
+        start = await client.post("/api/v1/exams/final-exam/attempts", headers=headers)
+        attempt_id = start.json()["attempt_id"]
+
+        response = await client.post(
+            f"/api/v1/exams/attempts/{attempt_id}/submit",
+            json={"with_ai_feedback": True},
+            headers=headers,
+        )
+
+        assert response.status_code == 402
+        assert response.json()["detail"]["feature"] == "ai_exam_rubric_grading"

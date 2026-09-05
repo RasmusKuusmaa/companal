@@ -11,6 +11,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 
 from app.domains.exams.models import ExamQuestionKind
+from app.domains.feedback.models import SkillLevel
 from app.domains.learning.schemas import CompositionPayload, QuizPayload
 from app.domains.notation.requirements import Requirement
 from app.domains.notation.schemas import NotationDocument
@@ -34,6 +35,7 @@ __all__ = [
     "ExamAttemptResultRead",
     "ExamAttemptSummary",
     "ExamAttemptHistoryRead",
+    "ExamSubmitRequest",
 ]
 
 
@@ -205,3 +207,17 @@ class ExamAttemptSummary(BaseModel):
 class ExamAttemptHistoryRead(BaseModel):
     exam_slug: str
     attempts: list[ExamAttemptSummary]
+
+
+class ExamSubmitRequest(BaseModel):
+    """What the client sends to grade an attempt.
+
+    `with_ai_feedback` is opt-in and additive, the same convention as
+    `learning.schemas.CompositionSubmissionRequest`: the deterministic
+    grade is computed either way, and asking for AI commentary can only add
+    to the response. Whether a free user is even allowed to ask is enforced
+    by the route (`Feature.AI_EXAM_RUBRIC_GRADING`), not by this schema.
+    """
+
+    with_ai_feedback: bool = False
+    skill_level: SkillLevel = SkillLevel.BEGINNER

@@ -29,6 +29,7 @@ from app.domains.exams.schemas import (
     ExamQuestionResultRead,
     ExamQuizQuestionRead,
     ExamRead,
+    ExamSummary,
 )
 from app.domains.feedback.models import SkillLevel
 from app.domains.learning.models import Course
@@ -115,6 +116,42 @@ async def _exam_read(db: AsyncSession, exam: Exam) -> ExamRead:
         question_count=len(questions),
         questions=[_public_question(question) for question in questions],
     )
+
+
+async def list_exams(db: AsyncSession) -> list[ExamSummary]:
+    """Every exam, in position order - one per stage, plus the final.
+
+    Batch-fetched and joined in memory rather than queried per exam: the
+    exam list is small (a handful of stages), and this is the same
+    "constant queries whatever the size of the content" shape `learning.
+    service.get_roadmap` uses for courses and lessons.
+    """
+    exams = (await db.scalars(select(Exam).order_by(Exam.position, Exam.slug))).all()
+
+    course_ids = {exam.course_id for exam in exams if exam.course_id is not None}
+    courses = (
+        (await db.scalars(select(Course).where(Course.id.in_(course_ids)))).all()
+        if course_ids
+        else []
+    )
+    slug_by_course_id = {course.id: course.slug for course in courses}
+
+    counts = await db.execute(
+        select(ExamQuestion.exam_id, func.count(ExamQuestion.id)).group_by(ExamQuestion.exam_id)
+    )
+    count_by_exam_id: dict[uuid.UUID, int] = {exam_id: count for exam_id, count in counts}
+
+    return [
+        ExamSummary(
+            id=exam.id,
+            slug=exam.slug,
+            title=exam.title,
+            description=exam.description,
+            course_slug=slug_by_course_id.get(exam.course_id) if exam.course_id else None,
+            question_count=count_by_exam_id.get(exam.id, 0),
+        )
+        for exam in exams
+    ]
 
 
 async def _next_attempt_number(db: AsyncSession, user_id: uuid.UUID, exam_id: uuid.UUID) -> int:
