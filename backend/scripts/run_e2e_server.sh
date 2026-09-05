@@ -13,7 +13,7 @@ cd "$(dirname "$0")/.."
 source .venv/bin/activate
 
 : "${E2E_DB_HOST:=localhost}"
-: "${E2E_DB_PORT:=5433}"
+: "${E2E_DB_PORT:=5432}"
 : "${E2E_DB_USER:=cadence}"
 : "${E2E_DB_PASSWORD:=cadence}"
 : "${E2E_DB_NAME:=cadence_e2e}"
