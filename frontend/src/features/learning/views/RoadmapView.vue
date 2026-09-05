@@ -10,7 +10,8 @@
  */
 import { computed, onMounted, ref } from "vue";
 
-import { BaseCard } from "@/shared/components/base";
+import { useExamsStore } from "@/features/exams/stores/exams.store";
+import { BaseButton, BaseCard } from "@/shared/components/base";
 import { toApiProblem } from "@/shared/utils/api-error";
 
 import LessonCard from "../components/LessonCard.vue";
@@ -18,9 +19,22 @@ import ProgressRing from "../components/ProgressRing.vue";
 import { useLearningStore } from "../stores/learning.store";
 
 const store = useLearningStore();
+const examsStore = useExamsStore();
 const loadError = ref("");
 
 const hasCurriculum = computed(() => (store.roadmap?.courses.length ?? 0) > 0);
+
+/** An exam sits at the end of each stage - keyed by the course it closes
+ *  out, so each section can look its own exam up without a linear scan. */
+const examSlugByCourseSlug = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {};
+  for (const exam of examsStore.exams) {
+    if (exam.courseSlug) map[exam.courseSlug] = exam.slug;
+  }
+  return map;
+});
+
+const finalExam = computed(() => examsStore.exams.find((exam) => exam.courseSlug === null) ?? null);
 
 const continueSlug = computed(() => store.progress?.continueLessonSlug ?? null);
 const continueLesson = computed(() => {
@@ -44,6 +58,14 @@ onMounted(async () => {
   } catch (error) {
     loadError.value = toApiProblem(error).detail ?? "Could not load the roadmap.";
   }
+
+  // Exam entry points are an embellishment on the roadmap, not core to it -
+  // a failure here shouldn't stop the roadmap itself from being usable.
+  try {
+    await examsStore.fetchExams();
+  } catch {
+    // Sections simply render without an exam link - see above.
+  }
 });
 </script>
 
@@ -54,8 +76,8 @@ onMounted(async () => {
         <div>
           <h1 class="text-xl font-semibold text-slate-900">Roadmap</h1>
           <p class="mt-1 text-sm text-slate-500">
-            Theory and composition, one topic at a time. Work through it in order, or go straight
-            to what you need.
+            Theory and composition, one topic at a time. Work through it in order, or go straight to
+            what you need.
           </p>
         </div>
         <RouterLink
@@ -115,7 +137,27 @@ onMounted(async () => {
               :index="index"
             />
           </div>
+
+          <RouterLink
+            v-if="examSlugByCourseSlug[course.slug]"
+            :to="`/exams/${examSlugByCourseSlug[course.slug]}/attempt`"
+            class="mt-2 block rounded-lg border border-dashed border-slate-300 p-3 text-center text-sm font-medium text-slate-600 transition-colors hover:border-slate-400 hover:text-slate-900"
+          >
+            Take the {{ course.title }} exam →
+          </RouterLink>
         </section>
+
+        <BaseCard v-if="finalExam" class="mt-2">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 class="text-base font-semibold text-slate-900">{{ finalExam.title }}</h2>
+              <p class="mt-1 text-sm text-slate-600">{{ finalExam.description }}</p>
+            </div>
+            <RouterLink :to="`/exams/${finalExam.slug}/attempt`">
+              <BaseButton>Start</BaseButton>
+            </RouterLink>
+          </div>
+        </BaseCard>
       </template>
     </div>
   </main>

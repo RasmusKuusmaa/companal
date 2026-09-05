@@ -9,6 +9,13 @@ vi.mock("@/features/learning/api/learning.api", () => ({
   },
 }));
 
+vi.mock("@/features/exams/api/exams.api", () => ({
+  examsApi: {
+    listExams: vi.fn(),
+  },
+}));
+
+import { examsApi } from "@/features/exams/api/exams.api";
 import { learningApi } from "@/features/learning/api/learning.api";
 import RoadmapView from "@/features/learning/views/RoadmapView.vue";
 import type { Roadmap, ProgressSummary } from "@/features/learning/types";
@@ -86,6 +93,7 @@ describe("RoadmapView", () => {
     vi.clearAllMocks();
     vi.mocked(learningApi.getRoadmap).mockResolvedValue(roadmap);
     vi.mocked(learningApi.getProgress).mockResolvedValue(progress);
+    vi.mocked(examsApi.listExams).mockResolvedValue([]);
   });
 
   it("renders every stage", async () => {
@@ -165,5 +173,60 @@ describe("RoadmapView", () => {
     // back to its own wording rather than surfacing a raw exception message.
     expect(wrapper.text()).toContain("Could not load the roadmap");
     expect(wrapper.text()).not.toContain("Fundamentals");
+  });
+
+  it("links to the stage exam at the end of its section", async () => {
+    vi.mocked(examsApi.listExams).mockResolvedValue([
+      {
+        id: "exam-1",
+        slug: "fundamentals-exam",
+        title: "Fundamentals exam",
+        description: "d",
+        courseSlug: "fundamentals",
+        questionCount: 3,
+      },
+    ]);
+
+    const wrapper = mountView();
+    await flush();
+    await flush();
+
+    expect(wrapper.text()).toContain("Take the Fundamentals exam");
+    const hrefs = wrapper.findAllComponents(RouterLinkStub).map((link) => link.props().to);
+    expect(hrefs).toContain("/exams/fundamentals-exam/attempt");
+  });
+
+  it("offers the comprehensive final once every stage is listed", async () => {
+    vi.mocked(examsApi.listExams).mockResolvedValue([
+      {
+        id: "exam-final",
+        slug: "final-exam",
+        title: "Comprehensive final",
+        description: "Everything, together.",
+        courseSlug: null,
+        questionCount: 10,
+      },
+    ]);
+
+    const wrapper = mountView();
+    await flush();
+    await flush();
+
+    expect(wrapper.text()).toContain("Comprehensive final");
+    const hrefs = wrapper.findAllComponents(RouterLinkStub).map((link) => link.props().to);
+    expect(hrefs).toContain("/exams/final-exam/attempt");
+  });
+
+  it("does not stumble when exams fail to load", async () => {
+    vi.mocked(examsApi.listExams).mockRejectedValue(new Error("network down"));
+
+    const wrapper = mountView();
+    await flush();
+    await flush();
+
+    // The roadmap itself is unaffected - exam entry points are an
+    // embellishment, not something that should take the page down.
+    expect(wrapper.text()).toContain("Fundamentals");
+    expect(wrapper.text()).not.toContain("Could not load the roadmap");
   });
 });
