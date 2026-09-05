@@ -286,5 +286,83 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="roman-numeral-analysis-in-minor",
+            title="Roman Numeral Analysis in Minor",
+            summary="The same labeling in minor, where the raised leading tone complicates it.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="roman-numerals-minor-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Roman numeral analysis in minor\n\n"
+                            "Minor's diatonic triads start from natural minor, using only "
+                            "the key signature's own notes:\n\n"
+                            "- **i** (minor) - the tonic\n"
+                            "- **ii°** (diminished)\n"
+                            "- **III** (major)\n"
+                            "- **iv** (minor)\n"
+                            "- **v** (minor)\n"
+                            "- **VI** (major)\n"
+                            "- **VII** (major)\n\n"
+                            "That lowercase **v** is the catch: a minor dominant has no "
+                            "leading tone and only a weak pull back to the tonic. In "
+                            "practice, harmony almost always **raises the 7th degree** - "
+                            "borrowing from harmonic minor - specifically to fix this, "
+                            "turning v into a proper major **V** with a leading tone a "
+                            "half step below the tonic, exactly the way a dominant is "
+                            "supposed to behave. The other diatonic triads (i, ii°, III, "
+                            "iv, VI) are normally left in their natural-minor form; only "
+                            "the chords that need the leading tone borrow it."
+                        )
+                    },
+                    topics=["roman-numerals-minor"],
+                ),
+                StepDef(
+                    slug="roman-numerals-minor-quiz-why-raise",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Why is the raised (harmonic minor) 7th degree normally used "
+                            "when building the dominant chord in a minor key?"
+                        ),
+                        "choices": [
+                            "To create a major dominant triad with a real leading tone",
+                            "To lower the 6th scale degree",
+                            "Purely for melodic smoothness, with no harmonic effect",
+                            "It has no effect on the dominant chord",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Raising the 7th degree turns the weak, minor v chord into a "
+                            "major V with a proper leading tone a half step below the "
+                            "tonic - restoring the dominant's normal pull home."
+                        ),
+                    },
+                    topics=["roman-numerals-minor"],
+                ),
+                StepDef(
+                    slug="roman-numerals-minor-quiz-natural-v",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "Built strictly from natural minor (no raised 7th), the "
+                            "triad on the 5th degree is:"
+                        ),
+                        "choices": ["Minor", "Major", "Diminished", "Augmented"],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Without the raised 7th, the 5th degree's triad comes out "
+                            "minor - a minor third stacked under a major third - which "
+                            "is exactly the weak dominant harmonic minor's raised 7th is "
+                            "there to fix."
+                        ),
+                    },
+                    topics=["roman-numerals-minor"],
+                ),
+            ],
+        ),
     ],
 )
