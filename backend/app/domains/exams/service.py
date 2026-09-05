@@ -27,10 +27,8 @@ from app.domains.exams.schemas import (
 )
 from app.domains.learning.models import Course
 from app.domains.learning.schemas import CompositionPayload, QuizPayload
-
-
-class UnsupportedQuestionKindError(Exception):
-    """This question's kind can't be graded yet."""
+from app.domains.notation.grading import grade_submission
+from app.domains.notation.schemas import NotationDocument
 
 
 class ExamNotFoundError(Exception):
@@ -244,10 +242,54 @@ def _grade_quiz_question(
     )
 
 
+def _grade_composition_question(
+    question: ExamQuestion, answer: ExamAnswer | None
+) -> ExamQuestionResultRead:
+    """Grades a composition question against its requirements, via the same
+    deterministic pipeline `learning.service.submit_composition` grades a
+    lesson's composition steps with (see `notation.grading.grade_submission`).
+
+    An unanswered question - or one whose held payload isn't a document,
+    which shouldn't happen but is handled the same way rather than raising -
+    scores zero without attempting to grade anything.
+    """
+    if answer is None or answer.payload.get("kind") != "composition":
+        detail: dict[str, object] = {"answered": False}
+        if answer is not None:
+            answer.score = 0.0
+            answer.max_score = 1.0
+            answer.result = detail
+        return ExamQuestionResultRead(
+            question_id=question.id,
+            kind=ExamQuestionKind.COMPOSITION,
+            score=0.0,
+            max_score=1.0,
+            detail=detail,
+        )
+
+    composition = CompositionPayload.model_validate(question.payload)
+    document = NotationDocument.model_validate(answer.payload["document"])
+    grade, _musicxml = grade_submission(document, composition.requirements)
+    score = 1.0 if grade.passed else 0.0
+    grade_detail = grade.model_dump(mode="json")
+
+    answer.score = score
+    answer.max_score = 1.0
+    answer.result = grade_detail
+
+    return ExamQuestionResultRead(
+        question_id=question.id,
+        kind=ExamQuestionKind.COMPOSITION,
+        score=score,
+        max_score=1.0,
+        detail=grade_detail,
+    )
+
+
 def _grade_question(question: ExamQuestion, answer: ExamAnswer | None) -> ExamQuestionResultRead:
     if question.kind is ExamQuestionKind.QUIZ:
         return _grade_quiz_question(question, answer)
-    raise UnsupportedQuestionKindError(question.kind)
+    return _grade_composition_question(question, answer)
 
 
 async def _answers_by_question(

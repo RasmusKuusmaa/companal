@@ -66,6 +66,17 @@ def _composition(slug: str) -> ExamQuestionDef:
     )
 
 
+def _composition_requiring_measures(slug: str, count: int) -> ExamQuestionDef:
+    return ExamQuestionDef(
+        slug=slug,
+        kind="composition",
+        payload={
+            "brief": "Write something.",
+            "requirements": [{"type": "measure_count", "count": count}],
+        },
+    )
+
+
 def _quiz(slug: str) -> ExamQuestionDef:
     return ExamQuestionDef(
         slug=slug,
@@ -539,3 +550,109 @@ class TestGradeAttempt:
 
         with pytest.raises(ExamAttemptNotFoundError):
             await grade_attempt(db_session, someone_else.id, attempt_id)
+
+
+class TestGradeCompositionQuestion:
+    async def _started(
+        self, db_session: AsyncSession, questions: list[ExamQuestionDef]
+    ) -> tuple[uuid.UUID, uuid.UUID, list[uuid.UUID]]:
+        await seed_exams(
+            db_session,
+            exams=[ExamDef(slug="final-exam", title="Final", description="d", questions=questions)],
+        )
+        user = await _make_user(db_session)
+        start = await start_attempt(db_session, user.id, "final-exam")
+        return user.id, start.attempt_id, [q.id for q in start.exam.questions]
+
+    async def test_a_document_meeting_every_requirement_scores_full_marks(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started(db_session, [_composition("c1")])
+        await answer_question(
+            db_session,
+            user_id,
+            attempt_id,
+            question_ids[0],
+            ExamCompositionAnswerPayload(document=_document()),
+        )
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        assert result.score == 1.0
+        assert result.max_score == 1.0
+        assert result.question_results[0].detail["passed"] is True
+
+    async def test_a_document_failing_a_requirement_scores_zero(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started(
+            db_session, [_composition_requiring_measures("c1", count=3)]
+        )
+        await answer_question(
+            db_session,
+            user_id,
+            attempt_id,
+            question_ids[0],
+            ExamCompositionAnswerPayload(document=_document()),
+        )
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        assert result.score == 0.0
+        assert result.question_results[0].detail["passed"] is False
+        assert result.question_results[0].detail["requirement_results"]
+
+    async def test_an_unanswered_composition_question_scores_zero(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, _question_ids = await self._started(db_session, [_composition("c1")])
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        assert result.score == 0.0
+        assert result.question_results[0].detail == {"answered": False}
+
+    async def test_grading_persists_the_full_grade_onto_the_held_answer(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started(db_session, [_composition("c1")])
+        await answer_question(
+            db_session,
+            user_id,
+            attempt_id,
+            question_ids[0],
+            ExamCompositionAnswerPayload(document=_document()),
+        )
+
+        await grade_attempt(db_session, user_id, attempt_id)
+
+        answer = await db_session.scalar(
+            select(ExamAnswer).where(
+                ExamAnswer.attempt_id == attempt_id, ExamAnswer.question_id == question_ids[0]
+            )
+        )
+        assert answer is not None
+        assert answer.score == 1.0
+        assert answer.result["passed"] is True
+
+    async def test_a_mixed_exam_scores_each_question_independently(
+        self, db_session: AsyncSession
+    ) -> None:
+        user_id, attempt_id, question_ids = await self._started(
+            db_session, [_quiz("q1"), _composition("c1")]
+        )
+        await answer_question(
+            db_session, user_id, attempt_id, question_ids[0], ExamQuizAnswerPayload(choice_index=1)
+        )
+        await answer_question(
+            db_session,
+            user_id,
+            attempt_id,
+            question_ids[1],
+            ExamCompositionAnswerPayload(document=_document()),
+        )
+
+        result = await grade_attempt(db_session, user_id, attempt_id)
+
+        assert result.score == 2.0
+        assert result.max_score == 2.0
