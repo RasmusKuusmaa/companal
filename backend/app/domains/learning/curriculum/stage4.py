@@ -487,5 +487,116 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="augmented-sixth-chords",
+            title="Augmented Sixth Chords",
+            summary="Italian, French, and German chords that squeeze into V from both sides.",
+            estimated_minutes=15,
+            steps=[
+                StepDef(
+                    slug="augmented-sixth-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Augmented sixth chords\n\n"
+                            "An **augmented sixth chord** is built around the interval "
+                            "of an augmented 6th - the lowered 6th scale degree in the "
+                            "bass against the raised 4th scale degree above it - and both "
+                            "notes resolve **outward by half step** to the octave on "
+                            "scale degree 5, converging on the dominant from opposite "
+                            "directions at once. That double half-step pull is what gives "
+                            "these chords their unmistakably strong predominant function.\n\n"
+                            "There are three common flavors, distinguished by what else "
+                            "is stacked between the two augmented-sixth notes (using A "
+                            "minor as the example key, so scale degree 6 is F and scale "
+                            "degree 4 is D#):\n\n"
+                            "- **Italian sixth (It+6)**: just the augmented sixth plus a "
+                            "doubled root - F, A, D# - only three distinct pitches.\n"
+                            "- **French sixth (Fr+6)**: F, A, B, D# - adds the 2nd scale "
+                            "degree, giving the chord a distinctive whole-tone flavor.\n"
+                            "- **German sixth (Ger+6)**: F, A, C, D# - adds the lowered "
+                            "3rd scale degree instead, which makes it sound and spell "
+                            "exactly like a dominant seventh chord (enharmonically), "
+                            "though it functions as a predominant, not a dominant.\n\n"
+                            "All three resolve to V (often through a cadential 6/4) with "
+                            "the augmented sixth interval expanding outward to an "
+                            "octave on the dominant's root."
+                        )
+                    },
+                    topics=["augmented-sixth-chords"],
+                ),
+                StepDef(
+                    slug="augmented-sixth-quiz-interval",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "An augmented sixth chord is built around which interval, "
+                            "and how does it resolve?"
+                        ),
+                        "choices": [
+                            "Lowered scale degree 6 against raised scale degree 4, "
+                            "expanding outward to an octave on scale degree 5",
+                            "A perfect fifth, contracting inward to a third",
+                            "A diminished seventh, resolving down by step",
+                            "A major sixth, staying stationary into the tonic",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The chord's defining interval - lowered 6 in the bass "
+                            "against raised 4 above - resolves outward by half step "
+                            "to converge on scale degree 5 from both sides."
+                        ),
+                    },
+                    topics=["augmented-sixth-chords"],
+                ),
+                StepDef(
+                    slug="augmented-sixth-quiz-german",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "The German sixth chord is spelled enharmonically the same "
+                            "as which chord, despite functioning differently?"
+                        ),
+                        "choices": [
+                            "A dominant seventh chord",
+                            "A diminished seventh chord",
+                            "A Neapolitan sixth chord",
+                            "A half-diminished seventh chord",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "Ger+6 adds the lowered 3rd scale degree to the augmented "
+                            "sixth interval, which spells exactly like a dominant "
+                            "seventh chord - though it still functions as a predominant "
+                            "resolving to V, not as a dominant."
+                        ),
+                    },
+                    topics=["augmented-sixth-chords"],
+                ),
+                StepDef(
+                    slug="augmented-sixth-quiz-french",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "What distinguishes the French sixth from the Italian sixth?"
+                        ),
+                        "choices": [
+                            "The French sixth adds scale degree 2, giving it a "
+                            "whole-tone flavor the Italian sixth lacks",
+                            "The French sixth resolves to IV instead of V",
+                            "The French sixth has no augmented sixth interval",
+                            "The French sixth is only used in major keys",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "It+6 is just three distinct pitches (with a doubled root); "
+                            "Fr+6 adds the 2nd scale degree in between, producing its "
+                            "characteristic whole-tone color."
+                        ),
+                    },
+                    topics=["augmented-sixth-chords"],
+                ),
+            ],
+        ),
     ],
 )
