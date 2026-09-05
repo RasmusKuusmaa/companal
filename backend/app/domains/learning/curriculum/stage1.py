@@ -431,5 +431,191 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="realizing-a-figured-bass",
+            title="Realizing a Figured Bass",
+            summary="Turning a bass line and its figures into a full chord above it.",
+            estimated_minutes=15,
+            steps=[
+                StepDef(
+                    slug="figured-bass-realization-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Realizing a figured bass\n\n"
+                            "A figured bass gives you a bass line and a set of numbers "
+                            "underneath it, and your job is to add the upper notes those "
+                            "numbers call for. The numbers are generic intervals **above "
+                            "the bass note**, not above the root - which is why root "
+                            "position is blank (or 5/3: a third and a fifth above the "
+                            "bass, which *is* the root there) while first inversion reads "
+                            "6 (a third and a sixth above the bass, which is now the "
+                            "chord's third, not its root).\n\n"
+                            "To realize a figure: find the bass note, then stack the "
+                            "intervals the figure names above it, choosing whichever "
+                            "octave places each note in a comfortable, singable range. "
+                            "The pitch classes are fixed by the figure; the exact octave "
+                            "is yours to choose."
+                        )
+                    },
+                    topics=["figured-bass-realization"],
+                ),
+                StepDef(
+                    slug="figured-bass-realization-quiz-blank",
+                    kind="quiz",
+                    payload={
+                        "question": "An unfigured (blank) bass note in root position implies:",
+                        "choices": [
+                            "A third and a fifth above the bass",
+                            "A sixth and a third above the bass",
+                            "A fourth and a sixth above the bass",
+                            "No chord at all - just the bass note alone",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A blank figure is shorthand for 5/3 - a third and a fifth "
+                            "above the bass, which is exactly root position."
+                        ),
+                    },
+                    topics=["figured-bass-realization"],
+                ),
+                StepDef(
+                    slug="figured-bass-realization-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "The bass line below is given and locked. Add upper notes "
+                            "that realize each measure's figure: blank, then 6, then "
+                            "blank again."
+                        ),
+                        "requirements": [
+                            {
+                                "type": "figured_bass",
+                                "bass_staff_index": 0,
+                                "figures": ["", "6", ""],
+                            }
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "bass",
+                                    "clef": "bass",
+                                    "measures": [
+                                        {
+                                            "id": "m0",
+                                            "voices": [
+                                                {
+                                                    "id": "bass-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": "b0",
+                                                            "step": "C",
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "id": "m1",
+                                            "voices": [
+                                                {
+                                                    "id": "bass-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": "b1",
+                                                            "step": "B",
+                                                            "octave": 2,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                        {
+                                            "id": "m2",
+                                            "voices": [
+                                                {
+                                                    "id": "bass-voice",
+                                                    "notes": [
+                                                        {
+                                                            "id": "b2",
+                                                            "step": "C",
+                                                            "octave": 3,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": False,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                }
+                                            ],
+                                        },
+                                    ],
+                                },
+                                {
+                                    "id": "upper",
+                                    "clef": "treble",
+                                    "measures": [
+                                        {
+                                            "id": f"m{i}",
+                                            "voices": [
+                                                {
+                                                    "id": "v1",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u1-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                                {
+                                                    "id": "v2",
+                                                    "notes": [
+                                                        {
+                                                            "id": f"u2-{i}",
+                                                            "step": "C",
+                                                            "octave": 4,
+                                                            "alter": 0,
+                                                            "duration": "whole",
+                                                            "dots": 0,
+                                                            "is_rest": True,
+                                                            "tied_to_next": False,
+                                                        }
+                                                    ],
+                                                },
+                                            ],
+                                        }
+                                        for i in range(3)
+                                    ],
+                                },
+                            ],
+                        },
+                        "locked_staff_indices": [0],
+                    },
+                    topics=["figured-bass-realization"],
+                ),
+            ],
+        ),
     ],
 )
