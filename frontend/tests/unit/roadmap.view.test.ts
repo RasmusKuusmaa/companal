@@ -117,6 +117,14 @@ describe("RoadmapView", () => {
     expect(hrefs).toContain("/learn/triads");
   });
 
+  it("links to the skill map", async () => {
+    const wrapper = mountView();
+    await flush();
+
+    const hrefs = wrapper.findAllComponents(RouterLinkStub).map((link) => link.props().to);
+    expect(hrefs).toContain("/skills");
+  });
+
   it("shows each stage's completed count", async () => {
     const wrapper = mountView();
     await flush();

@@ -50,12 +50,20 @@ onMounted(async () => {
 <template>
   <main class="min-h-screen bg-slate-50 px-4 py-10">
     <div class="mx-auto max-w-3xl">
-      <header class="mb-8">
-        <h1 class="text-xl font-semibold text-slate-900">Roadmap</h1>
-        <p class="mt-1 text-sm text-slate-500">
-          Theory and composition, one topic at a time. Work through it in order, or go straight to
-          what you need.
-        </p>
+      <header class="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 class="text-xl font-semibold text-slate-900">Roadmap</h1>
+          <p class="mt-1 text-sm text-slate-500">
+            Theory and composition, one topic at a time. Work through it in order, or go straight
+            to what you need.
+          </p>
+        </div>
+        <RouterLink
+          to="/skills"
+          class="shrink-0 text-sm font-medium text-slate-600 hover:text-slate-900 hover:underline"
+        >
+          Skill map →
+        </RouterLink>
       </header>
 
       <p v-if="store.isLoadingRoadmap" class="text-sm text-slate-500">Loading the roadmap…</p>
