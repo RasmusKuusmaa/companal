@@ -153,5 +153,85 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="tonicization-versus-modulation",
+            title="Tonicization Versus Modulation",
+            summary="Telling a brief chromatic detour apart from an actual change of key.",
+            estimated_minutes=12,
+            steps=[
+                StepDef(
+                    slug="tonicization-modulation-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Tonicization versus modulation\n\n"
+                            "A secondary dominant tonicizes its target for a moment - "
+                            "one chord, maybe two - and then the music simply carries on "
+                            "in the original key. Nothing has actually changed; the "
+                            "tonic never moved, it was only leaned on briefly from "
+                            "somewhere else.\n\n"
+                            "**Modulation** is different: the music genuinely settles "
+                            "into a new key, and stays there long enough to be "
+                            "confirmed - almost always by an authentic cadence *in the "
+                            "new key*. That confirming cadence is the real test. A "
+                            "secondary dominant that resolves and moves straight back to "
+                            "the original tonic is tonicization; a secondary dominant "
+                            "that instead leads into a cadence establishing a new tonic, "
+                            "with the music continuing to center on it afterward, is a "
+                            "modulation.\n\n"
+                            "The chromatic material - the borrowed accidentals of a "
+                            "secondary dominant - can look identical either way. What "
+                            "tells them apart isn't the chord itself, it's what happens "
+                            "next."
+                        )
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+                StepDef(
+                    slug="tonicization-modulation-quiz-difference",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "What is the key difference between tonicization and "
+                            "modulation?"
+                        ),
+                        "choices": [
+                            "Modulation is confirmed by a cadence in the new key; "
+                            "tonicization is brief and doesn't establish a new tonic",
+                            "Modulation always lasts for a shorter time than tonicization",
+                            "Modulation never involves a secondary dominant",
+                            "Tonicization can only happen in a minor key",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A confirming cadence in the new key is what separates a "
+                            "genuine modulation from a passing tonicization that simply "
+                            "returns home."
+                        ),
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+                StepDef(
+                    slug="tonicization-modulation-quiz-evidence",
+                    kind="quiz",
+                    payload={
+                        "question": "A secondary dominant by itself is evidence of:",
+                        "choices": [
+                            "Tonicization, not necessarily a modulation",
+                            "A confirmed modulation",
+                            "A deceptive cadence",
+                            "A plagal cadence",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "A secondary dominant alone only tonicizes its target - "
+                            "whether it becomes a real modulation depends on whether a "
+                            "cadence in that key follows."
+                        ),
+                    },
+                    topics=["tonicization-vs-modulation"],
+                ),
+            ],
+        ),
     ],
 )
