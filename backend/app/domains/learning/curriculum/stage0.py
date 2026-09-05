@@ -93,5 +93,89 @@ COURSE = CourseDef(
                 ),
             ],
         ),
+        LessonDef(
+            slug="note-values-dots-ties-and-rests",
+            title="Note Values, Dots, Ties and Rests",
+            summary="Durations and silences, and how dots and ties extend them.",
+            estimated_minutes=10,
+            steps=[
+                StepDef(
+                    slug="note-values-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Note values, dots, ties and rests\n\n"
+                            "Every note has a **duration** - how long it sounds - shown by "
+                            "its shape. Each value is worth exactly half the one before it:\n\n"
+                            "- **Whole note**: an open circle, worth 4 beats in 4/4.\n"
+                            "- **Half note**: an open circle with a stem, worth 2 beats.\n"
+                            "- **Quarter note**: a filled-in circle with a stem, worth 1 "
+                            "beat.\n"
+                            "- **Eighth note**: a filled circle with a stem and one flag "
+                            "(or beam), worth half a beat.\n"
+                            "- **Sixteenth note**: two flags or beams, worth a quarter of a "
+                            "beat.\n\n"
+                            "**Rests** are the same idea for silence - a whole rest, half "
+                            "rest, quarter rest and so on, each lasting as long as the note "
+                            "of the same name.\n\n"
+                            "## Dots\n\n"
+                            "A dot placed after a note adds **half that note's own value** "
+                            "to it. A dotted half note is a half note (2 beats) plus a "
+                            "quarter note (1 beat) - 3 beats total. A dotted quarter note is "
+                            "a quarter (1 beat) plus an eighth (half a beat) - 1.5 beats.\n\n"
+                            "## Ties\n\n"
+                            "A **tie** is a curved line connecting two notes of the same "
+                            "pitch, and it means: play this as one continuous sound lasting "
+                            "both notes' durations added together. Ties are how a duration "
+                            "that has no single symbol - or one that crosses a barline - gets "
+                            "written down."
+                        )
+                    },
+                    topics=["note-values-and-rests"],
+                ),
+                StepDef(
+                    slug="note-values-quiz-dotted-half",
+                    kind="quiz",
+                    payload={
+                        "question": "A dotted half note lasts as long as which combination?",
+                        "choices": [
+                            "A half note plus a quarter note",
+                            "Two quarter notes",
+                            "A whole note",
+                            "Three eighth notes",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The dot adds half of the half note's own value (1 beat) to the "
+                            "half note itself (2 beats), for 3 beats total - the same length "
+                            "as a half note tied to a quarter note."
+                        ),
+                    },
+                    topics=["note-values-and-rests"],
+                ),
+                StepDef(
+                    slug="note-values-quiz-tie",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "What does a tie between two notes of the same pitch mean?"
+                        ),
+                        "choices": [
+                            "Play the second note more quietly",
+                            "Slur smoothly between two different pitches",
+                            "Combine both notes into one continuous sound",
+                            "Repeat the note twice, staccato",
+                        ],
+                        "answer_index": 2,
+                        "explanation": (
+                            "A tie joins two notes of the same pitch into a single sound "
+                            "whose duration is the sum of both notes - it never restrikes "
+                            "the note."
+                        ),
+                    },
+                    topics=["note-values-and-rests"],
+                ),
+            ],
+        ),
     ],
 )
