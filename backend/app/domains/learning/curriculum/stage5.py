@@ -1,6 +1,38 @@
 """Stage 5 - Form and composition: assembling everything into whole pieces."""
 
+from typing import Any
+
 from app.domains.learning.curriculum.definitions import CourseDef, LessonDef, StepDef
+
+
+def _blank_measures(count: int, voice_id: str, id_offset: int = 0) -> list[dict[str, Any]]:
+    """`count` empty (rest-only) whole-note measures for one voice - a blank
+    starting point with the right shape, not a hint at any particular
+    solution. `id_offset` keeps measure ids unique when concatenating calls."""
+    return [
+        {
+            "id": f"m{id_offset + i}",
+            "voices": [
+                {
+                    "id": voice_id,
+                    "notes": [
+                        {
+                            "id": f"{voice_id}-{id_offset + i}",
+                            "step": "C",
+                            "octave": 4,
+                            "alter": 0,
+                            "duration": "whole",
+                            "dots": 0,
+                            "is_rest": True,
+                            "tied_to_next": False,
+                        }
+                    ],
+                }
+            ],
+        }
+        for i in range(count)
+    ]
+
 
 COURSE = CourseDef(
     slug="form-and-composition",
@@ -444,6 +476,115 @@ COURSE = CourseDef(
                         ),
                     },
                     topics=["motivic-development"],
+                ),
+            ],
+        ),
+        LessonDef(
+            slug="writing-a-complete-short-piece",
+            title="Writing a Complete Short Piece",
+            summary="Bringing form, melody, and harmony together into one finished piece.",
+            estimated_minutes=25,
+            steps=[
+                StepDef(
+                    slug="writing-a-short-piece-reading",
+                    kind="reading",
+                    payload={
+                        "markdown": (
+                            "# Writing a complete short piece\n\n"
+                            "Everything from this course comes together in a single "
+                            "act of composition: a short piece is, at heart, a "
+                            "**phrase structure** (an antecedent phrase and a "
+                            "consequent phrase, together forming a small binary or "
+                            "rounded-binary shape) realized through **melodic "
+                            "writing** that behaves itself (mostly stepwise, leaps "
+                            "recovered, staying inside the key) and closed off by a "
+                            "**cadence** strong enough to feel like an ending.\n\n"
+                            "A practical checklist for a short two-phrase piece:\n\n"
+                            "- Choose a key and a time signature, and stay in them.\n"
+                            "- Write an **antecedent** phrase that moves away from "
+                            "home - often pausing on a half cadence, or otherwise "
+                            "left open rather than fully resolved.\n"
+                            "- Write a **consequent** phrase that answers it, "
+                            "using similar or related melodic material, and this "
+                            "time closing with a full **perfect authentic "
+                            "cadence** - the strongest possible ending.\n"
+                            "- Keep melodic leaps recovered by step, stay "
+                            "diatonic unless a chromatic gesture is a deliberate "
+                            "choice, and keep the whole line within a comfortable "
+                            "range.\n\n"
+                            "None of this requires new machinery - it's the same "
+                            "melodic and cadential tools from earlier in the course, "
+                            "now all applied at once, in service of a single, "
+                            "complete, satisfying whole."
+                        )
+                    },
+                    topics=["writing-a-short-piece"],
+                ),
+                StepDef(
+                    slug="writing-a-short-piece-quiz-antecedent",
+                    kind="quiz",
+                    payload={
+                        "question": (
+                            "In a classic antecedent-consequent phrase pair, what "
+                            "typically happens at the end of the antecedent phrase?"
+                        ),
+                        "choices": [
+                            "It pauses on a half cadence or is otherwise left open",
+                            "It ends with the strongest possible perfect "
+                            "authentic cadence",
+                            "It modulates permanently to a new key",
+                            "It repeats the consequent phrase exactly",
+                        ],
+                        "answer_index": 0,
+                        "explanation": (
+                            "The antecedent poses the question - typically pausing "
+                            "on a half cadence - so the consequent phrase can "
+                            "answer it with a full, conclusive close."
+                        ),
+                    },
+                    topics=["writing-a-short-piece"],
+                ),
+                StepDef(
+                    slug="writing-a-short-piece-task",
+                    kind="composition",
+                    payload={
+                        "brief": (
+                            "Write a complete eight-measure short piece in C major: "
+                            "an antecedent phrase (measures 1-4) followed by a "
+                            "consequent phrase (measures 5-8) that closes with a "
+                            "perfect authentic cadence. Keep the melody diatonic, "
+                            "keep leaps recovered by step, and stay within a "
+                            "reasonable range."
+                        ),
+                        "requirements": [
+                            {"type": "key", "key": "C major"},
+                            {"type": "time_signature", "value": "4/4"},
+                            {"type": "measure_count", "count": 8},
+                            {"type": "diatonic_only"},
+                            {"type": "max_leap", "semitones": 9},
+                            {"type": "leap_recovery", "max_unresolved": 1},
+                            {"type": "cadence", "cadence": "perfect_authentic"},
+                        ],
+                        "starter_notation": {
+                            "fifths": 0,
+                            "mode": "major",
+                            "time": {"beats": 4, "beat_type": 4},
+                            "tempo": 90,
+                            "staves": [
+                                {
+                                    "id": "soprano",
+                                    "clef": "treble",
+                                    "measures": _blank_measures(8, "soprano-voice"),
+                                },
+                                {
+                                    "id": "bass",
+                                    "clef": "bass",
+                                    "measures": _blank_measures(8, "bass-voice"),
+                                },
+                            ],
+                        },
+                    },
+                    topics=["writing-a-short-piece"],
                 ),
             ],
         ),
