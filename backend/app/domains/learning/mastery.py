@@ -16,14 +16,34 @@ from app.domains.learning.models import MasteryStatus, TopicMastery
 # "getting it wrong now" - see the model's own docstring.
 _RECENT_RESULTS_CAP = 10
 
+# `needs_practice` looks at *recent* accuracy, not lifetime: three or more
+# attempts is enough to trust the recent window, and if half or more of
+# those recent results are wrong, this is a topic actively catching the
+# student out right now - what the status exists to surface.
+_NEEDS_PRACTICE_MIN_ATTEMPTS = 3
+_NEEDS_PRACTICE_MAX_RECENT_ACCURACY = 0.5
+
+# `solid` looks at lifetime accuracy instead: five attempts is enough to
+# call a topic settled, and 80% is the conventional "mostly get this
+# right" bar - high enough that a couple of early mistakes while still
+# learning don't cost a topic its solid status once it's genuinely known.
+_SOLID_MIN_ATTEMPTS = 5
+_SOLID_MIN_ACCURACY = 0.8
+
 
 def _mastery_status(
     attempt_count: int, accuracy: float, recent_results: list[bool]
 ) -> MasteryStatus:
+    """`untouched` is never returned - a `TopicMastery` row (and this
+    function) only exists once a topic has at least one attempt. It's the
+    skill map's own synthesis for a topic with no row at all."""
     recent_accuracy = sum(recent_results) / len(recent_results) if recent_results else accuracy
-    if attempt_count >= 3 and recent_accuracy <= 0.5:
+    if (
+        attempt_count >= _NEEDS_PRACTICE_MIN_ATTEMPTS
+        and recent_accuracy <= _NEEDS_PRACTICE_MAX_RECENT_ACCURACY
+    ):
         return MasteryStatus.NEEDS_PRACTICE
-    if attempt_count >= 5 and accuracy >= 0.8:
+    if attempt_count >= _SOLID_MIN_ATTEMPTS and accuracy >= _SOLID_MIN_ACCURACY:
         return MasteryStatus.SOLID
     return MasteryStatus.LEARNING
 
