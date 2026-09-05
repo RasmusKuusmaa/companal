@@ -72,10 +72,11 @@ class Subscription(Base):
 
 
 class AiUsageKind(str, enum.Enum):
-    """What the call was for - the two things that currently spend AI money."""
+    """What the call was for - the things that currently spend AI money."""
 
     COMPOSITION_FEEDBACK = "composition_feedback"
     EXERCISE_GRADING = "exercise_grading"
+    EXAM_RUBRIC_GRADING = "exam_rubric_grading"
 
 
 class AiUsage(Base):

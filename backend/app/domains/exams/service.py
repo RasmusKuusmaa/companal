@@ -8,11 +8,14 @@ no field on the read model for it to leak through.
 
 import uuid
 from datetime import UTC, datetime
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.domains.billing import service as billing_service
+from app.domains.billing.models import AiUsageKind
 from app.domains.exams.models import Exam, ExamAnswer, ExamAttempt, ExamQuestion, ExamQuestionKind
 from app.domains.exams.schemas import (
     ExamAnswerPayload,
@@ -25,9 +28,11 @@ from app.domains.exams.schemas import (
     ExamQuizQuestionRead,
     ExamRead,
 )
+from app.domains.feedback.models import SkillLevel
 from app.domains.learning.models import Course
 from app.domains.learning.schemas import CompositionPayload, QuizPayload
-from app.domains.notation.grading import grade_submission
+from app.domains.notation.ai_grading import AIGradingError, generate_exercise_feedback
+from app.domains.notation.grading import DeterministicGrade, analysis_bundle, grade_submission
 from app.domains.notation.schemas import NotationDocument
 
 
@@ -242,19 +247,61 @@ def _grade_quiz_question(
     )
 
 
-def _grade_composition_question(
-    question: ExamQuestion, answer: ExamAnswer | None
+async def _composition_ai_feedback(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    exam_title: str,
+    composition: CompositionPayload,
+    grade: DeterministicGrade,
+    skill_level: SkillLevel,
+) -> dict[str, Any] | None:
+    """Written commentary on one composition question, for premium.
+
+    Mirrors `learning.service.submit_composition`'s AI feedback exactly:
+    a failure to get commentary (no API key, a failed request) is swallowed
+    rather than raised - the deterministic grade is already decided by the
+    time this runs, and losing it over an unavailable extra would be a
+    worse failure than just not having the extra. Gating *whether* this is
+    even offered to a free user is the caller's job (`Feature.
+    AI_EXAM_RUBRIC_GRADING`), not this function's.
+    """
+    try:
+        feedback, usage = generate_exercise_feedback(
+            exam_title,
+            composition.brief,
+            grade.requirement_results,
+            analysis_bundle(grade),
+            skill_level,
+        )
+    except AIGradingError:
+        return None
+
+    await billing_service.record_ai_usage(db, user_id, AiUsageKind.EXAM_RUBRIC_GRADING, usage)
+    return feedback.model_dump(mode="json")
+
+
+async def _grade_composition_question(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    exam_title: str,
+    question: ExamQuestion,
+    answer: ExamAnswer | None,
+    with_ai_feedback: bool,
+    skill_level: SkillLevel,
 ) -> ExamQuestionResultRead:
     """Grades a composition question against its requirements, via the same
     deterministic pipeline `learning.service.submit_composition` grades a
     lesson's composition steps with (see `notation.grading.grade_submission`).
+    AI commentary rides alongside that grade, exactly the way it rides
+    alongside a lesson composition's - additive, and never gating whether
+    the question passed.
 
     An unanswered question - or one whose held payload isn't a document,
     which shouldn't happen but is handled the same way rather than raising -
     scores zero without attempting to grade anything.
     """
     if answer is None or answer.payload.get("kind") != "composition":
-        detail: dict[str, object] = {"answered": False}
+        detail: dict[str, Any] = {"answered": False}
         if answer is not None:
             answer.score = 0.0
             answer.max_score = 1.0
@@ -271,7 +318,15 @@ def _grade_composition_question(
     document = NotationDocument.model_validate(answer.payload["document"])
     grade, _musicxml = grade_submission(document, composition.requirements)
     score = 1.0 if grade.passed else 0.0
+
+    ai_feedback = None
+    if with_ai_feedback:
+        ai_feedback = await _composition_ai_feedback(
+            db, user_id, exam_title, composition, grade, skill_level
+        )
+
     grade_detail = grade.model_dump(mode="json")
+    grade_detail["ai_feedback"] = ai_feedback
 
     answer.score = score
     answer.max_score = 1.0
@@ -286,10 +341,20 @@ def _grade_composition_question(
     )
 
 
-def _grade_question(question: ExamQuestion, answer: ExamAnswer | None) -> ExamQuestionResultRead:
+async def _grade_question(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    exam_title: str,
+    question: ExamQuestion,
+    answer: ExamAnswer | None,
+    with_ai_feedback: bool,
+    skill_level: SkillLevel,
+) -> ExamQuestionResultRead:
     if question.kind is ExamQuestionKind.QUIZ:
         return _grade_quiz_question(question, answer)
-    return _grade_composition_question(question, answer)
+    return await _grade_composition_question(
+        db, user_id, exam_title, question, answer, with_ai_feedback, skill_level
+    )
 
 
 async def _answers_by_question(
@@ -300,7 +365,12 @@ async def _answers_by_question(
 
 
 async def grade_attempt(
-    db: AsyncSession, user_id: uuid.UUID, attempt_id: uuid.UUID
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    attempt_id: uuid.UUID,
+    *,
+    with_ai_feedback: bool = False,
+    skill_level: SkillLevel = SkillLevel.BEGINNER,
 ) -> ExamAttemptResultRead:
     """Grades every held answer and marks the attempt submitted.
 
@@ -308,16 +378,34 @@ async def grade_attempt(
     this attempt (see `ExamAttemptAlreadySubmittedError`), and grading
     itself can only happen once for the same reason - a second submission
     isn't a re-grade, it's a new attempt (see `start_attempt`).
+
+    `with_ai_feedback` asks for written commentary on every composition
+    question in the attempt (see `_composition_ai_feedback`) - it never
+    changes any score, and whether a free user is even allowed to ask for
+    it is enforced by the caller, not here.
     """
     attempt = await _get_attempt(db, user_id, attempt_id)
     if attempt.submitted_at is not None:
         raise ExamAttemptAlreadySubmittedError
 
+    exam = await db.get(Exam, attempt.exam_id)
+    if exam is None:
+        raise ExamNotFoundError
+
     questions = await _exam_questions(db, attempt.exam_id)
     answers = await _answers_by_question(db, attempt.id)
 
     question_results = [
-        _grade_question(question, answers.get(question.id)) for question in questions
+        await _grade_question(
+            db,
+            user_id,
+            exam.title,
+            question,
+            answers.get(question.id),
+            with_ai_feedback,
+            skill_level,
+        )
+        for question in questions
     ]
 
     attempt.score = sum(result.score for result in question_results)
